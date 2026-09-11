@@ -589,6 +589,20 @@ footer {
     max-width: 800px;
 }
 
+/* Configuração Base do Toggle Mobile */
+.menu-toggle {
+    display: none; /* Oculta a checkbox real */
+}
+
+.menu-icon {
+    display: none; /* Oculta o ícone no computador */
+    font-size: 2rem;
+    cursor: pointer;
+    color: var(--text-dark);
+    user-select: none;
+    line-height: 1;
+}
+
 /* RESPONSIVIDADE MOBILE APRIMORADA */
 @media (max-width: 900px) {
     .hero {
@@ -613,7 +627,45 @@ footer {
         text-align: center;
     }
     
-    .nav-links { display: none; }
+    /* Mostra o ícone hamburguer no mobile */
+    .menu-icon { 
+        display: block; 
+    }
+    
+    /* Configuração do menu oculto com animação Slide Down */
+    .nav-links { 
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: var(--bg-card);
+        flex-direction: column;
+        gap: 15px;
+        overflow: hidden;
+        max-height: 0; /* Menu fechado por padrão */
+        padding: 0 5%;
+        transition: max-height 0.4s ease-out, padding 0.4s ease-out;
+        box-shadow: 0 15px 20px rgba(0,0,0,0.05);
+    }
+
+    .nav-links a {
+        width: 100%;
+        text-align: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .nav-links a.btn-primary {
+        border: 2px solid var(--primary-red);
+        margin-bottom: 15px;
+    }
+
+    /* Expande o menu quando o usuário clica no ícone */
+    .menu-toggle:checked ~ .nav-links {
+        max-height: 400px;
+        padding: 20px 5%;
+        border-top: 1px solid var(--border-color);
+    }
     
     .save-the-date {
         flex-direction: column;
