@@ -589,19 +589,212 @@ footer {
     max-width: 800px;
 }
 
-/* Configuração Base do Toggle Mobile */
+/* ---------------------------------------------------- */
+/* ESTILOS EXCLUSIVOS DA PÁGINA "SOBRE"                 */
+/* ---------------------------------------------------- */
+.sobre-container {
+    max-width: 1200px; /* Expande o limite máximo para telas grandes */
+    width: 90%;        /* Faz com que ocupe 90% da tela disponível, criando uma margem dinâmica */
+    margin: 0 auto;
+    padding: 60px 0;   /* O padding horizontal agora é controlado pelo width: 90% */
+}
+
+.sobre-section {
+    background: var(--bg-card);
+    padding: 50px;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    margin-bottom: 40px;
+    transition: transform 0.3s ease;
+}
+
+.sobre-section:hover {
+    transform: translateY(-5px);
+    border-color: rgba(0, 166, 81, 0.3);
+}
+
+.sobre-section h2 {
+    color: var(--primary-red);
+    font-size: 2.2rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 25px;
+    letter-spacing: -1px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.sobre-section h2::before {
+    content: '';
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    background-color: var(--primary-green);
+    border-radius: 3px;
+}
+
+.sobre-section p {
+    color: var(--text-muted);
+    font-size: 1.15rem;
+    margin-bottom: 20px;
+    line-height: 1.8;
+    font-weight: 500;
+}
+
+.sobre-section p:last-child {
+    margin-bottom: 0;
+}
+
+.sobre-section strong {
+    color: var(--text-dark);
+    font-weight: 700;
+}
+
+/* Lista da Jornada na página Sobre */
+.jornada-list {
+    list-style: none;
+    margin-top: 30px;
+}
+
+.jornada-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.jornada-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.jornada-number {
+    background: var(--primary-green);
+    color: white;
+    font-family: 'Teko', sans-serif;
+    font-weight: 700;
+    font-size: 1.8rem;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    margin-right: 25px;
+    flex-shrink: 0;
+    box-shadow: 0 5px 15px rgba(0, 166, 81, 0.3);
+}
+
+.jornada-content h3 {
+    color: var(--text-dark);
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.jornada-content span {
+    color: var(--primary-red);
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+
+/* Correção da Lista de Critérios de Avaliação */
+.jornada-content ul {
+    list-style-type: disc;
+    margin-top: 15px;
+    margin-bottom: 20px;
+    padding-left: 25px; /* Adiciona o recuo necessário para as bolinhas não sumirem */
+}
+
+.jornada-content ul li {
+    color: var(--text-muted);
+    font-size: 1.15rem; /* Igualado ao tamanho do parágrafo */
+    font-weight: 500;   /* Igualado à espessura do parágrafo */
+    margin-bottom: 12px;
+    line-height: 1.8;   /* Igualado ao espaçamento do parágrafo */
+}
+
+.jornada-content ul li strong {
+    color: var(--text-dark);
+    font-weight: 700;
+}
+
+/* Estilos da Tabela de Cronograma */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto; /* Permite rolar a tabela no celular sem quebrar a página */
+    margin-top: 25px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.cronograma-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-card);
+    min-width: 600px; /* Garante que a tabela não esprema demais os textos */
+}
+
+.cronograma-table th, .cronograma-table td {
+    padding: 18px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.cronograma-table th {
+    background-color: var(--primary-green);
+    color: white;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.95rem;
+}
+
+.cronograma-table tr:last-child td {
+    border-bottom: none;
+}
+
+.cronograma-table tr:hover td {
+    background-color: rgba(0, 166, 81, 0.05);
+}
+
+.c-data {
+    font-weight: 900;
+    color: var(--primary-red);
+    white-space: nowrap;
+}
+
+.c-hora {
+    font-weight: 700;
+    color: var(--text-dark);
+    white-space: nowrap;
+}
+
+/* ---------------------------------------------------- */
+/* Configuração Base do Toggle Mobile                   */
+/* ---------------------------------------------------- */
 .menu-toggle {
-    display: none; /* Oculta a checkbox real */
+    display: none; 
 }
 
 .menu-icon {
-    display: none; /* Oculta o ícone no computador */
+    display: none; 
     font-size: 2rem;
     cursor: pointer;
     color: var(--text-dark);
     user-select: none;
     line-height: 1;
 }
+
 
 /* RESPONSIVIDADE MOBILE APRIMORADA */
 @media (max-width: 900px) {
@@ -710,5 +903,22 @@ footer {
     }
     .page-header p {
         font-size: 1rem;
+    }
+
+    /* Responsividade específica da página Sobre */
+    .sobre-section { 
+        padding: 30px 20px; 
+    }
+    .sobre-section h2 { 
+        font-size: 1.6rem; 
+    }
+    .sobre-section p {
+        font-size: 1rem;
+    }
+    .jornada-item {
+        flex-direction: column;
+    }
+    .jornada-number {
+        margin-bottom: 15px;
     }
 }
