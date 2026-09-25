@@ -1,0 +1,4998 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>O ÚLTIMO CLIQUE</title>
+
+<style>
+
+/* =========================================================
+   BASE
+========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: monospace;
+    color: #ddd;
+}
+
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 999;
+    background:
+        repeating-linear-gradient(
+            0deg,
+            rgba(255,255,255,.015) 0px,
+            rgba(255,255,255,.015) 1px,
+            transparent 1px,
+            transparent 4px
+        );
+    mix-blend-mode: screen;
+}
+
+#game {
+    width: 100%;
+    height: 100%;
+}
+
+
+/* =========================================================
+   MENU
+========================================================= */
+
+#menu {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background:
+        radial-gradient(
+            ellipse at center,
+            #151515 0%,
+            #070707 35%,
+            #020202 65%,
+            #000 100%
+        );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+}
+
+#menu::before {
+    content: "";
+    position: absolute;
+    inset: -50%;
+    background:
+        repeating-radial-gradient(
+            ellipse,
+            transparent 0px,
+            transparent 80px,
+            rgba(255,255,255,.015) 82px,
+            transparent 85px
+        );
+    animation: menuMove 18s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes menuMove {
+    from {
+        transform: rotate(0deg) scale(1);
+    }
+
+    to {
+        transform: rotate(360deg) scale(1.2);
+    }
+}
+
+.menu-content {
+    position: relative;
+    z-index: 2;
+    width: 90%;
+    max-width: 700px;
+}
+
+.menu-title {
+    position: relative;
+    font-size: 52px;
+    letter-spacing: 12px;
+    color: #ddd;
+    text-shadow:
+        0 0 8px #fff,
+        0 0 25px #777,
+        0 0 50px #333;
+    margin-bottom: 8px;
+    animation: titleFlicker 5s infinite;
+}
+
+@keyframes titleFlicker {
+    0%, 92%, 100% {
+        opacity: 1;
+    }
+
+    93% {
+        opacity: .65;
+    }
+
+    94% {
+        opacity: 1;
+    }
+
+    96% {
+        opacity: .35;
+    }
+
+    97% {
+        opacity: 1;
+    }
+}
+
+.menu-subtitle {
+    color: #555;
+    font-size: 13px;
+    letter-spacing: 4px;
+    margin-bottom: 55px;
+}
+
+.menu-warning {
+    color: #4a4a4a;
+    font-size: 11px;
+    letter-spacing: 2px;
+    margin-bottom: 25px;
+    animation: warningFlicker 3s infinite;
+}
+
+@keyframes warningFlicker {
+    0%, 100% {
+        opacity: .45;
+    }
+
+    50% {
+        opacity: .15;
+    }
+
+    55% {
+        opacity: .8;
+    }
+}
+
+.menu-button {
+    display: block;
+    width: 270px;
+    margin: 15px auto;
+    padding: 15px;
+    background: rgba(5,5,5,.9);
+    border: 1px solid #444;
+    color: #aaa;
+    font-family: monospace;
+    font-size: 15px;
+    letter-spacing: 4px;
+    cursor: pointer;
+    transition: .25s;
+}
+
+.menu-button:hover {
+    background: #151515;
+    border-color: #aaa;
+    color: #fff;
+    box-shadow:
+        0 0 15px #333,
+        inset 0 0 15px #111;
+}
+
+#controls {
+    display: none;
+    margin-top: 30px;
+    color: #666;
+    line-height: 2;
+    font-size: 13px;
+}
+
+#controls strong {
+    color: #ccc;
+}
+
+
+/* =========================================================
+   HUD
+========================================================= */
+
+#overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    color: white;
+    z-index: 30;
+}
+
+#title {
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    font-size: 20px;
+    letter-spacing: 4px;
+    color: #aaa;
+    text-shadow:
+        0 0 10px #fff;
+}
+
+#hud {
+    position: absolute;
+    bottom: 18px;
+    left: 20px;
+    font-size: 14px;
+    color: #aaa;
+    line-height: 1.7;
+    text-shadow:
+        0 0 5px #000;
+}
+
+
+/* =========================================================
+   MENSAGEM DO JOGO
+========================================================= */
+
+#message {
+    position: absolute;
+    left: 50%;
+    bottom: 80px;
+    transform: translateX(-50%);
+    width: auto;
+    max-width: 600px;
+    padding: 10px 16px;
+    text-align: center;
+    font-size: 14px;
+    color: #ddd;
+    background: rgba(0,0,0,.85);
+    border: 1px solid #333;
+    opacity: 0;
+    transition: opacity .3s;
+    text-shadow:
+        0 0 5px #000;
+    white-space: pre-line;
+}
+
+
+/* =========================================================
+   INTERAÇÃO
+========================================================= */
+
+#interaction {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform:
+        translate(-50%, -50%);
+    color: white;
+    font-size: 16px;
+    text-align: center;
+    opacity: 0;
+    text-shadow:
+        0 0 10px #fff;
+    z-index: 40;
+}
+
+
+/* =========================================================
+   ESCURIDÃO
+========================================================= */
+
+#darkness {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 15;
+    pointer-events: none;
+    opacity: 0;
+}
+
+
+/* =========================================================
+   FADE
+========================================================= */
+
+#fade {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 20;
+}
+
+
+/* =========================================================
+   CENTRAL DE CÂMERAS
+========================================================= */
+
+#cameraPanel {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: none;
+    background:
+        radial-gradient(
+            ellipse at center,
+            #111 0%,
+            #050505 65%,
+            #000 100%
+        );
+    color: #ddd;
+    flex-direction: column;
+    padding: 30px;
+}
+
+.camera-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.camera-header h1 {
+    margin: 0;
+    font-size: 28px;
+    letter-spacing: 6px;
+    font-weight: normal;
+}
+
+.camera-header p {
+    margin-top: 10px;
+    color: #666;
+    font-size: 12px;
+    letter-spacing: 2px;
+}
+
+
+/* =========================================================
+   MENSAGEM DENTRO DA CENTRAL
+========================================================= */
+
+#cameraMessage {
+    position: fixed;
+    left: 50%;
+    bottom: 72px;
+    transform: translateX(-50%);
+
+    width: min(700px, 85%);
+
+    min-height: 46px;
+
+    padding: 12px 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    background:
+        rgba(0,0,0,.94);
+
+    border:
+        1px solid #3a3a3a;
+
+    color: #aaa;
+
+    font-size: 14px;
+
+    letter-spacing: 1px;
+
+    white-space: pre-line;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    z-index: 500;
+
+    text-shadow:
+        0 0 7px #000;
+
+    transition:
+        opacity .25s;
+}
+
+#cameraMessage.visible {
+    opacity: 1;
+}
+
+#cameraMessage.glitch {
+    color: #d22;
+    border-color: #611;
+    text-shadow:
+        0 0 5px #f00,
+        2px 0 0 #600,
+        -2px 0 0 #300;
+
+    animation:
+        cameraMessageGlitch .25s infinite;
+}
+
+@keyframes cameraMessageGlitch {
+
+    0% {
+        transform:
+            translateX(-50%);
+        opacity: 1;
+    }
+
+    20% {
+        transform:
+            translateX(calc(-50% - 3px));
+        opacity: .65;
+    }
+
+    40% {
+        transform:
+            translateX(calc(-50% + 4px));
+        opacity: 1;
+    }
+
+    60% {
+        transform:
+            translateX(calc(-50% - 2px));
+        opacity: .8;
+    }
+
+    80% {
+        transform:
+            translateX(calc(-50% + 3px));
+        opacity: 1;
+    }
+
+    100% {
+        transform:
+            translateX(-50%);
+        opacity: 1;
+    }
+}
+
+
+/* =========================================================
+   GRID DAS CÂMERAS
+========================================================= */
+
+.camera-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns:
+        repeat(3, 1fr);
+    grid-template-rows:
+        repeat(2, 1fr);
+    gap: 15px;
+}
+
+.camera-monitor {
+    position: relative;
+    overflow: hidden;
+    background: #0b0b0b;
+    border: 1px solid #333;
+    min-height: 150px;
+    cursor: pointer;
+}
+
+.camera-monitor:hover {
+    border-color: #777;
+    box-shadow:
+        0 0 12px rgba(255,255,255,.05);
+}
+
+.camera-screen {
+    position: absolute;
+    inset: 30px 10px 30px 10px;
+    border: 1px solid #292929;
+    background: #181818;
+    overflow: hidden;
+}
+
+.camera-screen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            rgba(255,255,255,.045) 0px,
+            rgba(255,255,255,.045) 1px,
+            transparent 1px,
+            transparent 6px
+        );
+    pointer-events: none;
+    z-index: 5;
+}
+
+.camera-screen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,.03),
+            transparent
+        );
+    animation:
+        scan 3s linear infinite;
+}
+
+@keyframes scan {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(100%);
+    }
+}
+
+.camera-person {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform:
+        translate(-50%, -50%);
+    width: 18px;
+    height: 55px;
+    background: #080808;
+}
+
+.camera-person::before {
+    content: "";
+    position: absolute;
+    top: -18px;
+    left: 1px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #080808;
+}
+
+.camera-number {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    font-size: 12px;
+    color: #aaa;
+}
+
+.camera-location {
+    position: absolute;
+    bottom: 8px;
+    left: 10px;
+    font-size: 10px;
+    color: #555;
+}
+
+.camera-record {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #f22;
+    box-shadow:
+        0 0 7px #f22;
+    animation:
+        blink 1s infinite;
+}
+
+.camera-error {
+    position: absolute;
+    left: 50%;
+    top: 22%;
+    transform:
+        translateX(-50%);
+    color: #e33;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-shadow:
+        0 0 8px #f00;
+    animation:
+        glitchText .7s infinite;
+    z-index: 10;
+}
+
+.camera-message-small {
+    position: absolute;
+    left: 50%;
+    bottom: 12px;
+    transform:
+        translateX(-50%);
+    color: #aaa;
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: .8;
+    z-index: 10;
+}
+
+@keyframes glitchText {
+
+    0% {
+        transform:
+            translateX(-50%);
+    }
+
+    20% {
+        transform:
+            translateX(-53%);
+    }
+
+    40% {
+        transform:
+            translateX(-47%);
+    }
+
+    60% {
+        transform:
+            translateX(-50%);
+    }
+
+    80% {
+        transform:
+            translateX(-55%);
+    }
+
+    100% {
+        transform:
+            translateX(-50%);
+    }
+}
+
+@keyframes blink {
+
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: .2;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.camera-footer {
+    text-align: center;
+    padding: 15px;
+    color: #666;
+    font-size: 13px;
+    letter-spacing: 2px;
+}
+
+
+/* =========================================================
+   SENHA
+========================================================= */
+
+#codePanel {
+    position: fixed;
+    inset: 0;
+    z-index: 250;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background:
+        rgba(0,0,0,.94);
+}
+
+.code-box {
+    width: 340px;
+    padding: 25px;
+    background:
+        linear-gradient(
+            #101010,
+            #050505
+        );
+    border: 1px solid #555;
+    box-shadow:
+        0 0 30px #000,
+        inset 0 0 30px #000;
+    text-align: center;
+}
+
+.code-title {
+    color: #888;
+    letter-spacing: 4px;
+    font-size: 13px;
+    margin-bottom: 15px;
+}
+
+#codeDisplay {
+    height: 50px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #333;
+    background: #020202;
+    color: #ddd;
+    font-size: 24px;
+    letter-spacing: 7px;
+}
+
+
+/* =========================================================
+   MENSAGEM DE ERRO DO CÓDIGO
+========================================================= */
+
+#codeStatus {
+    height: 35px;
+
+    margin-bottom: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #e00000;
+
+    font-size: 12px;
+
+    letter-spacing: 2px;
+
+    opacity: 0;
+
+    text-shadow:
+        0 0 5px #f00;
+
+    white-space: pre-line;
+}
+
+#codeStatus.show {
+    opacity: 1;
+}
+
+#codeStatus.glitch {
+    animation:
+        codeGlitch .18s infinite;
+}
+
+@keyframes codeGlitch {
+
+    0% {
+        transform:
+            translate(0,0);
+        opacity: 1;
+    }
+
+    20% {
+        transform:
+            translate(-4px,1px);
+        opacity: .5;
+    }
+
+    40% {
+        transform:
+            translate(4px,-1px);
+        opacity: .9;
+    }
+
+    60% {
+        transform:
+            translate(-2px,0);
+        opacity: .4;
+    }
+
+    80% {
+        transform:
+            translate(3px,1px);
+        opacity: 1;
+    }
+
+    100% {
+        transform:
+            translate(0,0);
+        opacity: 1;
+    }
+}
+
+.code-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(3, 1fr);
+    gap: 8px;
+}
+
+.code-key {
+    height: 50px;
+    background: #111;
+    border: 1px solid #444;
+    color: #ddd;
+    font-family: monospace;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.code-key:hover {
+    background: #222;
+    border-color: #888;
+}
+
+.code-key:active {
+    background: #333;
+}
+
+.code-enter {
+    grid-column: span 2;
+}
+
+.code-clear {
+    color: #888;
+}
+
+.code-close {
+    margin-top: 12px;
+    width: 100%;
+    padding: 10px;
+    background: #080808;
+    border: 1px solid #333;
+    color: #777;
+    font-family: monospace;
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   FINAL
+========================================================= */
+
+#ending {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    color: #ddd;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 300;
+    text-align: center;
+}
+
+#ending h1 {
+    position: relative;
+    font-size: 32px;
+    letter-spacing: 8px;
+    font-weight: normal;
+    color: #e00000;
+    text-shadow:
+        0 0 4px #f00,
+        0 0 15px #600;
+    animation:
+        horrorGlitch 1.2s infinite;
+}
+
+#ending h1::before,
+#ending h1::after {
+    content:
+        "VOCÊ JÁ FEZ ISSO 17 VEZES.";
+    position: absolute;
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+#ending h1::before {
+    color: #ff3333;
+    transform:
+        translate(-3px, -2px);
+    clip-path:
+        inset(0 0 55% 0);
+    animation:
+        glitchRed .5s infinite;
+}
+
+#ending h1::after {
+    color: #700;
+    transform:
+        translate(3px, 2px);
+    clip-path:
+        inset(55% 0 0 0);
+    animation:
+        glitchDark .7s infinite;
+}
+
+@keyframes horrorGlitch {
+
+    0%, 100% {
+        opacity: 1;
+    }
+
+    10% {
+        opacity: .85;
+    }
+
+    12% {
+        opacity: .2;
+    }
+
+    14% {
+        opacity: 1;
+    }
+
+    48% {
+        opacity: .9;
+    }
+
+    50% {
+        opacity: .3;
+    }
+
+    52% {
+        opacity: 1;
+    }
+}
+
+@keyframes glitchRed {
+
+    0% {
+        transform:
+            translate(-3px,-2px);
+    }
+
+    25% {
+        transform:
+            translate(5px,1px);
+    }
+
+    50% {
+        transform:
+            translate(-6px,2px);
+    }
+
+    75% {
+        transform:
+            translate(2px,-3px);
+    }
+
+    100% {
+        transform:
+            translate(-3px,-2px);
+    }
+}
+
+@keyframes glitchDark {
+
+    0% {
+        transform:
+            translate(3px,2px);
+    }
+
+    30% {
+        transform:
+            translate(-4px,-1px);
+    }
+
+    60% {
+        transform:
+            translate(6px,3px);
+    }
+
+    100% {
+        transform:
+            translate(3px,2px);
+    }
+}
+
+#ending p {
+    font-size: 18px;
+    color: #666;
+}
+
+#ending button {
+    margin-top: 30px;
+    padding: 12px 25px;
+    background: #111;
+    border: 1px solid #555;
+    color: #ddd;
+    font-family: monospace;
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   RESPONSIVO
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .menu-title {
+        font-size: 30px;
+        letter-spacing: 6px;
+    }
+
+    .camera-grid {
+        grid-template-columns:
+            repeat(2, 1fr);
+        grid-template-rows:
+            repeat(3, 1fr);
+    }
+
+    #cameraMessage {
+        bottom: 65px;
+        font-size: 11px;
+    }
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<!-- =====================================================
+     MENU
+===================================================== -->
+
+<div id="menu">
+
+    <div class="menu-content">
+
+        <div class="menu-title">
+            O ÚLTIMO CLIQUE
+        </div>
+
+        <div class="menu-subtitle">
+            TERROR PSICOLÓGICO • MISTÉRIO • PUZZLE
+        </div>
+
+        <div class="menu-warning">
+            NÃO CONFIE NO QUE VOCÊ VÊ.
+        </div>
+
+        <button
+            class="menu-button"
+            id="playButton">
+
+            JOGAR
+
+        </button>
+
+        <button
+            class="menu-button"
+            id="controlButton">
+
+            CONTROLES
+
+        </button>
+
+        <div id="controls">
+
+            <div>
+                <strong>W A S D</strong> /
+                <strong>SETAS</strong>
+                — mover
+            </div>
+
+            <div>
+                <strong>E</strong> /
+                <strong>ENTER</strong>
+                — interagir
+            </div>
+
+            <div>
+                <strong>CLIQUE</strong>
+                — acender a lanterna
+            </div>
+
+            <br>
+
+            <div>
+                A luz dura 1 segundo.
+            </div>
+
+            <div>
+                É necessário esperar 2 segundos entre os cliques.
+            </div>
+
+            <br>
+
+            <div>
+                Na Sala 3, pressione <strong>ESC</strong>
+                para sair das câmeras.
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     JOGO
+===================================================== -->
+
+<div id="game"></div>
+
+
+<!-- =====================================================
+     HUD
+===================================================== -->
+
+<div id="overlay">
+
+    <div id="title">
+        O ÚLTIMO CLIQUE
+    </div>
+
+    <div id="hud">
+
+        <div>
+            LOCAL:
+            <span id="roomName">
+                SALA 01
+            </span>
+        </div>
+
+        <div>
+            INVENTÁRIO:
+            <span id="inventory">
+                VAZIO
+            </span>
+        </div>
+
+    </div>
+
+    <div id="message"></div>
+
+    <div id="interaction"></div>
+
+</div>
+
+
+<!-- =====================================================
+     ESCURIDÃO
+===================================================== -->
+
+<div id="darkness"></div>
+
+<div id="fade"></div>
+
+
+<!-- =====================================================
+     CENTRAL DE CÂMERAS
+===================================================== -->
+
+<div id="cameraPanel">
+
+    <div class="camera-header">
+
+        <h1>
+            CENTRAL DE SEGURANÇA
+        </h1>
+
+        <p>
+            SISTEMA DE MONITORAMENTO — TESTE 17
+        </p>
+
+    </div>
+
+
+    <div class="camera-grid">
+
+
+        <!-- CAM 01 -->
+
+        <div
+            class="camera-monitor"
+            data-camera="01">
+
+            <div class="camera-number">
+                CAM 01
+            </div>
+
+            <div class="camera-record"></div>
+
+            <div
+                class="camera-screen"
+                style="background:#26362d">
+
+                <div class="camera-person"></div>
+
+            </div>
+
+            <div class="camera-location">
+                CORREDOR
+            </div>
+
+        </div>
+
+
+        <!-- CAM 02 -->
+
+        <div
+            class="camera-monitor"
+            data-camera="02">
+
+            <div class="camera-number">
+                CAM 02
+            </div>
+
+            <div class="camera-record"></div>
+
+            <div
+                class="camera-screen"
+                style="background:#362d26">
+
+                <div class="camera-person"></div>
+
+                <div class="camera-message-small">
+                    VOCÊ LEMBRA DESTA SALA?
+                </div>
+
+            </div>
+
+            <div class="camera-location">
+                OFICINA
+            </div>
+
+        </div>
+
+
+        <!-- CAM 03 -->
+
+        <div
+            class="camera-monitor"
+            data-camera="03">
+
+            <div class="camera-number">
+                CAM 03
+            </div>
+
+            <div class="camera-record"></div>
+
+            <div
+                class="camera-screen"
+                style="background:#292f38">
+
+                <div class="camera-person"></div>
+
+                <div class="camera-error">
+                    ERRO-01
+                </div>
+
+            </div>
+
+            <div class="camera-location">
+                ARQUIVO
+            </div>
+
+        </div>
+
+
+        <!-- CAM 04 -->
+
+        <div
+            class="camera-monitor"
+            data-camera="04">
+
+            <div class="camera-number">
+                CAM 04
+            </div>
+
+            <div class="camera-record"></div>
+
+            <div
+                class="camera-screen"
+                style="background:#302634">
+
+                <div class="camera-person"></div>
+
+                <div class="camera-message-small">
+                    MOVIMENTO DETECTADO
+                </div>
+
+            </div>
+
+            <div class="camera-location">
+                OBSERVAÇÃO
+            </div>
+
+        </div>
+
+
+        <!-- CAM 05 -->
+
+        <div
+            class="camera-monitor"
+            data-camera="05">
+
+            <div class="camera-number">
+                CAM 05
+            </div>
+
+            <div class="camera-record"></div>
+
+            <div
+                class="camera-screen"
+                style="background:#352525">
+
+                <div
+                    class="camera-person"
+                    style="opacity:.15">
+                </div>
+
+                <div class="camera-message-small">
+                    NÃO HÁ NINGUÉM AQUI.
+                </div>
+
+            </div>
+
+            <div class="camera-location">
+                PORTA FINAL
+            </div>
+
+        </div>
+
+
+        <!-- CAM 06 -->
+
+        <div
+            class="camera-monitor"
+            data-camera="06">
+
+            <div class="camera-number">
+                CAM 06
+            </div>
+
+            <div class="camera-record"></div>
+
+            <div
+                class="camera-screen"
+                id="camera06"
+                style="background:#090909">
+
+                <div
+                    class="camera-person"
+                    style="opacity:.2">
+                </div>
+
+                <div class="camera-error">
+                    SINAL PERDIDO
+                </div>
+
+            </div>
+
+            <div class="camera-location">
+                ???
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- MENSAGEM AGORA FICA DENTRO DA CENTRAL -->
+
+    <div id="cameraMessage"></div>
+
+
+    <div class="camera-footer">
+
+        ESC — SAIR DAS CÂMERAS
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     SENHA
+===================================================== -->
+
+<div id="codePanel">
+
+    <div class="code-box">
+
+        <div class="code-title">
+            SISTEMA DE SEGURANÇA
+        </div>
+
+        <div id="codeDisplay">
+            • • • • • •
+        </div>
+
+        <div id="codeStatus"></div>
+
+        <div class="code-grid">
+
+            <button
+                class="code-key"
+                data-number="1">
+                1
+            </button>
+
+            <button
+                class="code-key"
+                data-number="2">
+                2
+            </button>
+
+            <button
+                class="code-key"
+                data-number="3">
+                3
+            </button>
+
+            <button
+                class="code-key"
+                data-number="4">
+                4
+            </button>
+
+            <button
+                class="code-key"
+                data-number="5">
+                5
+            </button>
+
+            <button
+                class="code-key"
+                data-number="6">
+                6
+            </button>
+
+            <button
+                class="code-key"
+                data-number="7">
+                7
+            </button>
+
+            <button
+                class="code-key"
+                data-number="8">
+                8
+            </button>
+
+            <button
+                class="code-key"
+                data-number="9">
+                9
+            </button>
+
+            <button
+                class="code-key code-clear"
+                id="codeClear">
+                LIMPAR
+            </button>
+
+            <button
+                class="code-key"
+                data-number="0">
+                0
+            </button>
+
+            <button
+                class="code-key code-enter"
+                id="codeEnter">
+                CONFIRMAR
+            </button>
+
+        </div>
+
+
+        <button
+            class="code-close"
+            id="codeClose">
+
+            CANCELAR
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     FINAL
+===================================================== -->
+
+<div id="ending">
+
+    <h1>
+        VOCÊ JÁ FEZ ISSO 17 VEZES.
+    </h1>
+
+    <p>
+        Mas desta vez existe uma pequena diferença.
+    </p>
+
+    <button onclick="location.reload()">
+
+        CLICAR PARA RECOMEÇAR
+
+    </button>
+
+</div>
+
+
+<!-- =====================================================
+     SONS
+     
+     IMPORTANTE:
+     Os arquivos devem estar dentro da pasta "sons".
+===================================================== -->
+
+<audio
+    id="heartbeatSound"
+    preload="auto">
+
+    <source
+        src="sons/soundreality-heart-beat-137135.mp3"
+        type="audio/mpeg">
+
+</audio>
+
+
+<audio
+    id="errorSound"
+    preload="auto">
+
+    <source
+        src="sons/creatorshome-error-002-337159.mp3"
+        type="audio/mpeg">
+
+</audio>
+
+
+<!-- =====================================================
+     PHASER
+===================================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
+
+
+<script>
+
+/* =========================================================
+   CONFIGURAÇÕES
+========================================================= */
+
+const WIDTH = 1100;
+
+const HEIGHT = 700;
+
+const finalCode = "260926";
+
+const LIGHT_DURATION = 1000;
+
+const CLICK_COOLDOWN = 2000;
+
+
+/* =========================================================
+   SONS
+========================================================= */
+
+const heartbeatSound =
+    document.getElementById(
+        "heartbeatSound"
+    );
+
+const errorSound =
+    document.getElementById(
+        "errorSound"
+    );
+
+
+/*
+    Tenta preparar o áudio depois
+    que o jogador clicar em JOGAR.
+*/
+
+function unlockAudio() {
+
+    if (heartbeatSound) {
+
+        heartbeatSound.volume = 0.55;
+
+        heartbeatSound.load();
+
+    }
+
+    if (errorSound) {
+
+        errorSound.volume = 0.75;
+
+        errorSound.load();
+
+    }
+
+}
+
+
+/*
+    Batimento.
+*/
+
+function playHeartbeat() {
+
+    if (!heartbeatSound)
+        return;
+
+    heartbeatSound.loop = true;
+
+    heartbeatSound.volume = 0.55;
+
+    heartbeatSound.currentTime = 0;
+
+    const promise =
+        heartbeatSound.play();
+
+    if (promise !== undefined) {
+
+        promise.catch(
+            error => {
+
+                console.warn(
+                    "Não foi possível reproduzir o batimento:",
+                    error
+                );
+
+            }
+        );
+
+    }
+
+}
+
+
+/*
+    Som de erro.
+*/
+
+function playErrorSound() {
+
+    if (!errorSound)
+        return;
+
+    errorSound.volume = 0.8;
+
+    errorSound.currentTime = 0;
+
+    const promise =
+        errorSound.play();
+
+    if (promise !== undefined) {
+
+        promise.catch(
+            error => {
+
+                console.warn(
+                    "Não foi possível reproduzir o som de erro:",
+                    error
+                );
+
+            }
+        );
+
+    }
+
+}
+
+
+/*
+    Para o batimento.
+*/
+
+function stopHeartbeat() {
+
+    if (!heartbeatSound)
+        return;
+
+    heartbeatSound.pause();
+
+    heartbeatSound.currentTime = 0;
+
+}
+
+
+/* =========================================================
+   VARIÁVEIS
+========================================================= */
+
+let game;
+
+let scene;
+
+let player;
+
+let walls = [];
+
+let objects = [];
+
+let lastClick = -9999;
+
+let currentRoom = "01";
+
+let boxBroken = false;
+
+let gameStarted = false;
+
+let roomIsDark = false;
+
+let cameraMode = false;
+
+let cameraVisited = false;
+
+
+/* =========================================================
+   INVENTÁRIO
+========================================================= */
+
+let inventory = {
+
+    key1: false,
+
+    crowbar: false,
+
+    key2: false
+
+};
+
+
+/* =========================================================
+   ELEMENTOS
+========================================================= */
+
+const menu =
+    document.getElementById(
+        "menu"
+    );
+
+const playButton =
+    document.getElementById(
+        "playButton"
+    );
+
+const controlButton =
+    document.getElementById(
+        "controlButton"
+    );
+
+const controls =
+    document.getElementById(
+        "controls"
+    );
+
+const cameraPanel =
+    document.getElementById(
+        "cameraPanel"
+    );
+
+const cameraMessage =
+    document.getElementById(
+        "cameraMessage"
+    );
+
+const codePanel =
+    document.getElementById(
+        "codePanel"
+    );
+
+const codeStatus =
+    document.getElementById(
+        "codeStatus"
+    );
+
+
+/* =========================================================
+   MENU
+========================================================= */
+
+controlButton.addEventListener(
+    "click",
+    () => {
+
+        controls.style.display =
+            controls.style.display ===
+            "block"
+                ? "none"
+                : "block";
+
+    }
+);
+
+
+playButton.addEventListener(
+    "click",
+    () => {
+
+        gameStarted = true;
+
+        /*
+            Prepara os arquivos de áudio
+            após uma interação real do usuário.
+        */
+
+        unlockAudio();
+
+        menu.style.display =
+            "none";
+
+        showMessage(
+            "Você acorda no escuro.\n\nExiste algo preso à sua mão.",
+            4500
+        );
+
+    }
+);
+
+
+/* =========================================================
+   HUD
+========================================================= */
+
+function updateHUD() {
+
+    document.getElementById(
+        "roomName"
+    ).innerText =
+        getRoomName(
+            currentRoom
+        );
+
+
+    const items = [];
+
+
+    if (inventory.key1) {
+
+        items.push(
+            "CHAVE 01"
+        );
+
+    }
+
+
+    if (inventory.crowbar) {
+
+        items.push(
+            "PÉ DE CABRA"
+        );
+
+    }
+
+
+    if (inventory.key2) {
+
+        items.push(
+            "CHAVE 02"
+        );
+
+    }
+
+
+    document.getElementById(
+        "inventory"
+    ).innerText =
+        items.length
+            ? items.join(" | ")
+            : "VAZIO";
+
+}
+
+
+function getRoomName(room) {
+
+    const names = {
+
+        "01":
+            "SALA 01 — ARQUIVO",
+
+        "02":
+            "SALA 02 — OFICINA",
+
+        "03":
+            "SALA 03 — CENTRAL DE SEGURANÇA",
+
+        "04":
+            "SALA 04 — OBSERVAÇÃO",
+
+        "05":
+            "SALA 05 — SAÍDA"
+
+    };
+
+
+    return names[room] || room;
+
+}
+
+
+/* =========================================================
+   MENSAGENS
+========================================================= */
+
+function showMessage(
+    text,
+    duration = 3000
+) {
+
+    const element =
+        document.getElementById(
+            "message"
+        );
+
+
+    element.innerText =
+        text;
+
+    element.style.opacity =
+        "1";
+
+
+    clearTimeout(
+        window.messageTimer
+    );
+
+
+    window.messageTimer =
+        setTimeout(
+            () => {
+
+                element.style.opacity =
+                    "0";
+
+            },
+            duration
+        );
+
+}
+
+
+/* =========================================================
+   ESCURIDÃO
+========================================================= */
+
+function setRoomDark(
+    dark
+) {
+
+    roomIsDark =
+        dark;
+
+
+    const darkness =
+        document.getElementById(
+            "darkness"
+        );
+
+
+    if (dark) {
+
+        darkness.style.opacity =
+            "1";
+
+        darkness.style.background =
+            "#000";
+
+    }
+    else {
+
+        darkness.style.opacity =
+            "0";
+
+        darkness.style.background =
+            "#000";
+
+    }
+
+}
+
+
+/* =========================================================
+   PHASER
+========================================================= */
+
+const config = {
+
+    type:
+        Phaser.AUTO,
+
+    width:
+        WIDTH,
+
+    height:
+        HEIGHT,
+
+    parent:
+        "game",
+
+    backgroundColor:
+        "#020202",
+
+    physics: {
+
+        default:
+            "arcade",
+
+        arcade: {
+
+            gravity: {
+                y: 0
+            },
+
+            debug:
+                false
+
+        }
+
+    },
+
+    scene: {
+
+        preload() {},
+
+
+        create() {
+
+            scene =
+                this;
+
+            createRoom01();
+
+            setupInput();
+
+            updateHUD();
+
+        },
+
+
+        update() {
+
+            if (!gameStarted)
+                return;
+
+
+            if (cameraMode)
+                return;
+
+
+            if (!player)
+                return;
+
+
+            movePlayer();
+
+            checkInteractions();
+
+        }
+
+    }
+
+};
+
+
+game =
+    new Phaser.Game(
+        config
+    );
+
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+function setupInput() {
+
+    scene.input.keyboard.on(
+        "keydown-E",
+        interact
+    );
+
+
+    scene.input.keyboard.on(
+        "keydown-ENTER",
+        () => {
+
+            if (
+                codePanel.style.display ===
+                "flex"
+            ) {
+
+                confirmCode();
+
+            }
+            else if (
+                !cameraMode
+            ) {
+
+                interact();
+
+            }
+
+        }
+    );
+
+
+    scene.input.on(
+        "pointerdown",
+        function(pointer) {
+
+            if (
+                pointer.leftButtonDown()
+            ) {
+
+                makeClick(
+                    pointer
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   ESC
+========================================================= */
+
+window.addEventListener(
+    "keydown",
+    event => {
+
+        if (cameraMode) {
+
+            if (
+                event.key ===
+                "Escape"
+            ) {
+
+                closeCameraMenu();
+
+                event.preventDefault();
+
+            }
+
+            return;
+
+        }
+
+
+        if (
+            codePanel.style.display ===
+            "flex"
+        ) {
+
+            if (
+                event.key ===
+                "Escape"
+            ) {
+
+                closeCodePanel();
+
+                event.preventDefault();
+
+            }
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   ABRIR CÂMERAS
+========================================================= */
+
+function openCameraMenu() {
+
+    cameraMode =
+        true;
+
+    cameraVisited =
+        true;
+
+
+    cameraPanel.style.display =
+        "flex";
+
+
+    document.getElementById(
+        "overlay"
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "darkness"
+    ).style.opacity =
+        "0";
+
+
+    /*
+        Toca o batimento.
+    */
+
+    playHeartbeat();
+
+
+    /*
+        Primeira mensagem da central.
+    */
+
+    showCameraInteractionMessage(
+        "VOCÊ LEMBRA QUE JÁ PASSOU POR AQUI.",
+        false,
+        4000
+    );
+
+
+    updateCamera06();
+
+}
+
+
+/* =========================================================
+   FECHAR CÂMERAS
+========================================================= */
+
+function closeCameraMenu() {
+
+    cameraMode =
+        false;
+
+
+    hideCameraMessage();
+
+
+    cameraPanel.style.display =
+        "none";
+
+
+    document.getElementById(
+        "overlay"
+    ).style.display =
+        "block";
+
+
+    stopHeartbeat();
+
+
+    /*
+        IMPORTANTE:
+        Ao sair da Sala 03,
+        o jogador vai para a Sala 04.
+    */
+
+    if (
+        currentRoom === "03"
+    ) {
+
+        transitionToRoom(
+            createRoom04
+        );
+
+        return;
+
+    }
+
+
+    setRoomDark(false);
+
+}
+
+
+/* =========================================================
+   MENSAGENS DA CENTRAL
+========================================================= */
+
+function showCameraInteractionMessage(
+    text,
+    glitch = false,
+    duration = 3500
+) {
+
+    if (!cameraMessage)
+        return;
+
+
+    clearTimeout(
+        window.cameraMessageTimer
+    );
+
+
+    cameraMessage.innerText =
+        text;
+
+
+    cameraMessage.classList.add(
+        "visible"
+    );
+
+
+    if (glitch) {
+
+        cameraMessage.classList.add(
+            "glitch"
+        );
+
+    }
+    else {
+
+        cameraMessage.classList.remove(
+            "glitch"
+        );
+
+    }
+
+
+    if (duration > 0) {
+
+        window.cameraMessageTimer =
+            setTimeout(
+                () => {
+
+                    hideCameraMessage();
+
+                },
+                duration
+            );
+
+    }
+
+}
+
+
+function hideCameraMessage() {
+
+    if (!cameraMessage)
+        return;
+
+
+    cameraMessage.classList.remove(
+        "visible"
+    );
+
+    cameraMessage.classList.remove(
+        "glitch"
+    );
+
+}
+
+
+/* =========================================================
+   INTERAÇÃO COM CÂMERAS
+========================================================= */
+
+document
+    .querySelectorAll(
+        ".camera-monitor"
+    )
+    .forEach(
+        monitor => {
+
+            monitor.addEventListener(
+                "click",
+                () => {
+
+                    const camera =
+                        monitor.dataset.camera;
+
+                    cameraInteraction(
+                        camera
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+function cameraInteraction(
+    camera
+) {
+
+    if (!cameraMode)
+        return;
+
+
+    switch(camera) {
+
+        case "01":
+
+            showCameraInteractionMessage(
+                "VOCÊ JÁ PASSOU POR AQUI.",
+                false,
+                3500
+            );
+
+            break;
+
+
+        case "02":
+
+            showCameraInteractionMessage(
+                "VOCÊ LEMBRA QUE JÁ PASSOU POR AQUI?",
+                false,
+                1800
+            );
+
+            setTimeout(
+                () => {
+
+                    if (!cameraMode)
+                        return;
+
+                    showCameraInteractionMessage(
+                        "A PORTA ESTAVA FECHADA DA ÚLTIMA VEZ.",
+                        false,
+                        3000
+                    );
+
+                },
+                1900
+            );
+
+            break;
+
+
+        case "03":
+
+            showCameraInteractionMessage(
+                "ERRO-01\n\nESTA GRAVAÇÃO NÃO DEVERIA EXISTIR.",
+                true,
+                3000
+            );
+
+            setTimeout(
+                () => {
+
+                    if (!cameraMode)
+                        return;
+
+                    showCameraInteractionMessage(
+                        "HÁ ALGO SE MEXENDO ATRÁS DE VOCÊ.",
+                        true,
+                        3000
+                    );
+
+                },
+                3200
+            );
+
+            setTimeout(
+                () => {
+
+                    if (!cameraMode)
+                        return;
+
+                    showCameraInteractionMessage(
+                        "NÃO OLHE.",
+                        true,
+                        2500
+                    );
+
+                },
+                6500
+            );
+
+            break;
+
+
+        case "04":
+
+            showCameraInteractionMessage(
+                "VOCÊ SENTE UMA PRESENÇA.",
+                false,
+                1800
+            );
+
+            setTimeout(
+                () => {
+
+                    if (!cameraMode)
+                        return;
+
+                    showCameraInteractionMessage(
+                        "MAS NÃO OLHE PARA TRÁS.",
+                        true,
+                        3000
+                    );
+
+                },
+                1900
+            );
+
+            break;
+
+
+        case "05":
+
+            showCameraInteractionMessage(
+                "A PORTA FINAL ESTÁ ABERTA.",
+                false,
+                1900
+            );
+
+            setTimeout(
+                () => {
+
+                    if (!cameraMode)
+                        return;
+
+                    showCameraInteractionMessage(
+                        "MAS VOCÊ AINDA NÃO CHEGOU ATÉ ELA.",
+                        false,
+                        3000
+                    );
+
+                },
+                2000
+            );
+
+            break;
+
+
+        case "06":
+
+            showCameraInteractionMessage(
+                "SINAL PERDIDO.",
+                true,
+                1800
+            );
+
+            setTimeout(
+                () => {
+
+                    if (!cameraMode)
+                        return;
+
+                    showCameraInteractionMessage(
+                        "NÃO HÁ CÂMERA 06 NO PRÉDIO.",
+                        true,
+                        2200
+                    );
+
+                },
+                1900
+            );
+
+            setTimeout(
+                () => {
+
+                    if (!cameraMode)
+                        return;
+
+                    showCameraInteractionMessage(
+                        "ENTÃO QUEM ESTÁ SENDO OBSERVADO?",
+                        true,
+                        3500
+                    );
+
+                },
+                4300
+            );
+
+            break;
+
+    }
+
+}
+
+
+/* =========================================================
+   CÂMERA 06
+========================================================= */
+
+function updateCamera06() {
+
+    const camera =
+        document.getElementById(
+            "camera06"
+        );
+
+
+    if (!camera)
+        return;
+
+
+    if (
+        window.cameraInterval
+    ) {
+
+        clearInterval(
+            window.cameraInterval
+        );
+
+    }
+
+
+    window.cameraInterval =
+        setInterval(
+            () => {
+
+                if (!cameraMode)
+                    return;
+
+
+                if (
+                    Math.random() > .5
+                ) {
+
+                    camera.style.background =
+                        "#090909";
+
+                }
+                else {
+
+                    camera.style.background =
+                        "#171717";
+
+                }
+
+            },
+            1000
+        );
+
+}
+
+
+/* =========================================================
+   LANTERNA
+========================================================= */
+
+function makeClick(
+    pointer
+) {
+
+    if (!gameStarted)
+        return;
+
+
+    if (!pointer)
+        return;
+
+
+    if (cameraMode)
+        return;
+
+
+    const now =
+        performance.now();
+
+
+    if (
+        now - lastClick <
+        CLICK_COOLDOWN
+    ) {
+
+        return;
+
+    }
+
+
+    if (!roomIsDark) {
+
+        return;
+
+    }
+
+
+    lastClick =
+        now;
+
+
+    const darkness =
+        document.getElementById(
+            "darkness"
+        );
+
+
+    const canvas =
+        document.querySelector(
+            "#game canvas"
+        );
+
+
+    if (!canvas)
+        return;
+
+
+    const rect =
+        canvas.getBoundingClientRect();
+
+
+    const x =
+        pointer.x /
+        WIDTH *
+        rect.width +
+        rect.left;
+
+
+    const y =
+        pointer.y /
+        HEIGHT *
+        rect.height +
+        rect.top;
+
+
+    darkness.style.background = `
+
+        radial-gradient(
+
+            circle 190px
+            at ${x}px ${y}px,
+
+            transparent 0px,
+
+            transparent 120px,
+
+            rgba(0,0,0,.18) 145px,
+
+            #000 190px
+
+        )
+
+    `;
+
+
+    darkness.style.opacity =
+        "1";
+
+
+    clearTimeout(
+        window.flashlightTimer
+    );
+
+
+    window.flashlightTimer =
+        setTimeout(
+            () => {
+
+                darkness.style.background =
+                    "#000";
+
+            },
+            LIGHT_DURATION
+        );
+
+}
+
+
+/* =========================================================
+   MOVIMENTO
+========================================================= */
+
+const movementKeys = {
+
+    w: false,
+
+    a: false,
+
+    s: false,
+
+    d: false,
+
+    ArrowUp: false,
+
+    ArrowDown: false,
+
+    ArrowLeft: false,
+
+    ArrowRight: false
+
+};
+
+
+window.addEventListener(
+    "keydown",
+    event => {
+
+        const key =
+            event.key.length === 1
+                ? event.key.toLowerCase()
+                : event.key;
+
+
+        if (
+            Object.prototype
+                .hasOwnProperty
+                .call(
+                    movementKeys,
+                    key
+                )
+        ) {
+
+            movementKeys[key] =
+                true;
+
+
+            if (gameStarted) {
+
+                event.preventDefault();
+
+            }
+
+        }
+
+    }
+);
+
+
+window.addEventListener(
+    "keyup",
+    event => {
+
+        const key =
+            event.key.length === 1
+                ? event.key.toLowerCase()
+                : event.key;
+
+
+        if (
+            Object.prototype
+                .hasOwnProperty
+                .call(
+                    movementKeys,
+                    key
+                )
+        ) {
+
+            movementKeys[key] =
+                false;
+
+        }
+
+    }
+);
+
+
+function movePlayer() {
+
+    if (!player)
+        return;
+
+
+    const speed =
+        3.5;
+
+
+    let dx = 0;
+
+    let dy = 0;
+
+
+    if (
+        movementKeys.a ||
+        movementKeys.ArrowLeft
+    ) {
+
+        dx -= speed;
+
+    }
+
+
+    if (
+        movementKeys.d ||
+        movementKeys.ArrowRight
+    ) {
+
+        dx += speed;
+
+    }
+
+
+    if (
+        movementKeys.w ||
+        movementKeys.ArrowUp
+    ) {
+
+        dy -= speed;
+
+    }
+
+
+    if (
+        movementKeys.s ||
+        movementKeys.ArrowDown
+    ) {
+
+        dy += speed;
+
+    }
+
+
+    player.x =
+        Phaser.Math.Clamp(
+            player.x + dx,
+            30,
+            WIDTH - 30
+        );
+
+
+    player.y =
+        Phaser.Math.Clamp(
+            player.y + dy,
+            30,
+            HEIGHT - 30
+        );
+
+}
+
+
+/* =========================================================
+   LIMPAR SALA
+========================================================= */
+
+function clearRoom() {
+
+    walls.forEach(
+        wall => {
+
+            if (wall)
+                wall.destroy();
+
+        }
+    );
+
+
+    objects.forEach(
+        object => {
+
+            if (
+                object &&
+                object.destroy
+            ) {
+
+                object.destroy();
+
+            }
+
+        }
+    );
+
+
+    walls = [];
+
+    objects = [];
+
+
+    if (player) {
+
+        player.destroy();
+
+        player = null;
+
+    }
+
+
+    clearTimeout(
+        window.flashlightTimer
+    );
+
+}
+
+
+/* =========================================================
+   BASE DA SALA
+========================================================= */
+
+function createRoomBase() {
+
+    createWall(
+        WIDTH / 2,
+        15,
+        WIDTH,
+        30
+    );
+
+
+    createWall(
+        WIDTH / 2,
+        HEIGHT - 15,
+        WIDTH,
+        30
+    );
+
+
+    createWall(
+        15,
+        HEIGHT / 2,
+        30,
+        HEIGHT
+    );
+
+
+    createWall(
+        WIDTH - 15,
+        HEIGHT / 2,
+        30,
+        HEIGHT
+    );
+
+}
+
+
+function createWall(
+    x,
+    y,
+    width,
+    height
+) {
+
+    const wall =
+        scene.add.rectangle(
+            x,
+            y,
+            width,
+            height,
+            0x111111
+        );
+
+
+    walls.push(
+        wall
+    );
+
+
+    return wall;
+
+}
+
+
+/* =========================================================
+   JOGADOR
+========================================================= */
+
+function createPlayer(
+    x,
+    y
+) {
+
+    player =
+        scene.add.circle(
+            x,
+            y,
+            12,
+            0xdddddd
+        );
+
+
+    scene.physics.add.existing(
+        player
+    );
+
+
+    player.body.setCollideWorldBounds(
+        true
+    );
+
+
+    player.setDepth(
+        15
+    );
+
+}
+
+
+/* =========================================================
+   SALA 01
+========================================================= */
+
+function createRoom01() {
+
+    clearRoom();
+
+    currentRoom =
+        "01";
+
+    createRoomBase();
+
+    createPlayer(
+        150,
+        350
+    );
+
+
+    createObject(
+        1030,
+        350,
+        30,
+        120,
+        0x3b3028,
+        "DOOR_02"
+    );
+
+
+    createKey(
+        450,
+        500,
+        "KEY_01"
+    );
+
+
+    createText(
+        760,
+        180,
+        "A LUZ MOSTRA O CAMINHO.\n\nMAS SOMENTE AQUELES\nQUE LEMBRAM CONSEGUEM SAIR.",
+        18
+    );
+
+
+    createText(
+        275,
+        135,
+        "2",
+        13
+    );
+
+
+    setRoomDark(
+        true
+    );
+
+
+    showMessage(
+        "Você está em uma sala de concreto.\nExiste uma porta à frente.",
+        3000
+    );
+
+}
+
+
+/* =========================================================
+   SALA 02
+========================================================= */
+
+function createRoom02() {
+
+    clearRoom();
+
+    currentRoom =
+        "02";
+
+    createRoomBase();
+
+    createPlayer(
+        100,
+        350
+    );
+
+
+    createText(
+        100,
+        90,
+        "02 — OFICINA",
+        24
+    );
+
+
+    if (!inventory.crowbar) {
+
+        createCrowbar(
+            400,
+            250
+        );
+
+    }
+
+
+    if (!boxBroken) {
+
+        createBox(
+            700,
+            350
+        );
+
+    }
+    else {
+
+        createBrokenBox(
+            700,
+            350
+        );
+
+
+        if (!inventory.key2) {
+
+            createKey(
+                735,
+                315,
+                "KEY_02"
+            );
+
+        }
+
+    }
+
+
+    createText(
+        250,
+        545,
+        "09",
+        12
+    );
+
+
+    createObject(
+        1030,
+        350,
+        30,
+        120,
+        0x3b3028,
+        "DOOR_03"
+    );
+
+
+    setRoomDark(
+        true
+    );
+
+
+    showMessage(
+        "A oficina está abandonada.\nAlgo parece ter sido quebrado recentemente.",
+        3500
+    );
+
+}
+
+
+/* =========================================================
+   CAIXA
+========================================================= */
+
+function createBox(
+    x,
+    y
+) {
+
+    const box =
+        scene.add.container(
+            x,
+            y
+        );
+
+
+    const shadow =
+        scene.add.ellipse(
+            0,
+            43,
+            135,
+            28,
+            0x000000,
+            .6
+        );
+
+
+    const body =
+        scene.add.rectangle(
+            0,
+            10,
+            115,
+            75,
+            0x59351f
+        );
+
+
+    body.setStrokeStyle(
+        3,
+        0x2a170d
+    );
+
+
+    const lid =
+        scene.add.rectangle(
+            0,
+            -31,
+            125,
+            22,
+            0x6b4025
+        );
+
+
+    lid.setStrokeStyle(
+        3,
+        0x2a170d
+    );
+
+
+    const stripe1 =
+        scene.add.rectangle(
+            -35,
+            10,
+            8,
+            70,
+            0x3b2113
+        );
+
+
+    const stripe2 =
+        scene.add.rectangle(
+            0,
+            10,
+            8,
+            70,
+            0x3b2113
+        );
+
+
+    const stripe3 =
+        scene.add.rectangle(
+            35,
+            10,
+            8,
+            70,
+            0x3b2113
+        );
+
+
+    const lock =
+        scene.add.rectangle(
+            0,
+            -8,
+            18,
+            22,
+            0xb08a32
+        );
+
+
+    const keyhole =
+        scene.add.circle(
+            0,
+            -4,
+            3,
+            0x17110a
+        );
+
+
+    box.add([
+        shadow,
+        body,
+        lid,
+        stripe1,
+        stripe2,
+        stripe3,
+        lock,
+        keyhole
+    ]);
+
+
+    box.setDepth(
+        5
+    );
+
+
+    box.setData(
+        "type",
+        "BOX"
+    );
+
+
+    objects.push(
+        box
+    );
+
+
+    scene.tweens.add({
+
+        targets:
+            box,
+
+        y:
+            y - 2,
+
+        duration:
+            1200,
+
+        yoyo:
+            true,
+
+        repeat:
+            -1,
+
+        ease:
+            "Sine.easeInOut"
+
+    });
+
+
+    return box;
+
+}
+
+
+/* =========================================================
+   SALA 03
+========================================================= */
+
+function createRoom03() {
+
+    clearRoom();
+
+    currentRoom =
+        "03";
+
+
+    createRoomBase();
+
+
+    createPlayer(
+        100,
+        350
+    );
+
+
+    setRoomDark(
+        false
+    );
+
+
+    openCameraMenu();
+
+}
+
+
+/* =========================================================
+   SALA 04
+========================================================= */
+
+function createRoom04() {
+
+    clearRoom();
+
+    currentRoom =
+        "04";
+
+    createRoomBase();
+
+    createPlayer(
+        100,
+        350
+    );
+
+
+    setRoomDark(
+        true
+    );
+
+
+    createText(
+        100,
+        90,
+        "04 — OBSERVAÇÃO",
+        24
+    );
+
+
+    createText(
+        540,
+        200,
+        "VOCÊ JÁ ESTEVE AQUI ANTES.",
+        24
+    );
+
+
+    createText(
+        540,
+        280,
+        "A ESCURIDÃO NÃO ESCONDE.\nELA SUBSTITUI.",
+        18
+    );
+
+
+    createText(
+        310,
+        468,
+        "20",
+        11
+    );
+
+
+    createText(
+        805,
+        468,
+        "26",
+        11
+    );
+
+
+    createText(
+        540,
+        120,
+        "LEMBRE-SE DO PRIMEIRO NÚMERO.",
+        13
+    );
+
+
+    /*
+        Porta de retorno para as câmeras.
+    */
+
+    createObject(
+        80,
+        350,
+        30,
+        130,
+        0x202020,
+        "DOOR_03_RETURN"
+    );
+
+
+    createObject(
+        1030,
+        350,
+        30,
+        150,
+        0x222222,
+        "FINAL_DOOR"
+    );
+
+
+    showMessage(
+        "Existe uma porta que não possui maçaneta.",
+        3500
+    );
+
+}
+
+
+/* =========================================================
+   SALA 05
+========================================================= */
+
+function createRoom05() {
+
+    clearRoom();
+
+    currentRoom =
+        "05";
+
+    createRoomBase();
+
+    createPlayer(
+        180,
+        350
+    );
+
+
+    setRoomDark(
+        true
+    );
+
+
+    createText(
+        100,
+        90,
+        "05 — SAÍDA",
+        24
+    );
+
+
+    createObject(
+        550,
+        350,
+        250,
+        180,
+        0x101010,
+        "CHAIR"
+    );
+
+
+    createText(
+        550,
+        180,
+        "A LUZ MOSTRA O CAMINHO.",
+        18
+    );
+
+
+    createObject(
+        800,
+        400,
+        35,
+        70,
+        0xdddddd,
+        "DOPPELGANGER"
+    );
+
+
+    showMessage(
+        "A sala é exatamente igual à primeira.",
+        3500
+    );
+
+
+    setTimeout(
+        () => {
+
+            showMessage(
+                "Agora é a minha vez.",
+                5000
+            );
+
+        },
+        4500
+    );
+
+
+    setTimeout(
+        () => {
+
+            triggerEnding();
+
+        },
+        9000
+    );
+
+}
+
+
+/* =========================================================
+   OBJETOS
+========================================================= */
+
+function createObject(
+    x,
+    y,
+    width,
+    height,
+    color,
+    type
+) {
+
+    const object =
+        scene.add.rectangle(
+            x,
+            y,
+            width,
+            height,
+            color
+        );
+
+
+    object.setData(
+        "type",
+        type
+    );
+
+
+    objects.push(
+        object
+    );
+
+
+    return object;
+
+}
+
+
+/* =========================================================
+   PÉ DE CABRA
+========================================================= */
+
+function createCrowbar(
+    x,
+    y
+) {
+
+    const crowbar =
+        scene.add.container(
+            x,
+            y
+        );
+
+
+    const shaft =
+        scene.add.rectangle(
+            0,
+            0,
+            90,
+            9,
+            0x888888
+        );
+
+
+    shaft.setStrokeStyle(
+        2,
+        0x222222
+    );
+
+
+    const handle =
+        scene.add.rectangle(
+            -43,
+            0,
+            20,
+            13,
+            0x3a2920
+        );
+
+
+    crowbar.add([
+        shaft,
+        handle
+    ]);
+
+
+    crowbar.setDepth(
+        10
+    );
+
+
+    crowbar.setData(
+        "type",
+        "CROWBAR"
+    );
+
+
+    objects.push(
+        crowbar
+    );
+
+
+    scene.tweens.add({
+
+        targets:
+            crowbar,
+
+        alpha:
+            .55,
+
+        duration:
+            600,
+
+        yoyo:
+            true,
+
+        repeat:
+            -1
+
+    });
+
+
+    return crowbar;
+
+}
+
+
+/* =========================================================
+   CAIXA QUEBRADA
+========================================================= */
+
+function createBrokenBox(
+    x,
+    y
+) {
+
+    const box =
+        scene.add.container(
+            x,
+            y
+        );
+
+
+    const shadow =
+        scene.add.ellipse(
+            0,
+            42,
+            135,
+            28,
+            0x000000,
+            .55
+        );
+
+
+    const body =
+        scene.add.rectangle(
+            0,
+            12,
+            110,
+            62,
+            0x4a2b19
+        );
+
+
+    body.setStrokeStyle(
+        3,
+        0x25140b
+    );
+
+
+    const inside =
+        scene.add.rectangle(
+            0,
+            -17,
+            86,
+            30,
+            0x050505
+        );
+
+
+    const lid =
+        scene.add.rectangle(
+            -18,
+            -43,
+            95,
+            18,
+            0x5a351f
+        );
+
+
+    lid.setStrokeStyle(
+        2,
+        0x281115
+    );
+
+
+    lid.setAngle(
+        -15
+    );
+
+
+    const wood1 =
+        scene.add.rectangle(
+            -35,
+            12,
+            7,
+            60,
+            0x2d190e
+        );
+
+
+    const wood2 =
+        scene.add.rectangle(
+            0,
+            12,
+            7,
+            60,
+            0x2d190e
+        );
+
+
+    const wood3 =
+        scene.add.rectangle(
+            35,
+            12,
+            7,
+            60,
+            0x2d190e
+        );
+
+
+    box.add([
+        shadow,
+        body,
+        inside,
+        lid,
+        wood1,
+        wood2,
+        wood3
+    ]);
+
+
+    box.setDepth(
+        5
+    );
+
+
+    box.setData(
+        "type",
+        "BROKEN_BOX"
+    );
+
+
+    objects.push(
+        box
+    );
+
+
+    return box;
+
+}
+
+
+/* =========================================================
+   CHAVE
+========================================================= */
+
+function createKey(
+    x,
+    y,
+    type
+) {
+
+    const key =
+        scene.add.container(
+            x,
+            y
+        );
+
+
+    const color =
+        type === "KEY_01"
+            ? 0xffd34d
+            : 0xff3b3b;
+
+
+    const glow =
+        scene.add.circle(
+            0,
+            0,
+            22,
+            color,
+            .08
+        );
+
+
+    const body =
+        scene.add.rectangle(
+            5,
+            0,
+            35,
+            9,
+            color
+        );
+
+
+    body.setStrokeStyle(
+        2,
+        0x332200
+    );
+
+
+    const head =
+        scene.add.circle(
+            -17,
+            0,
+            11,
+            color
+        );
+
+
+    head.setStrokeStyle(
+        2,
+        0x332200
+    );
+
+
+    const hole =
+        scene.add.circle(
+            -17,
+            0,
+            4,
+            0x111111
+        );
+
+
+    const tooth1 =
+        scene.add.rectangle(
+            18,
+            7,
+            6,
+            9,
+            color
+        );
+
+
+    const tooth2 =
+        scene.add.rectangle(
+            28,
+            5,
+            6,
+            7,
+            color
+        );
+
+
+    key.add([
+        glow,
+        body,
+        head,
+        hole,
+        tooth1,
+        tooth2
+    ]);
+
+
+    key.setDepth(
+        20
+    );
+
+
+    key.setData(
+        "type",
+        type
+    );
+
+
+    objects.push(
+        key
+    );
+
+
+    scene.tweens.add({
+
+        targets:
+            key,
+
+        y:
+            y - 5,
+
+        duration:
+            700,
+
+        yoyo:
+            true,
+
+        repeat:
+            -1,
+
+        ease:
+            "Sine.easeInOut"
+
+    });
+
+
+    scene.tweens.add({
+
+        targets:
+            glow,
+
+        alpha:
+            .25,
+
+        scale:
+            1.25,
+
+        duration:
+            700,
+
+        yoyo:
+            true,
+
+        repeat:
+            -1
+
+    });
+
+
+    return key;
+
+}
+
+
+/* =========================================================
+   TEXTO
+========================================================= */
+
+function createText(
+    x,
+    y,
+    text,
+    size = 18
+) {
+
+    const object =
+        scene.add.text(
+            x,
+            y,
+            text,
+            {
+
+                fontFamily:
+                    "monospace",
+
+                fontSize:
+                    size,
+
+                color:
+                    "#aaaaaa",
+
+                align:
+                    "center"
+
+            }
+        );
+
+
+    object.setOrigin(
+        .5
+    );
+
+
+    objects.push(
+        object
+    );
+
+
+    return object;
+
+}
+
+
+/* =========================================================
+   INTERAÇÕES
+========================================================= */
+
+function checkInteractions() {
+
+    if (!player)
+        return;
+
+
+    if (cameraMode) {
+
+        document.getElementById(
+            "interaction"
+        ).style.opacity =
+            "0";
+
+        return;
+
+    }
+
+
+    let nearest = null;
+
+    let nearestDistance =
+        9999;
+
+
+    objects.forEach(
+        object => {
+
+            if (!object.active)
+                return;
+
+
+            const type =
+                object.getData(
+                    "type"
+                );
+
+
+            if (!type)
+                return;
+
+
+            const distance =
+                Phaser.Math.Distance.Between(
+                    player.x,
+                    player.y,
+                    object.x,
+                    object.y
+                );
+
+
+            if (
+                distance < 100 &&
+                distance < nearestDistance
+            ) {
+
+                nearest =
+                    object;
+
+                nearestDistance =
+                    distance;
+
+            }
+
+        }
+    );
+
+
+    const interaction =
+        document.getElementById(
+            "interaction"
+        );
+
+
+    if (nearest) {
+
+        interaction.style.opacity =
+            "1";
+
+
+        interaction.innerText =
+            "[ E ] " +
+            interactionText(
+                nearest.getData(
+                    "type"
+                )
+            );
+
+    }
+    else {
+
+        interaction.style.opacity =
+            "0";
+
+    }
+
+}
+
+
+/* =========================================================
+   TEXTOS DAS INTERAÇÕES
+========================================================= */
+
+function interactionText(
+    type
+) {
+
+    switch(type) {
+
+        case "KEY_01":
+            return "EQUIPAR CHAVE 01";
+
+        case "CROWBAR":
+            return "EQUIPAR PÉ DE CABRA";
+
+        case "BOX":
+            return "ABRIR CAIXA";
+
+        case "KEY_02":
+            return "EQUIPAR CHAVE 02";
+
+        case "DOOR_02":
+            return "ABRIR PORTA";
+
+        case "DOOR_03":
+            return "ABRIR PORTA";
+
+        case "DOOR_03_RETURN":
+            return "VOLTAR À CENTRAL";
+
+        case "FINAL_DOOR":
+            return "ABRIR PORTA";
+
+        default:
+            return "INTERAGIR";
+
+    }
+
+}
+
+
+/* =========================================================
+   INTERAGIR
+========================================================= */
+
+function interact() {
+
+    if (!player)
+        return;
+
+
+    if (cameraMode)
+        return;
+
+
+    let target = null;
+
+    let bestDistance =
+        9999;
+
+
+    objects.forEach(
+        object => {
+
+            if (!object.active)
+                return;
+
+
+            const type =
+                object.getData(
+                    "type"
+                );
+
+
+            if (!type)
+                return;
+
+
+            const distance =
+                Phaser.Math.Distance.Between(
+                    player.x,
+                    player.y,
+                    object.x,
+                    object.y
+                );
+
+
+            if (
+                distance < 100 &&
+                distance < bestDistance
+            ) {
+
+                target =
+                    object;
+
+                bestDistance =
+                    distance;
+
+            }
+
+        }
+    );
+
+
+    if (!target)
+        return;
+
+
+    handleInteraction(
+        target.getData(
+            "type"
+        ),
+        target
+    );
+
+}
+
+
+/* =========================================================
+   AÇÕES
+========================================================= */
+
+function handleInteraction(
+    type,
+    object
+) {
+
+    switch(type) {
+
+
+        case "KEY_01":
+
+            inventory.key1 =
+                true;
+
+            object.destroy();
+
+            showMessage(
+                "CHAVE 01 EQUIPADA",
+                2500
+            );
+
+            updateHUD();
+
+            break;
+
+
+        case "CROWBAR":
+
+            inventory.crowbar =
+                true;
+
+            object.destroy();
+
+            showMessage(
+                "PÉ DE CABRA EQUIPADO",
+                2500
+            );
+
+            updateHUD();
+
+            break;
+
+
+        case "BOX":
+
+            if (!inventory.crowbar) {
+
+                showMessage(
+                    "A caixa está fechada.\nVocê precisa de alguma ferramenta.",
+                    2500
+                );
+
+                return;
+
+            }
+
+
+            boxBroken =
+                true;
+
+            object.destroy();
+
+
+            createBrokenBox(
+                700,
+                350
+            );
+
+
+            if (!inventory.key2) {
+
+                createKey(
+                    735,
+                    315,
+                    "KEY_02"
+                );
+
+            }
+
+
+            showMessage(
+                "A caixa foi aberta.\n\nHá uma chave vermelha dentro.",
+                3000
+            );
+
+            break;
+
+
+        case "KEY_02":
+
+            inventory.key2 =
+                true;
+
+            object.destroy();
+
+            showMessage(
+                "CHAVE 02 EQUIPADA\n\nVocê já esteve aqui antes.",
+                3500
+            );
+
+            updateHUD();
+
+            break;
+
+
+        case "DOOR_02":
+
+            if (!inventory.key1) {
+
+                showMessage(
+                    "A porta está trancada.\nUma chave parece ser necessária.",
+                    2500
+                );
+
+                return;
+
+            }
+
+
+            transitionToRoom(
+                createRoom02
+            );
+
+            break;
+
+
+        case "DOOR_03":
+
+            if (!inventory.key2) {
+
+                showMessage(
+                    "A porta está trancada.\nVocê precisa da CHAVE 02.",
+                    2500
+                );
+
+                return;
+
+            }
+
+
+            transitionToRoom(
+                createRoom03
+            );
+
+            break;
+
+
+        case "DOOR_03_RETURN":
+
+            /*
+                Pode voltar para a Central
+                quantas vezes quiser.
+            */
+
+            transitionToRoom(
+                createRoom03
+            );
+
+            break;
+
+
+        case "FINAL_DOOR":
+
+            openFinalDoor();
+
+            break;
+
+
+        case "PHOTO_SELF":
+
+            showMessage(
+                "Na fotografia existe alguém usando exatamente as mesmas roupas que você.",
+                4500
+            );
+
+            break;
+
+    }
+
+}
+
+
+/* =========================================================
+   TRANSIÇÃO
+========================================================= */
+
+function transitionToRoom(
+    callback
+) {
+
+    const fade =
+        document.getElementById(
+            "fade"
+        );
+
+
+    fade.style.transition =
+        "opacity .6s";
+
+
+    fade.style.opacity =
+        "1";
+
+
+    setTimeout(
+        () => {
+
+            cameraMode =
+                false;
+
+            cameraPanel.style.display =
+                "none";
+
+
+            hideCameraMessage();
+
+
+            document.getElementById(
+                "overlay"
+            ).style.display =
+                "block";
+
+
+            stopHeartbeat();
+
+
+            callback();
+
+            updateHUD();
+
+
+            setTimeout(
+                () => {
+
+                    fade.style.opacity =
+                        "0";
+
+                },
+                100
+            );
+
+        },
+        650
+    );
+
+}
+
+
+/* =========================================================
+   SENHA
+========================================================= */
+
+let enteredCode = "";
+
+
+const codeDisplay =
+    document.getElementById(
+        "codeDisplay"
+    );
+
+
+function openFinalDoor() {
+
+    enteredCode =
+        "";
+
+    clearCodeStatus();
+
+    updateCodeDisplay();
+
+    codePanel.style.display =
+        "flex";
+
+}
+
+
+function updateCodeDisplay() {
+
+    if (!enteredCode.length) {
+
+        codeDisplay.innerText =
+            "• • • • • •";
+
+        return;
+
+    }
+
+
+    codeDisplay.innerText =
+        enteredCode
+            .split("")
+            .map(
+                () => "•"
+            )
+            .join(" ");
+
+}
+
+
+/* =========================================================
+   STATUS DO CÓDIGO
+========================================================= */
+
+function showCodeError(
+    text
+) {
+
+    codeStatus.innerText =
+        text;
+
+    codeStatus.classList.add(
+        "show"
+    );
+
+    codeStatus.classList.add(
+        "glitch"
+    );
+
+
+    clearTimeout(
+        window.codeStatusTimer
+    );
+
+
+    window.codeStatusTimer =
+        setTimeout(
+            () => {
+
+                codeStatus.classList.remove(
+                    "glitch"
+                );
+
+            },
+            900
+        );
+
+}
+
+
+function clearCodeStatus() {
+
+    codeStatus.innerText =
+        "";
+
+    codeStatus.classList.remove(
+        "show"
+    );
+
+    codeStatus.classList.remove(
+        "glitch"
+    );
+
+}
+
+
+/* =========================================================
+   BOTÕES DA SENHA
+========================================================= */
+
+document
+    .querySelectorAll(
+        ".code-key[data-number]"
+    )
+    .forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    clearCodeStatus();
+
+
+                    if (
+                        enteredCode.length >=
+                        finalCode.length
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    enteredCode +=
+                        button.dataset.number;
+
+
+                    updateCodeDisplay();
+
+                }
+            );
+
+        }
+    );
+
+
+/* =========================================================
+   LIMPAR
+========================================================= */
+
+document
+    .getElementById(
+        "codeClear"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+            enteredCode =
+                "";
+
+            clearCodeStatus();
+
+            updateCodeDisplay();
+
+        }
+    );
+
+
+/* =========================================================
+   CONFIRMAR
+========================================================= */
+
+document
+    .getElementById(
+        "codeEnter"
+    )
+    .addEventListener(
+        "click",
+        confirmCode
+    );
+
+
+function confirmCode() {
+
+    if (
+        enteredCode.length !==
+        finalCode.length
+    ) {
+
+        playErrorSound();
+
+
+        showCodeError(
+            "ERRO — DIGITE OS 6 DÍGITOS."
+        );
+
+
+        return;
+
+    }
+
+
+    if (
+        enteredCode ===
+        finalCode
+    ) {
+
+        clearCodeStatus();
+
+
+        codePanel.style.display =
+            "none";
+
+
+        showMessage(
+            "BIP.\n\nCÓDIGO 260926 ACEITO.",
+            3000
+        );
+
+
+        setTimeout(
+            () => {
+
+                transitionToRoom(
+                    createRoom05
+                );
+
+            },
+            3000
+        );
+
+    }
+    else {
+
+        /*
+            Som de erro.
+        */
+
+        playErrorSound();
+
+
+        /*
+            Mensagem vermelha falhada.
+        */
+
+        showCodeError(
+            "CÓDIGO INCORRETO.\nA PORTA CONTINUA TRANCADA."
+        );
+
+
+        enteredCode =
+            "";
+
+        updateCodeDisplay();
+
+    }
+
+}
+
+
+/* =========================================================
+   CANCELAR
+========================================================= */
+
+function closeCodePanel() {
+
+    codePanel.style.display =
+        "none";
+
+    enteredCode =
+        "";
+
+    clearCodeStatus();
+
+    updateCodeDisplay();
+
+}
+
+
+document
+    .getElementById(
+        "codeClose"
+    )
+    .addEventListener(
+        "click",
+        closeCodePanel
+    );
+
+
+/* =========================================================
+   TECLADO DA SENHA
+========================================================= */
+
+window.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            codePanel.style.display !==
+            "flex"
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            event.key >= "0" &&
+            event.key <= "9"
+        ) {
+
+            clearCodeStatus();
+
+
+            if (
+                enteredCode.length <
+                finalCode.length
+            ) {
+
+                enteredCode +=
+                    event.key;
+
+                updateCodeDisplay();
+
+            }
+
+
+            event.preventDefault();
+
+        }
+
+
+        if (
+            event.key ===
+            "Backspace"
+        ) {
+
+            enteredCode =
+                enteredCode.slice(
+                    0,
+                    -1
+                );
+
+            clearCodeStatus();
+
+            updateCodeDisplay();
+
+            event.preventDefault();
+
+        }
+
+
+        if (
+            event.key ===
+            "Enter"
+        ) {
+
+            confirmCode();
+
+            event.preventDefault();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   FINAL
+========================================================= */
+
+function triggerEnding() {
+
+    const ending =
+        document.getElementById(
+            "ending"
+        );
+
+
+    ending.style.display =
+        "flex";
+
+
+    document.body.style.filter =
+        "contrast(1.4) brightness(.6)";
+
+}
+
+</script>
+
+</body>
+
+</html>

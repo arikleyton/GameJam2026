@@ -593,10 +593,10 @@ footer {
 /* ESTILOS EXCLUSIVOS DA PÁGINA "SOBRE"                 */
 /* ---------------------------------------------------- */
 .sobre-container {
-    max-width: 1200px; /* Expande o limite máximo para telas grandes */
-    width: 90%;        /* Faz com que ocupe 90% da tela disponível, criando uma margem dinâmica */
+    max-width: 1200px; 
+    width: 90%;        
     margin: 0 auto;
-    padding: 60px 0;   /* O padding horizontal agora é controlado pelo width: 90% */
+    padding: 60px 0;   
 }
 
 .sobre-section {
@@ -707,20 +707,19 @@ footer {
     letter-spacing: 1px;
 }
 
-/* Correção da Lista de Critérios de Avaliação */
 .jornada-content ul {
     list-style-type: disc;
     margin-top: 15px;
     margin-bottom: 20px;
-    padding-left: 25px; /* Adiciona o recuo necessário para as bolinhas não sumirem */
+    padding-left: 25px; 
 }
 
 .jornada-content ul li {
     color: var(--text-muted);
-    font-size: 1.15rem; /* Igualado ao tamanho do parágrafo */
-    font-weight: 500;   /* Igualado à espessura do parágrafo */
+    font-size: 1.15rem; 
+    font-weight: 500;   
     margin-bottom: 12px;
-    line-height: 1.8;   /* Igualado ao espaçamento do parágrafo */
+    line-height: 1.8;   
 }
 
 .jornada-content ul li strong {
@@ -731,7 +730,7 @@ footer {
 /* Estilos da Tabela de Cronograma */
 .table-responsive {
     width: 100%;
-    overflow-x: auto; /* Permite rolar a tabela no celular sem quebrar a página */
+    overflow-x: auto; 
     margin-top: 25px;
     border-radius: 8px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.05);
@@ -741,7 +740,7 @@ footer {
     width: 100%;
     border-collapse: collapse;
     background: var(--bg-card);
-    min-width: 600px; /* Garante que a tabela não esprema demais os textos */
+    min-width: 600px; 
 }
 
 .cronograma-table th, .cronograma-table td {
@@ -779,9 +778,7 @@ footer {
     white-space: nowrap;
 }
 
-/* ---------------------------------------------------- */
-/* Configuração Base do Toggle Mobile                   */
-/* ---------------------------------------------------- */
+/* Configuração Base do Toggle Mobile */
 .menu-toggle {
     display: none; 
 }
@@ -795,37 +792,103 @@ footer {
     line-height: 1;
 }
 
+/* ---------------------------------------------------- */
+/* GALERIA DE JOGOS (PÁGINA DE TESTES - EM LISTA)       */
+/* ---------------------------------------------------- */
 
-/* RESPONSIVIDADE MOBILE APRIMORADA */
+.games-list {
+    display: flex;
+    flex-direction: column;
+    gap: 35px;
+    margin-top: 20px;
+}
+
+.game-card-large {
+    display: flex;
+    align-items: stretch; /* Faz com que as duas colunas tenham sempre a mesma altura */
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.game-card-large:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 166, 81, 0.15);
+    border-color: var(--primary-green);
+}
+
+.game-cover {
+    width: 40%; 
+    flex-shrink: 0;
+    position: relative;
+    border-right: 3px solid var(--primary-red);
+    min-height: 220px; /* Garante um tamanho mínimo caso a descrição seja muito pequena */
+}
+
+.game-cover img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Corta a imagem sem distorcê-la, adequando-se à altura do texto */
+}
+
+.game-details {
+    width: 60%; 
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.game-title {
+    font-size: 2.2rem; /* Reduzido de 2.2rem */
+    font-weight: 900;
+    color: var(--primary-green);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    line-height: 1.1;
+}
+
+/* Aplicado para Equipe, Escolaridade e Plataforma (Especificidade aumentada) */
+.game-details .game-team, 
+.game-details .game-school, 
+.game-details .game-platform {
+    color: var(--text-dark);
+    font-size: 0.85rem; /* Força a fonte menor */
+    margin-bottom: 5px;    
+    letter-spacing: 1px;
+    line-height: 1.4; /* Remove o espaçamento gigante herdado */
+}
+
+.game-details .game-team strong, 
+.game-details .game-school strong, 
+.game-details .game-platform strong {
+    color: var(--primary-red);
+    font-weight: 900;
+}
+
+/* Aplicado para a Descrição do Jogo */
+.game-details .game-desc {
+    color: var(--text-muted);
+    font-size: 0.95rem; /* Força a fonte da descrição a diminuir */
+    line-height: 1.6;
+    margin: 15px 0 25px 0;
+    font-weight: 500;
+}
+
+/* ---------------------------------------------------- */
+/* RESPONSIVIDADE GLOBAL (MOBILE & TABLET)              */
+/* ---------------------------------------------------- */
 @media (max-width: 900px) {
-    .hero {
-        flex-direction: column-reverse;
-        text-align: center;
-        padding: 40px 5%; /* Padding menor no celular */
-    }
+    /* Navbar e Menu Oculto */
+    .menu-icon { display: block; }
     
-    .hero-title { font-size: 2.8rem; }
-    .hero-desc { margin: 0 auto 30px; font-size: 1rem; }
-    .hero-image img { max-width: 90%; margin-bottom: 30px; }
-    
-    /* Organização de botões um embaixo do outro no celular */
-    .btn-group { 
-        justify-content: center; 
-        flex-direction: column;
-        width: 100%;
-        gap: 15px;
-    }
-    .btn-group a {
-        width: 100%;
-        text-align: center;
-    }
-    
-    /* Mostra o ícone hamburguer no mobile */
-    .menu-icon { 
-        display: block; 
-    }
-    
-    /* Configuração do menu oculto com animação Slide Down */
     .nav-links { 
         position: absolute;
         top: 100%;
@@ -835,7 +898,7 @@ footer {
         flex-direction: column;
         gap: 15px;
         overflow: hidden;
-        max-height: 0; /* Menu fechado por padrão */
+        max-height: 0; 
         padding: 0 5%;
         transition: max-height 0.4s ease-out, padding 0.4s ease-out;
         box-shadow: 0 15px 20px rgba(0,0,0,0.05);
@@ -853,72 +916,90 @@ footer {
         margin-bottom: 15px;
     }
 
-    /* Expande o menu quando o usuário clica no ícone */
     .menu-toggle:checked ~ .nav-links {
         max-height: 400px;
         padding: 20px 5%;
         border-top: 1px solid var(--border-color);
     }
+
+    /* Hero Section */
+    .hero {
+        flex-direction: column-reverse;
+        text-align: center;
+        padding: 40px 5%; 
+    }
     
+    .hero-title { font-size: 2.8rem; }
+    .hero-desc { margin: 0 auto 30px; font-size: 1rem; }
+    .hero-image img { max-width: 90%; margin-bottom: 30px; }
+    
+    .btn-group { 
+        justify-content: center; 
+        flex-direction: column;
+        width: 100%;
+        gap: 15px;
+    }
+    .btn-group a {
+        width: 100%;
+        text-align: center;
+    }
+    
+    /* Demais Sessões da Home */
     .save-the-date {
         flex-direction: column;
         text-align: center;
         padding: 40px 5%;
-        margin: 50px 5%; /* Margem reduzida para não sobrar espaço em branco no celular */
+        margin: 50px 5%; 
     }
     
-    .date-image { 
-        margin-top: 30px; 
-        width: 100%; 
-    }
-    
-    /* Trava de redimensionamento para imagens */
-    .date-image img { 
-        width: 100%; 
-        max-width: 400px; 
-        height: auto; 
-    }
-    
+    .date-image { margin-top: 30px; width: 100%; }
+    .date-image img { width: 100%; max-width: 400px; height: auto; }
     .date-info h2 { font-size: 2.2rem; }
     .date-info p { font-size: 1rem; }
     
     .section-header h2 { font-size: 2.2rem; }
     
-    /* Garante apenas 1 card por linha no mobile nas duas sessões */
-    .phases-grid, .roles-grid {
-        grid-template-columns: 1fr;
-    }
+    .phases-grid, .roles-grid { grid-template-columns: 1fr; }
     
-    /* Ajuste para as Logos dos parceiros no mobile */
-    .sponsors {
-        flex-direction: column;
-        gap: 40px; 
-    }
+    .sponsors { flex-direction: column; gap: 40px; }
     
-    .page-header {
-        padding: 50px 5% 40px;
-    }
-    .page-header h1 {
-        font-size: 2.2rem;
-    }
-    .page-header p {
-        font-size: 1rem;
-    }
+    /* Cabeçalhos Internos e Sobre */
+    .page-header { padding: 50px 5% 40px; }
+    .page-header h1 { font-size: 2.2rem; }
+    .page-header p { font-size: 1rem; }
 
-    /* Responsividade específica da página Sobre */
-    .sobre-section { 
-        padding: 30px 20px; 
-    }
-    .sobre-section h2 { 
-        font-size: 1.6rem; 
-    }
-    .sobre-section p {
-        font-size: 1rem;
-    }
-    .jornada-item {
+    .sobre-section { padding: 30px 20px; }
+    .sobre-section h2 { font-size: 1.6rem; }
+    .sobre-section p { font-size: 1rem; }
+    
+    .jornada-item { flex-direction: column; }
+    .jornada-number { margin-bottom: 15px; }
+
+    /* Ajustes Mobile da Lista de Jogos (dentro do @media) */
+    .game-card-large {
         flex-direction: column;
     }
-    .jornada-number {
-        margin-bottom: 15px;
+    
+    .game-cover {
+        width: 100%;
+        min-height: auto; /* Remove a altura mínima no mobile */
+        padding-bottom: 56.25%; /* Mantém proporção 16:9 */
+        border-right: none;
+        border-bottom: 3px solid var(--primary-red);
+    }
+    
+    .game-details {
+        width: 100%;
+        padding: 25px 20px;
+    }
+    
+    .game-title {
+        font-size: 1.5rem; /* Ainda menor no celular */
+    }
+    
+    .game-details .btn-primary {
+        width: 100%;
+        text-align: center;
+        font-size: 1.1rem;
     }
 }

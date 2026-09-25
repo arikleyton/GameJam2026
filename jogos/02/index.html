@@ -1,0 +1,2573 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>APENAS UM CAMINHO</title>
+
+<style>
+*{box-sizing:border-box}
+
+html,body{
+    width:100%;
+    height:100%;
+    margin:0;
+}
+
+body{
+    background:#050816;
+    overflow:hidden;
+    font-family:Arial,sans-serif;
+    touch-action:none;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100dvh;
+}
+
+#gameWrap{
+    position:relative;
+    width:min(900px,100vw);
+    height:min(600px,100dvh);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+}
+
+canvas{
+    display:block;
+    width:100%;
+    height:100%;
+    background:#080d20;
+    touch-action:none;
+}
+
+.mobileControls{
+    display:none;
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+}
+
+.mobileControls button{
+    pointer-events:auto;
+    border:2px solid rgba(255,255,255,.45);
+    background:rgba(15,23,42,.78);
+    color:white;
+    border-radius:16px;
+    font-weight:bold;
+    box-shadow:0 4px 15px rgba(0,0,0,.35);
+    user-select:none;
+    touch-action:none;
+}
+
+.dpad{
+    position:absolute;
+    left:18px;
+    bottom:18px;
+    width:150px;
+    height:150px;
+}
+
+.dpad button{
+    position:absolute;
+    width:52px;
+    height:52px;
+    font-size:24px;
+}
+
+.up{
+    left:49px;
+    top:0;
+}
+
+.down{
+    left:49px;
+    bottom:0;
+}
+
+.left{
+    left:0;
+    top:49px;
+}
+
+.right{
+    right:0;
+    top:49px;
+}
+
+.selectBtn{
+    position:absolute;
+    right:22px;
+    bottom:58px;
+    width:105px;
+    height:65px;
+    font-size:15px;
+    background:rgba(109,40,217,.82)!important;
+}
+
+.mobileStart{
+    display:none;
+}
+
+.mobileHint{
+    position:absolute;
+    right:18px;
+    bottom:18px;
+    color:#cbd5e1;
+    font-size:10px;
+    text-align:center;
+    max-width:120px;
+}
+
+@media (max-width:700px){
+
+    body{
+        overflow:hidden;
+        display:block;
+        min-height:100dvh;
+        background:
+        radial-gradient(
+            circle at 50% 15%,
+            #172554 0%,
+            #080d20 42%,
+            #030510 100%
+        );
+    }
+
+    #gameWrap{
+        width:100vw;
+        height:100dvh;
+        min-height:100dvh;
+        max-height:none;
+        display:block;
+        position:relative;
+        overflow:hidden;
+    }
+
+    canvas{
+        position:absolute;
+        top:3vh;
+        left:50%;
+        transform:translateX(-50%);
+        width:100vw;
+        height:auto;
+        aspect-ratio:3/2;
+        max-height:none;
+        border-radius:20px;
+        box-shadow:0 12px 35px rgba(0,0,0,.5);
+    }
+
+    .mobileControls{
+        display:block;
+        z-index:10;
+    }
+
+    .mobileHint{
+        display:none;
+    }
+
+    .mobileStart{
+        display:block;
+    }
+
+    .dpad{
+        left:18px;
+        bottom:22px;
+        width:154px;
+        height:154px;
+    }
+
+    .dpad button{
+        width:54px;
+        height:54px;
+        font-size:25px;
+        border-radius:17px;
+    }
+
+    .up{
+        left:50px;
+        top:0;
+    }
+
+    .down{
+        left:50px;
+        bottom:0;
+    }
+
+    .left{
+        left:0;
+        top:50px;
+    }
+
+    .right{
+        right:0;
+        top:50px;
+    }
+
+    .selectBtn{
+        right:18px;
+        bottom:62px;
+        width:145px;
+        height:70px;
+        font-size:17px;
+        border-radius:20px!important;
+        box-shadow:
+        0 8px 24px rgba(109,40,217,.35)!important;
+    }
+
+    .mobileStart{
+        position:absolute;
+        left:50%;
+        top:34%;
+        transform:translate(-50%,-50%);
+        width:min(82vw,360px);
+        height:68px;
+        border:2px solid #c4b5fd;
+        border-radius:20px;
+        background:
+        linear-gradient(
+            135deg,
+            #7c3aed,
+            #4c1d95
+        );
+        color:white;
+        font-size:18px;
+        font-weight:bold;
+        box-shadow:0 10px 30px rgba(0,0,0,.45);
+        display:block;
+        pointer-events:auto;
+        touch-action:manipulation;
+    }
+}
+
+@media (max-width:700px) and (orientation:landscape){
+
+    canvas{
+        top:2vh;
+        width:86vw;
+        height:auto;
+    }
+
+    .dpad{
+        left:14px;
+        bottom:12px;
+        transform:scale(.82);
+        transform-origin:bottom left;
+    }
+
+    .selectBtn{
+        right:14px;
+        bottom:24px;
+        transform:scale(.9);
+        transform-origin:bottom right;
+    }
+
+    .mobileStart{
+        top:50%;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="gameWrap">
+
+<canvas id="jogo" width="900" height="600"></canvas>
+
+<div class="mobileControls">
+
+    <div class="dpad">
+
+        <button class="up" data-key="arrowup">▲</button>
+
+        <button class="down" data-key="arrowdown">▼</button>
+
+        <button class="left" data-key="arrowleft">◀</button>
+
+        <button class="right" data-key="arrowright">▶</button>
+
+    </div>
+
+    <button class="selectBtn" id="selectBtn">
+        ESCOLHER
+    </button>
+
+    <button class="mobileStart" id="mobileStart">
+        TOCAR PARA COMEÇAR
+    </button>
+
+</div>
+
+</div>
+
+
+<script>
+
+const canvas =
+document.getElementById("jogo");
+
+const ctx =
+canvas.getContext("2d");
+
+
+let tela = "inicio";
+
+let vidas = 2;
+
+let mensagem = "";
+
+let mensagemTempo = 0;
+
+let efeitoErro = 0;
+
+let criaturaTempo = 0;
+
+let dificuldade = 1;
+
+let tempoJogo = 0;
+
+let particulas = [];
+
+let portasAtuais = [];
+
+let inicioMensagem = "";
+
+
+const jogador = {
+    x:450,
+    y:500,
+    velocidade:4
+};
+
+
+const teclas = {};
+
+
+let audioCtx = null;
+
+let musicaAtiva = false;
+
+let musicaTimer = null;
+
+let musicaNotas = [
+    220,
+    261.63,
+    329.63,
+    392,
+    329.63,
+    261.63,
+    293.66,
+    349.23
+];
+
+let musicaIndex = 0;
+
+
+/* =========================
+   ÁUDIO
+========================= */
+
+function iniciarAudio(){
+
+    if(!audioCtx){
+
+        const AC =
+        window.AudioContext ||
+        window.webkitAudioContext;
+
+        if(AC)
+            audioCtx = new AC();
+    }
+
+    if(
+        audioCtx &&
+        audioCtx.state === "suspended"
+    ){
+
+        audioCtx.resume();
+
+    }
+}
+
+
+function iniciarMusica(){
+
+    iniciarAudio();
+
+    if(
+        !audioCtx ||
+        musicaAtiva
+    )
+        return;
+
+    musicaAtiva = true;
+
+    musicaIndex = 0;
+
+    function tocarNota(){
+
+        if(
+            !audioCtx ||
+            !musicaAtiva
+        )
+            return;
+
+        const agora =
+        audioCtx.currentTime;
+
+        const o =
+        audioCtx.createOscillator();
+
+        const g =
+        audioCtx.createGain();
+
+        o.type = "sine";
+
+        o.frequency.value =
+        musicaNotas[
+            musicaIndex %
+            musicaNotas.length
+        ];
+
+        g.gain.setValueAtTime(
+            .0001,
+            agora
+        );
+
+        g.gain.exponentialRampToValueAtTime(
+            .035,
+            agora + .18
+        );
+
+        g.gain.exponentialRampToValueAtTime(
+            .0001,
+            agora + 1.25
+        );
+
+        o.connect(g)
+        .connect(audioCtx.destination);
+
+        o.start(agora);
+
+        o.stop(
+            agora + 1.3
+        );
+
+        musicaIndex++;
+
+        musicaTimer =
+        setTimeout(
+            tocarNota,
+            900
+        );
+    }
+
+    tocarNota();
+}
+
+
+function somPorta(){
+
+    iniciarAudio();
+
+    if(!audioCtx)
+        return;
+
+    const agora =
+    audioCtx.currentTime;
+
+    const click =
+    audioCtx.createOscillator();
+
+    const ganho =
+    audioCtx.createGain();
+
+    click.type = "square";
+
+    click.frequency.setValueAtTime(
+        480,
+        agora
+    );
+
+    click.frequency.exponentialRampToValueAtTime(
+        180,
+        agora + .08
+    );
+
+    ganho.gain.setValueAtTime(
+        .0001,
+        agora
+    );
+
+    ganho.gain.exponentialRampToValueAtTime(
+        .12,
+        agora + .01
+    );
+
+    ganho.gain.exponentialRampToValueAtTime(
+        .0001,
+        agora + .12
+    );
+
+    click.connect(ganho)
+    .connect(audioCtx.destination);
+
+    click.start(agora);
+
+    click.stop(
+        agora + .13
+    );
+
+
+    const sino =
+    audioCtx.createOscillator();
+
+    const gs =
+    audioCtx.createGain();
+
+    sino.type = "sine";
+
+    sino.frequency.setValueAtTime(
+        260,
+        agora + .05
+    );
+
+    sino.frequency.exponentialRampToValueAtTime(
+        760,
+        agora + .55
+    );
+
+    gs.gain.setValueAtTime(
+        .0001,
+        agora + .05
+    );
+
+    gs.gain.exponentialRampToValueAtTime(
+        .08,
+        agora + .15
+    );
+
+    gs.gain.exponentialRampToValueAtTime(
+        .0001,
+        agora + .7
+    );
+
+    sino.connect(gs)
+    .connect(audioCtx.destination);
+
+    sino.start(
+        agora + .05
+    );
+
+    sino.stop(
+        agora + .72
+    );
+}
+
+
+function somErro(){
+
+    iniciarAudio();
+
+    if(!audioCtx)
+        return;
+
+    const agora =
+    audioCtx.currentTime;
+
+    [150,105].forEach(
+        (freq,i)=>{
+
+            const o =
+            audioCtx.createOscillator();
+
+            const g =
+            audioCtx.createGain();
+
+            o.type =
+            "sawtooth";
+
+            o.frequency.value =
+            freq;
+
+            g.gain.setValueAtTime(
+                .0001,
+                agora + i*.12
+            );
+
+            g.gain.exponentialRampToValueAtTime(
+                .08,
+                agora + i*.12 + .02
+            );
+
+            g.gain.exponentialRampToValueAtTime(
+                .0001,
+                agora + i*.12 + .18
+            );
+
+            o.connect(g)
+            .connect(audioCtx.destination);
+
+            o.start(
+                agora + i*.12
+            );
+
+            o.stop(
+                agora + i*.12 + .2
+            );
+
+        }
+    );
+}
+
+
+function somVitoria(){
+
+    iniciarAudio();
+
+    if(!audioCtx)
+        return;
+
+    const agora =
+    audioCtx.currentTime;
+
+    [392,494,587,784].forEach(
+        (freq,i)=>{
+
+            const o =
+            audioCtx.createOscillator();
+
+            const g =
+            audioCtx.createGain();
+
+            o.type = "sine";
+
+            o.frequency.value =
+            freq;
+
+            g.gain.setValueAtTime(
+                .0001,
+                agora + i*.11
+            );
+
+            g.gain.exponentialRampToValueAtTime(
+                .1,
+                agora + i*.11 + .03
+            );
+
+            g.gain.exponentialRampToValueAtTime(
+                .0001,
+                agora + i*.11 + .32
+            );
+
+            o.connect(g)
+            .connect(audioCtx.destination);
+
+            o.start(
+                agora + i*.11
+            );
+
+            o.stop(
+                agora + i*.11 + .35
+            );
+
+        }
+    );
+}
+
+
+/* =========================
+   TECLADO
+========================= */
+
+document.addEventListener(
+    "keydown",
+    e => {
+
+        iniciarAudio();
+
+        const k =
+        e.key.toLowerCase();
+
+        teclas[k] = true;
+
+        if([
+            "arrowup",
+            "arrowdown",
+            "arrowleft",
+            "arrowright",
+            "enter",
+            " "
+        ].includes(k)){
+
+            e.preventDefault();
+
+        }
+
+        if(k === "enter")
+            acaoEnter();
+
+    }
+);
+
+
+document.addEventListener(
+    "keyup",
+    e => {
+
+        teclas[
+            e.key.toLowerCase()
+        ] = false;
+
+    }
+);
+
+
+/* =========================
+   CONTROLES CELULAR
+========================= */
+
+document
+.querySelectorAll(
+    ".mobileControls [data-key]"
+)
+.forEach(btn => {
+
+    btn.addEventListener(
+        "pointerdown",
+        e => {
+
+            e.preventDefault();
+
+            iniciarAudio();
+
+            teclas[
+                btn.dataset.key
+            ] = true;
+
+        }
+    );
+
+    const soltar = e => {
+
+        e.preventDefault();
+
+        teclas[
+            btn.dataset.key
+        ] = false;
+
+    };
+
+    btn.addEventListener(
+        "pointerup",
+        soltar
+    );
+
+    btn.addEventListener(
+        "pointercancel",
+        soltar
+    );
+
+    btn.addEventListener(
+        "pointerleave",
+        soltar
+    );
+
+});
+
+
+document
+.getElementById("selectBtn")
+.addEventListener(
+    "pointerdown",
+    e => {
+
+        e.preventDefault();
+
+        iniciarAudio();
+
+        acaoEnter();
+
+    }
+);
+
+
+document
+.getElementById("mobileStart")
+.addEventListener(
+    "pointerdown",
+    e => {
+
+        e.preventDefault();
+
+        iniciarAudio();
+
+        acaoEnter();
+
+    }
+);
+
+
+function atualizarControlesMobile(){
+
+    const start =
+    document.getElementById(
+        "mobileStart"
+    );
+
+    if(start){
+
+        start.style.display =
+        tela === "inicio"
+        ? "block"
+        : "none";
+
+    }
+}
+
+
+canvas.addEventListener(
+    "pointerdown",
+    e => {
+
+        if(tela === "inicio"){
+
+            e.preventDefault();
+
+            iniciarAudio();
+
+            acaoEnter();
+
+        }
+
+    }
+);
+
+
+/* =========================
+   TEXTO
+========================= */
+
+function texto(
+    t,
+    x,
+    y,
+    tamanho,
+    cor = "#fff",
+    fonte = "Arial"
+){
+
+    ctx.fillStyle = cor;
+
+    ctx.font =
+    `${tamanho}px ${fonte}`;
+
+    ctx.textAlign = "center";
+
+    ctx.textBaseline = "middle";
+
+    t.split("\n")
+    .forEach(
+        (l,i) => {
+
+            ctx.fillText(
+                l,
+                x,
+                y + i*(tamanho+6)
+            );
+
+        }
+    );
+}
+
+
+/* =========================
+   TELA INICIAL
+========================= */
+
+function fundoInicio(){
+
+    const g =
+    ctx.createLinearGradient(
+        0,0,0,600
+    );
+
+    g.addColorStop(
+        0,
+        "#030617"
+    );
+
+    g.addColorStop(
+        .55,
+        "#0b1230"
+    );
+
+    g.addColorStop(
+        1,
+        "#180b2b"
+    );
+
+    ctx.fillStyle = g;
+
+    ctx.fillRect(
+        0,0,900,600
+    );
+
+
+    ctx.fillStyle =
+    "#fef3c7";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        700,
+        120,
+        65,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle =
+    "#0b1230";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        725,
+        98,
+        60,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    for(
+        let i=0;
+        i<70;
+        i++
+    ){
+
+        const x =
+        (i*137)%900;
+
+        const y =
+        (i*71)%390;
+
+        const r =
+        i%4===0 ? 2 : 1;
+
+        ctx.fillStyle =
+        i%5===0
+        ? "#fbbf24"
+        : "rgba(255,255,255,.7)";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y,
+            r,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+    }
+
+
+    ctx.fillStyle =
+    "#070b1c";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        0,
+        470
+    );
+
+    ctx.lineTo(
+        150,
+        300
+    );
+
+    ctx.lineTo(
+        270,
+        450
+    );
+
+    ctx.lineTo(
+        410,
+        280
+    );
+
+    ctx.lineTo(
+        600,
+        460
+    );
+
+    ctx.lineTo(
+        760,
+        320
+    );
+
+    ctx.lineTo(
+        900,
+        460
+    );
+
+    ctx.lineTo(
+        900,
+        600
+    );
+
+    ctx.lineTo(
+        0,
+        600
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+}
+
+
+function desenharInicio(){
+
+    fundoInicio();
+
+    texto(
+        "APENAS UM CAMINHO",
+        450,
+        150,
+        43,
+        "#fef3c7",
+        "Georgia"
+    );
+
+    texto(
+        "Descubra a resposta.",
+        450,
+        215,
+        22,
+        "#c4b5fd",
+        "Georgia"
+    );
+
+    texto(
+        "Escolha a porta correta.",
+        450,
+        250,
+        22,
+        "#c4b5fd",
+        "Georgia"
+    );
+
+    texto(
+        "Você tem apenas 2 vidas.",
+        450,
+        310,
+        17,
+        "#cbd5e1"
+    );
+
+    botao(
+        450,
+        390,
+        270,
+        65,
+        "COMEÇAR"
+    );
+
+    texto(
+        "ENTER para começar",
+        450,
+        475,
+        15,
+        "#94a3b8"
+    );
+
+    texto(
+        "Criado por Camile Padilha Oliveira",
+        450,
+        570,
+        14,
+        "#94a3b8"
+    );
+}
+
+
+function botao(
+    x,
+    y,
+    w,
+    h,
+    textoBotao
+){
+
+    ctx.fillStyle =
+    "rgba(124,58,237,.85)";
+
+    ctx.beginPath();
+
+    ctx.roundRect(
+        x-w/2,
+        y-h/2,
+        w,
+        h,
+        18
+    );
+
+    ctx.fill();
+
+    ctx.strokeStyle =
+    "#c4b5fd";
+
+    ctx.lineWidth = 2;
+
+    ctx.stroke();
+
+    texto(
+        textoBotao,
+        x,
+        y,
+        19,
+        "#fff"
+    );
+}
+
+
+/* =========================
+   FUNDO DA ÁREA
+========================= */
+
+function fundoArea(){
+
+    const g =
+    ctx.createLinearGradient(
+        0,
+        0,
+        0,
+        600
+    );
+
+    g.addColorStop(
+        0,
+        "#07112c"
+    );
+
+    g.addColorStop(
+        .55,
+        "#111827"
+    );
+
+    g.addColorStop(
+        1,
+        "#24140c"
+    );
+
+    ctx.fillStyle = g;
+
+    ctx.fillRect(
+        0,
+        0,
+        900,
+        600
+    );
+
+
+    // Lua
+
+    ctx.fillStyle =
+    "#fef3c7";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        760,
+        90,
+        42,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    // Montanhas
+
+    ctx.fillStyle =
+    "#080b18";
+
+    ctx.beginPath();
+
+    ctx.moveTo(0,420);
+    ctx.lineTo(120,280);
+    ctx.lineTo(220,410);
+    ctx.lineTo(350,250);
+    ctx.lineTo(500,420);
+    ctx.lineTo(650,290);
+    ctx.lineTo(900,430);
+    ctx.lineTo(900,600);
+    ctx.lineTo(0,600);
+
+    ctx.closePath();
+
+    ctx.fill();
+
+
+    // Chão
+
+    ctx.fillStyle =
+    "#17110e";
+
+    ctx.fillRect(
+        0,
+        410,
+        900,
+        190
+    );
+
+
+    // Pedras
+
+    for(
+        let i=0;
+        i<25;
+        i++
+    ){
+
+        const x =
+        (i*97)%900;
+
+        const y =
+        455+(i%4)*28;
+
+        ctx.fillStyle =
+        i%2
+        ? "#292524"
+        : "#3f3f46";
+
+        ctx.fillRect(
+            x,
+            y,
+            55,
+            18
+        );
+
+    }
+
+
+    // Tochas
+
+    [70,830].forEach(
+        x => {
+
+            ctx.fillStyle =
+            "#713f12";
+
+            ctx.fillRect(
+                x-5,
+                320,
+                10,
+                80
+            );
+
+            ctx.shadowBlur = 25;
+
+            ctx.shadowColor =
+            "#f59e0b";
+
+            ctx.fillStyle =
+            "#fbbf24";
+
+            ctx.beginPath();
+
+            ctx.arc(
+                x,
+                315,
+                13,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+
+        }
+    );
+}
+
+
+/* =========================
+   JOGADOR
+========================= */
+
+function desenharJogador(){
+
+    const x =
+    jogador.x;
+
+    const y =
+    jogador.y;
+
+    ctx.save();
+
+    ctx.shadowBlur = 12;
+
+    ctx.shadowColor =
+    "#22c55e";
+
+    ctx.fillStyle =
+    "#22c55e";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x,
+        y-18,
+        13,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+
+    ctx.fillStyle =
+    "#334155";
+
+    ctx.fillRect(
+        x-14,
+        y-5,
+        28,
+        22
+    );
+
+
+    ctx.fillStyle =
+    "#f2c09b";
+
+    ctx.fillRect(
+        x-21,
+        y-2,
+        7,
+        20
+    );
+
+    ctx.fillRect(
+        x+14,
+        y-2,
+        7,
+        20
+    );
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x,
+        y-18,
+        13,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle =
+    "#3b2416";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x,
+        y-23,
+        13,
+        Math.PI,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle =
+    "#111";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x-5,
+        y-18,
+        2,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x+5,
+        y-18,
+        2,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.restore();
+}
+
+
+/* =========================
+   PORTAS
+========================= */
+
+function desenharPorta(p){
+
+    const qtd =
+    portasAtuais.length;
+
+    const passo =
+    qtd>1
+    ? (900-260)/(qtd-1)
+    : 0;
+
+    const largura =
+    Math.min(
+        156,
+        Math.max(
+            88,
+            passo*.68
+        )
+    );
+
+    const perto =
+    Math.abs(
+        jogador.x-p.x
+    )
+    <
+    Math.max(
+        45,
+        largura*.48
+    )
+    &&
+    jogador.y<430;
+
+
+    if(perto){
+
+        ctx.shadowBlur = 25;
+
+        ctx.shadowColor =
+        p.cor;
+    }
+
+
+    ctx.fillStyle =
+    "#334155";
+
+    ctx.beginPath();
+
+    ctx.roundRect(
+        p.x-largura/2,
+        235,
+        largura,
+        175,
+        14
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle =
+    "#cbd5e1";
+
+    ctx.fillRect(
+        p.x-largura/2+8,
+        245,
+        largura-16,
+        155
+    );
+
+
+    ctx.fillStyle =
+    p.cor;
+
+    ctx.fillRect(
+        p.x-largura/2+14,
+        251,
+        largura-28,
+        143
+    );
+
+
+    ctx.fillStyle =
+    "rgba(255,255,255,.12)";
+
+    ctx.fillRect(
+        p.x-largura/2+22,
+        260,
+        8,
+        125
+    );
+
+
+    ctx.fillStyle =
+    "#fbbf24";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        p.x+largura*.23,
+        330,
+        5,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.shadowBlur = 0;
+
+
+    ctx.fillStyle =
+    "#171717";
+
+    ctx.fillRect(
+        p.x-largura/2-8,
+        415,
+        largura+16,
+        32
+    );
+
+
+    ctx.strokeStyle =
+    "#a16207";
+
+    ctx.lineWidth = 2;
+
+    ctx.strokeRect(
+        p.x-largura/2-8,
+        415,
+        largura+16,
+        32
+    );
+
+
+    texto(
+        p.nome,
+        p.x,
+        431,
+        qtd>=5 ? 9 : 12,
+        "#fef3c7",
+        "Georgia"
+    );
+
+
+    if(perto){
+
+        ctx.fillStyle =
+        "rgba(0,0,0,.88)";
+
+        ctx.fillRect(
+            p.x-75,
+            455,
+            150,
+            30
+        );
+
+        ctx.strokeStyle =
+        p.cor;
+
+        ctx.lineWidth = 2;
+
+        ctx.strokeRect(
+            p.x-75,
+            455,
+            150,
+            30
+        );
+
+        texto(
+            "ENTER para escolher",
+            p.x,
+            470,
+            11,
+            "#fff"
+        );
+    }
+}
+
+
+/* =========================
+   FASES
+========================= */
+
+const fases = [
+
+{
+    pista:
+`Quanto mais você tenta me alcançar, mais eu recuo.
+Não tenho corpo, mas posso parecer estar diante dos seus olhos.
+O que sou?`,
+
+    portas:[
+        ["O HORIZONTE","#8b5cf6",true],
+        ["O ESPELHO","#ef4444",false],
+        ["A MONTANHA","#f97316",false]
+    ]
+},
+
+{
+    pista:
+`Eu nasço sem ser criado.
+Posso ocupar um lugar inteiro e ainda assim não pesar nada.
+Quando a luz muda, eu também mudo. O que sou?`,
+
+    portas:[
+        ["A SOMBRA","#22c55e",true],
+        ["A PEDRA","#ef4444",false],
+        ["A FUMAÇA","#f59e0b",false],
+        ["O VENTO","#06b6d4",false]
+    ]
+},
+
+{
+    pista:
+`Posso ser dada sem ser segurada.
+Posso ser quebrada sem fazer barulho.
+Quando desapareço, a confiança pode ir comigo. O que sou?`,
+
+    portas:[
+        ["A PROMESSA","#06b6d4",true],
+        ["A CORDA","#22c55e",false],
+        ["A JANELA","#f59e0b",false],
+        ["A CHAVE","#ef4444",false],
+        ["A PEDRA","#8b5cf6",false]
+    ]
+},
+
+{
+    pista:
+`Não tenho voz, mas devolvo o que você me entrega.
+Não tenho memória, mas pareço guardar seu rosto.
+Se você se afasta, eu também me afasto. O que sou?`,
+
+    portas:[
+        ["O ESPELHO","#ec4899",true],
+        ["O ECO","#22c55e",false],
+        ["A SOMBRA","#8b5cf6",false],
+        ["A JANELA","#f97316",false],
+        ["A ÁGUA","#06b6d4",false]
+    ]
+},
+
+{
+    pista:
+`Posso abrir caminhos sem andar.
+Posso fechar segredos sem falar.
+Normalmente, só funciono quando encontro aquilo que combina comigo. O que sou?`,
+
+    portas:[
+        ["A CHAVE","#facc15",true],
+        ["A PORTA","#ef4444",false],
+        ["A LANTERNA","#22c55e",false],
+        ["A CORDA","#06b6d4",false],
+        ["O MAPA","#8b5cf6",false],
+        ["O CADEADO","#f97316",false]
+    ]
+},
+
+{
+    pista:
+`Quanto mais existe de mim, menos você consegue enxergar.
+Não sou parede, mas escondo o que está depois de mim.
+Posso desaparecer com o calor ou com o vento. O que sou?`,
+
+    portas:[
+        ["A NEBLINA","#a78bfa",true],
+        ["A SOMBRA","#22c55e",false],
+        ["O ESPELHO","#ec4899",false],
+        ["A FUMAÇA","#f97316",false],
+        ["A NOITE","#334155",false],
+        ["A ÁGUA","#06b6d4",false]
+    ]
+}
+];
+
+
+/* =========================
+   PREPARAR FASE
+========================= */
+
+function prepararFase(){
+
+    const f =
+    fases[dificuldade-1];
+
+
+    portasAtuais =
+    f.portas.map(
+        p => ({
+            x:0,
+            nome:p[0],
+            cor:p[1],
+            certa:p[2]
+        })
+    );
+
+
+    /*
+       EMBARALHA AS PORTAS
+
+       A resposta correta muda
+       de posição a cada fase.
+    */
+
+    for(
+        let i =
+        portasAtuais.length-1;
+
+        i>0;
+
+        i--
+    ){
+
+        const j =
+        Math.floor(
+            Math.random() *
+            (i+1)
+        );
+
+        [
+            portasAtuais[i],
+            portasAtuais[j]
+        ] =
+        [
+            portasAtuais[j],
+            portasAtuais[i]
+        ];
+    }
+
+
+    const margem = 130;
+
+    const passo =
+    (900-margem*2) /
+    (portasAtuais.length-1);
+
+
+    portasAtuais.forEach(
+        (p,i) => {
+
+            p.x =
+            margem+i*passo;
+
+        }
+    );
+}
+
+
+/* =========================
+   PISTA
+========================= */
+
+function desenharPista(t){
+
+    ctx.fillStyle =
+    "rgba(30,41,90,.96)";
+
+    ctx.fillRect(
+        145,
+        72,
+        610,
+        126
+    );
+
+
+    ctx.strokeStyle =
+    "#818cf8";
+
+    ctx.lineWidth = 2;
+
+    ctx.strokeRect(
+        145,
+        72,
+        610,
+        126
+    );
+
+
+    const linhas =
+    t.split("\n");
+
+    const inicioY = 103;
+
+    const espaco = 23;
+
+
+    linhas.forEach(
+        (linha,i) => {
+
+            texto(
+                linha.trim(),
+                450,
+                inicioY+i*espaco,
+                16,
+                "#fff",
+                "Georgia"
+            );
+
+        }
+    );
+}
+
+
+/* =========================
+   HUD
+========================= */
+
+function desenharHUD(){
+
+    texto(
+        "VIDAS: "+"♥".repeat(vidas),
+        90,
+        40,
+        18,
+        "#fb7185"
+    );
+
+    texto(
+        "FASE "+dificuldade+"/6",
+        450,
+        40,
+        16,
+        "#c4b5fd"
+    );
+
+    texto(
+        "SETAS / WASD",
+        690,
+        32,
+        12,
+        "#94a3b8"
+    );
+
+    texto(
+        "ENTER: ESCOLHER",
+        690,
+        50,
+        12,
+        "#94a3b8"
+    );
+}
+
+
+/* =========================
+   ÁREA
+========================= */
+
+function desenharArea(){
+
+    fundoArea();
+
+    const f =
+    fases[dificuldade-1];
+
+    desenharPista(
+        f.pista
+    );
+
+    portasAtuais.forEach(
+        desenharPorta
+    );
+
+    desenharJogador();
+
+    desenharHUD();
+
+    mostrarMensagem();
+}
+
+
+function mostrarMensagem(){
+
+    if(mensagemTempo>0){
+
+        ctx.fillStyle =
+        "rgba(0,0,0,.75)";
+
+        ctx.fillRect(
+            170,
+            548,
+            560,
+            36
+        );
+
+        texto(
+            mensagem,
+            450,
+            566,
+            15,
+            "#fef3c7"
+        );
+    }
+}
+
+
+/* =========================
+   ERRO
+========================= */
+
+function erro(){
+
+    vidas--;
+
+    efeitoErro = 35;
+
+    criaturaTempo = 50;
+
+    jogador.x = 450;
+
+    jogador.y = 500;
+
+
+    if(vidas<=0){
+
+        tela = "gameover";
+
+        return;
+    }
+
+
+    mensagem =
+    "ERRADO! Você perdeu uma vida e voltou ao começo.";
+
+    mensagemTempo = 150;
+
+
+    dificuldade = 1;
+
+    prepararFase();
+}
+
+
+/* =========================
+   PRÓXIMA FASE
+========================= */
+
+function proximaFase(){
+
+    dificuldade++;
+
+
+    if(dificuldade>6){
+
+        somVitoria();
+
+        tela = "final";
+
+        return;
+    }
+
+
+    jogador.x = 450;
+
+    jogador.y = 500;
+
+
+    mensagem =
+    "Certo! O próximo caminho será ainda mais difícil.";
+
+    mensagemTempo = 130;
+
+
+    prepararFase();
+}
+
+
+/* =========================
+   ENTER / ESCOLHER
+========================= */
+
+function acaoEnter(){
+
+    if(tela === "inicio"){
+
+        iniciarMusica();
+
+        tela = "area";
+
+        vidas = 2;
+
+        dificuldade = 1;
+
+        jogador.x = 450;
+
+        jogador.y = 500;
+
+        mensagem =
+        "Primeiro descubra a resposta. Depois escolha a porta.";
+
+        mensagemTempo = 150;
+
+        prepararFase();
+
+        return;
+    }
+
+
+    if(tela === "gameover"){
+
+        tela = "inicio";
+
+        vidas = 2;
+
+        dificuldade = 1;
+
+        return;
+    }
+
+
+    if(tela === "final")
+        return;
+
+
+    if(tela !== "area")
+        return;
+
+
+    let alvo = null;
+
+    let menor = Infinity;
+
+
+    portasAtuais.forEach(
+        p => {
+
+            const dist =
+            Math.abs(
+                p.x-jogador.x
+            );
+
+            if(dist<menor){
+
+                menor = dist;
+
+                alvo = p;
+
+            }
+        }
+    );
+
+
+    if(
+        !alvo ||
+        menor>75 ||
+        jogador.y>430
+    ){
+
+        mensagem =
+        "Chegue perto de uma porta antes de escolher.";
+
+        mensagemTempo = 90;
+
+        return;
+    }
+
+
+    if(alvo.certa){
+
+        somPorta();
+
+        proximaFase();
+
+    }else{
+
+        somErro();
+
+        erro();
+
+    }
+}
+
+
+/* =========================
+   CRIATURA DO ERRO
+========================= */
+
+function desenharCriatura(){
+
+    if(criaturaTempo<=0)
+        return;
+
+
+    const t =
+    Math.random()*10-5;
+
+
+    ctx.fillStyle =
+    "#020617";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        450+t,
+        260,
+        75,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle =
+    "#ef4444";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        425+t,
+        250,
+        10,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+        475+t,
+        250,
+        10,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    texto(
+        "CAMINHO ERRADO",
+        450+t,
+        350,
+        24,
+        "#ef4444"
+    );
+}
+
+
+/* =========================
+   GAME OVER
+========================= */
+
+function desenharGameOver(){
+
+    const g =
+    ctx.createLinearGradient(
+        0,
+        0,
+        0,
+        600
+    );
+
+    g.addColorStop(
+        0,
+        "#260707"
+    );
+
+    g.addColorStop(
+        1,
+        "#080101"
+    );
+
+    ctx.fillStyle = g;
+
+    ctx.fillRect(
+        0,
+        0,
+        900,
+        600
+    );
+
+
+    texto(
+        "AS DUAS VIDAS ACABARAM.",
+        450,
+        210,
+        42
+    );
+
+
+    texto(
+        "Você ficou sem vidas antes de completar o percurso.",
+        450,
+        275,
+        21,
+        "#fecaca",
+        "Georgia"
+    );
+
+
+    texto(
+        "Agora você já conhece o caminho. Tente novamente.",
+        450,
+        315,
+        17,
+        "#fca5a5"
+    );
+
+
+    botao(
+        450,
+        410,
+        280,
+        70,
+        "TENTAR NOVAMENTE"
+    );
+}
+
+
+/* =========================
+   FINAL
+========================= */
+
+function desenharFinal(){
+
+    const g =
+    ctx.createRadialGradient(
+        450,
+        300,
+        20,
+        450,
+        300,
+        500
+    );
+
+    g.addColorStop(
+        0,
+        "#854d0e"
+    );
+
+    g.addColorStop(
+        .35,
+        "#422006"
+    );
+
+    g.addColorStop(
+        1,
+        "#020617"
+    );
+
+    ctx.fillStyle = g;
+
+    ctx.fillRect(
+        0,
+        0,
+        900,
+        600
+    );
+
+
+    ctx.fillStyle =
+    "rgba(250,204,21,.05)";
+
+
+    for(
+        let i=0;
+        i<12;
+        i++
+    ){
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            450,
+            300
+        );
+
+        ctx.lineTo(
+            i*100,
+            0
+        );
+
+        ctx.lineTo(
+            (i+1)*100,
+            0
+        );
+
+        ctx.fill();
+
+    }
+
+
+    texto(
+        "VOCÊ ENCONTROU O CAMINHO.",
+        450,
+        100,
+        30,
+        "#fde68a"
+    );
+
+
+    ctx.shadowBlur = 35;
+
+    ctx.shadowColor =
+    "#facc15";
+
+    ctx.fillStyle =
+    "#92400e";
+
+    ctx.fillRect(
+        325,
+        300,
+        250,
+        130
+    );
+
+
+    ctx.fillStyle =
+    "#facc15";
+
+    ctx.fillRect(
+        315,
+        285,
+        270,
+        35
+    );
+
+
+    ctx.fillStyle =
+    "#f59e0b";
+
+    ctx.fillRect(
+        340,
+        330,
+        220,
+        100
+    );
+
+
+    ctx.fillStyle =
+    "#fde047";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        450,
+        350,
+        16,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.shadowBlur = 0;
+
+
+    ctx.fillStyle =
+    "#fef08a";
+
+
+    for(
+        let i=0;
+        i<12;
+        i++
+    ){
+
+        ctx.beginPath();
+
+        ctx.arc(
+            350+(i*37)%210,
+            315+(i*29)%90,
+            5,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+    }
+
+
+    texto(
+        "O TESOURO ERA REAL.",
+        450,
+        475,
+        27,
+        "#fef3c7"
+    );
+
+
+    texto(
+        "Você resolveu os seis enigmas e encontrou a saída.",
+        450,
+        515,
+        17,
+        "#fde68a",
+        "Georgia"
+    );
+}
+
+
+/* =========================
+   MOVIMENTO
+========================= */
+
+function atualizarJogador(){
+
+    if(tela !== "area")
+        return;
+
+
+    if(
+        teclas["arrowup"] ||
+        teclas["w"]
+    )
+        jogador.y -= jogador.velocidade;
+
+
+    if(
+        teclas["arrowdown"] ||
+        teclas["s"]
+    )
+        jogador.y += jogador.velocidade;
+
+
+    if(
+        teclas["arrowleft"] ||
+        teclas["a"]
+    )
+        jogador.x -= jogador.velocidade;
+
+
+    if(
+        teclas["arrowright"] ||
+        teclas["d"]
+    )
+        jogador.x += jogador.velocidade;
+
+
+    jogador.x =
+    Math.max(
+        30,
+        Math.min(
+            870,
+            jogador.x
+        )
+    );
+
+
+    jogador.y =
+    Math.max(
+        200,
+        Math.min(
+            530,
+            jogador.y
+        )
+    );
+}
+
+
+/* =========================
+   DESENHAR
+========================= */
+
+function desenhar(){
+
+    atualizarControlesMobile();
+
+    ctx.clearRect(
+        0,
+        0,
+        900,
+        600
+    );
+
+
+    if(tela === "inicio")
+        desenharInicio();
+
+    else if(tela === "area")
+        desenharArea();
+
+    else if(tela === "final")
+        desenharFinal();
+
+    else if(tela === "gameover")
+        desenharGameOver();
+
+
+    if(efeitoErro>0){
+
+        ctx.fillStyle =
+        "rgba(255,0,0,.2)";
+
+        ctx.fillRect(
+            0,
+            0,
+            900,
+            600
+        );
+
+        efeitoErro--;
+    }
+
+
+    if(criaturaTempo>0){
+
+        desenharCriatura();
+
+        criaturaTempo--;
+    }
+
+
+    if(mensagemTempo>0)
+        mensagemTempo--;
+}
+
+
+/* =========================
+   LOOP
+========================= */
+
+function jogo(){
+
+    atualizarJogador();
+
+    desenhar();
+
+    requestAnimationFrame(jogo);
+}
+
+
+jogo();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black Forest - 1 Minuto</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Share+Tech+Mono&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #020406;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            touch-action: none;
+            user-select: none;
+            overflow: hidden;
+        }
+        .creepster-font {
+            font-family: 'Creepster', cursive;
+        }
+        .timer-font {
+            font-family: 'Share Tech Mono', monospace;
+        }
+        canvas {
+            image-rendering: auto;
+        }
+
+        @keyframes timerPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(1.08); }
+        }
+
+        .timer-warning {
+            color: #ef4444 !important;
+            animation: timerPulse 0.5s infinite;
+            text-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
+        }
+
+        /* Estilos para Alucinações */
+        .hallucination-glitch {
+            animation: glitchEffect 0.1s infinite;
+        }
+        @keyframes glitchEffect {
+            0% { transform: translate(0, 0); filter: hue-rotate(0deg) contrast(2); }
+            25% { transform: translate(-4px, 4px); filter: hue-rotate(90deg) invert(0.2); }
+            50% { transform: translate(4px, -2px); filter: hue-rotate(180deg) contrast(3); }
+            75% { transform: translate(-2px, -4px); filter: hue-rotate(270deg) invert(0.4); }
+            100% { transform: translate(0, 0); filter: hue-rotate(360deg) contrast(2); }
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col justify-center items-center relative select-none cursor-crosshair">
+
+    <!-- Áudios do Jogo -->
+    <audio id="bgMusic" src="musica.mp3" loop></audio>
+    <audio id="tensionMusic" src="musicaap.mp3" loop></audio>
+    <audio id="screamerAudio" src="grito.mp3"></audio>
+
+    <!-- Overlay de Alucinações (Imagens e Textos Aleatórios) -->
+    <div id="hallucinationOverlay" class="absolute inset-0 z-25 pointer-events-none hidden flex items-center justify-center overflow-hidden">
+        <img id="hallucinationImg" src="" class="absolute w-full h-full object-cover opacity-35 hallucination-glitch hidden" alt="Alucinação" />
+        <div id="hallucinationTextContainer" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span id="hallucinationText" class="creepster-font text-5xl md:text-7xl text-red-600 tracking-wider drop-shadow-[0_0_15px_rgba(255,0,0,0.9)] opacity-0 transition-opacity duration-75"></span>
+        </div>
+    </div>
+
+    <!-- HUD superior em jogo -->
+    <div id="hud" class="absolute top-4 left-4 right-4 z-20 flex justify-between items-start pointer-events-none hidden">
+        <!-- Lado Esquerdo: Páginas e Nível de Medo -->
+        <div class="flex flex-col gap-2">
+            <div class="bg-black/85 backdrop-blur border border-red-900/50 px-4 py-2 rounded-xl flex items-center gap-3 shadow-2xl">
+                <span class="text-xs uppercase tracking-widest text-gray-400 font-semibold">Páginas:</span>
+                <span id="pageCount" class="text-2xl font-bold text-red-500">0 / 8</span>
+            </div>
+
+            <div class="bg-black/85 backdrop-blur border border-red-900/50 px-4 py-2 rounded-xl flex flex-col gap-1 w-48 shadow-2xl">
+                <div class="flex justify-between text-xs font-semibold tracking-wider">
+                    <span class="text-gray-400">MEDO</span>
+                    <span id="fearPercent" class="text-red-400">0%</span>
+                </div>
+                <div class="w-full h-2 bg-gray-900 rounded-full overflow-hidden border border-red-950">
+                    <div id="fearBar" class="h-full bg-red-600 transition-all duration-100 w-0"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lado Direito: Bússola / Minimapa + CRONÔMETRO -->
+        <div class="flex flex-col items-end gap-2">
+            <!-- BÚSSOLA / MINIMAPA -->
+            <div class="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-2 border-emerald-950/80 bg-black/90 shadow-[0_0_25px_rgba(0,0,0,0.95)] overflow-hidden flex items-center justify-center border-stone-800">
+                <canvas id="minimapCanvas" class="w-full h-full rounded-full"></canvas>
+                
+                <!-- Overlay Visual de Bússola -->
+                <div class="absolute inset-0 pointer-events-none border-2 border-emerald-950/60 rounded-full flex items-center justify-center">
+                    <span class="absolute top-1 text-[11px] font-bold text-red-600 tracking-wider drop-shadow">N</span>
+                    <span class="absolute right-1 text-[10px] font-bold text-gray-500">L</span>
+                    <span class="absolute bottom-1 text-[10px] font-bold text-gray-500">S</span>
+                    <span class="absolute left-1 text-[10px] font-bold text-gray-500">O</span>
+                    <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]"></div>
+                </div>
+            </div>
+
+            <!-- CRONÔMETRO -->
+            <div class="bg-black/90 backdrop-blur border border-red-950/80 px-4 py-2 rounded-xl flex flex-col items-center shadow-2xl w-32 md:w-40 border-stone-800">
+                <span class="text-[10px] uppercase tracking-widest text-red-400/80 font-bold mb-0.5">TEMPO RESTANTE</span>
+                <span id="timerDisplay" class="timer-font text-2xl md:text-3xl font-bold text-red-500 tracking-wider drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]">
+                    01:00
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dica dos controles -->
+    <div id="controlsHint" class="absolute bottom-4 left-4 z-20 bg-black/80 backdrop-blur text-gray-300 text-xs px-3 py-1.5 rounded-lg border border-stone-800 hidden md:block shadow-lg">
+        Mover / Apontar Lanterna: <strong class="text-white">W A S D</strong> | Correr: <strong class="text-white">Shift</strong>
+    </div>
+
+    <!-- Canvas Principal do Jogo -->
+    <canvas id="gameCanvas" class="w-full h-full block bg-black"></canvas>
+
+    <!-- Menu Inicial -->
+    <div id="startMenu" class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-stone-950/95 p-6 text-center backdrop-blur-md">
+        <h1 class="creepster-font text-6xl md:text-8xl text-red-700 tracking-wider mb-2 drop-shadow-[0_5px_20px_rgba(185,28,28,0.6)]">
+            BLACK FOREST
+        </h1>
+        <p class="text-stone-300 text-sm md:text-base max-w-md mb-6">
+            Você começa com <strong class="text-red-500 font-bold">1 minuto</strong> para encontrar as <strong>8 páginas</strong>. Cada página coletada concede <strong class="text-emerald-400 font-bold">+10 segundos</strong>! Cuidado com as ilusões e Slenders falsos.
+        </p>
+
+        <div class="bg-stone-900/90 border border-stone-800 p-4 rounded-xl mb-8 text-left text-xs md:text-sm text-stone-300 max-w-xs space-y-2 shadow-2xl">
+            <p><strong>🕹️ Mover & Lanterna:</strong> Teclas W, A, S, D</p>
+            <p><strong>⚡ Correr:</strong> Segurar Shift</p>
+            <p><strong>⏱️ Bônus:</strong> +10s por página coletada</p>
+            <p><strong>🧭 Bússola:</strong> Revela o mapa e páginas</p>
+        </div>
+
+        <button id="startBtn" class="bg-red-700 hover:bg-red-600 text-white font-bold py-4 px-10 rounded-xl transition duration-200 transform hover:scale-105 shadow-[0_0_25px_rgba(185,28,28,0.5)] active:scale-95 text-lg cursor-pointer">
+            ENTRAR NA FLORESTA
+        </button>
+    </div>
+
+    <!-- TELA DE GAME OVER (SEM BOTÃO, APENAS MENSAGEM FINAL) -->
+    <div id="gameOverMenu" class="absolute inset-0 z-50 flex flex-col items-center justify-between bg-black p-6 text-center hidden overflow-hidden">
+        <div class="absolute inset-0 w-full h-full pointer-events-none z-0">
+            <img id="jumpscareImg" 
+                 src="tela de morte.png" 
+                 alt="Slenderman Jumpscare" 
+                 class="w-full h-full object-cover object-center opacity-100 contrast-100 brightness-115"
+                 onerror="this.src='https://images.unsplash.com/photo-1509248961158-e54f6934749c?q=80&w=1200&auto=format&fit=crop'" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/60 opacity-60"></div>
+        </div>
+
+        <div class="relative z-10 pt-10">
+            <h2 class="creepster-font text-6xl md:text-8xl text-red-600 mb-2 drop-shadow-[0_5px_20px_rgba(0,0,0,1)] tracking-wider">ELE TE PEGOU!</h2>
+            <p id="gameOverText" class="text-gray-200 text-base md:text-lg font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Sua lanterna apagou e o tempo acabou na imensidão da floresta.</p>
+        </div>
+
+        <!-- MENSAGEM DE FIM DEFINITIVO -->
+        <div class="relative z-10 pb-16 flex items-center justify-center">
+            <span class="creepster-font text-3xl md:text-5xl text-red-500 tracking-wider drop-shadow-[0_0_15px_rgba(255,0,0,0.8)] bg-black/60 px-6 py-3 rounded-xl border border-red-900/50">
+                você só podia jogar uma vez
+            </span>
+        </div>
+    </div>
+
+    <!-- Tela de Vitória -->
+    <div id="winMenu" class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-stone-950/95 backdrop-blur-md p-6 text-center hidden">
+        <h2 class="creepster-font text-6xl md:text-8xl text-emerald-500 mb-2 drop-shadow-lg">VOCÊ SOBREVIVEU!</h2>
+        <p class="text-stone-300 text-base mb-8">Todas as 8 páginas foram recuperadas a tempo. Você escapou da taiga sombria!</p>
+        <button id="winRestartBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-8 rounded-xl transition duration-200 shadow-lg active:scale-95 cursor-pointer">
+            JOGAR NOVAMENTE
+        </button>
+    </div>
+
+    <!-- Controles Mobile -->
+    <div id="mobileControls" class="absolute bottom-6 right-6 z-20 grid grid-cols-3 gap-2 w-36 h-36 md:hidden hidden opacity-70">
+        <div></div>
+        <button id="btnUp" class="bg-stone-800 border border-stone-600 rounded-lg active:bg-stone-600 flex items-center justify-center text-xl text-white">▲</button>
+        <div></div>
+        <button id="btnLeft" class="bg-stone-800 border border-stone-600 rounded-lg active:bg-stone-600 flex items-center justify-center text-xl text-white">◄</button>
+        <button id="btnDown" class="bg-stone-800 border border-stone-600 rounded-lg active:bg-stone-600 flex items-center justify-center text-xl text-white">▼</button>
+        <button id="btnRight" class="bg-stone-800 border border-stone-600 rounded-lg active:bg-stone-600 flex items-center justify-center text-xl text-white">►</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const minimapCanvas = document.getElementById('minimapCanvas');
+        const miniCtx = minimapCanvas.getContext('2d');
+
+        const bgMusic = document.getElementById('bgMusic');
+        const tensionMusic = document.getElementById('tensionMusic');
+        const screamerAudio = document.getElementById('screamerAudio');
+        bgMusic.volume = 0.5;
+        tensionMusic.volume = 0.0;
+        tensionMusic.loop = true;
+
+        const slenderImg = new Image();
+        let slenderImgLoaded = false;
+        slenderImg.src = 'Slender.png';
+        slenderImg.onload = () => { slenderImgLoaded = true; };
+        slenderImg.onerror = () => { slenderImgLoaded = false; };
+
+        const treeImg = new Image();
+        let treeImgLoaded = false;
+        treeImg.src = 'arvore.png';
+        treeImg.onload = () => { treeImgLoaded = true; };
+        treeImg.onerror = () => { treeImgLoaded = false; };
+
+        const amberImg = new Image();
+        let amberImgLoaded = false;
+        amberImg.src = 'Amber.png';
+        amberImg.onload = () => { amberImgLoaded = true; };
+        amberImg.onerror = () => { amberImgLoaded = false; };
+
+        const hallucinationImages = ['berço.png', 'mao.png', 'maluco.png'].map(src => {
+            const img = new Image();
+            img.src = src;
+            return img;
+        });
+
+        const hallucinationPhrases = [
+            "Vai ficar tudo bem, Amber",
+            "Fuja",
+            "Sobreviva"
+        ];
+
+        let hallucinationTimer = 0;
+
+        const cimaImgs = [];
+        const baixoImgs = [];
+        const esquerdaImgs = [];
+        const direitaImgs = [];
+
+        for (let i = 1; i <= 9; i++) {
+            const imgC = new Image();
+            imgC.src = `cima${i}.png`;
+            cimaImgs.push(imgC);
+
+            const imgB = new Image();
+            imgB.src = `baixo${i}.png`;
+            baixoImgs.push(imgB);
+
+            const imgE = new Image();
+            imgE.src = `esquerda${i}.png`;
+            esquerdaImgs.push(imgE);
+
+            const imgD = new Image();
+            imgD.src = `direita${i}.png`;
+            direitaImgs.push(imgD);
+        }
+
+        const COLS = 23;
+        const ROWS = 23;
+        let TILE_SIZE = 72;
+
+        let gameState = 'MENU';
+        let maze = [];
+        let treeDetails = [];
+        let exploredMap = [];
+        let pages = [];
+        let collectedPages = 0;
+        const TOTAL_PAGES = 8;
+        let fearLevel = 0;
+
+        const INITIAL_GAME_DURATION = 60; 
+        let timeRemaining = INITIAL_GAME_DURATION;
+        let timerInterval = null;
+
+        let player = null;
+        let slenderman = null;
+        let fakeSlenders = [];
+
+        const keys = {
+            w: false, a: false, s: false, d: false,
+            Up: false, Left: false, Down: false, Right: false,
+            Shift: false
+        };
+
+        let audioCtx = null;
+        let staticSoundNode = null;
+        let staticGainNode = null;
+
+        function initAudio() {
+            if (audioCtx) return;
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+
+            const bufferSize = audioCtx.sampleRate * 2;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            staticSoundNode = audioCtx.createBufferSource();
+            staticSoundNode.buffer = noiseBuffer;
+            staticSoundNode.loop = true;
+
+            staticGainNode = audioCtx.createGain();
+            staticGainNode.gain.value = 0;
+
+            staticSoundNode.connect(staticGainNode);
+            staticGainNode.connect(audioCtx.destination);
+            staticSoundNode.start();
+        }
+
+        function playCollectSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(520, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1040, audioCtx.currentTime + 0.25);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.25);
+        }
+
+        class Player {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 11;
+                this.speed = 3.2;
+                this.angle = Math.PI / 2;
+                this.currentAnimFrame = 0;
+                this.animTimer = 0;
+                this.lastDirection = 'baixo';
+            }
+
+            update() {
+                let dx = 0;
+                let dy = 0;
+                let activeKey = null;
+
+                if (keys.w || keys.Up) { dy -= 1; activeKey = 'cima'; }
+                else if (keys.s || keys.Down) { dy += 1; activeKey = 'baixo'; }
+                else if (keys.a || keys.Left) { dx -= 1; activeKey = 'esquerda'; }
+                else if (keys.d || keys.Right) { dx += 1; activeKey = 'direita'; }
+
+                if (dx !== 0 && dy !== 0) {
+                    dx *= 0.7071;
+                    dy *= 0.7071;
+                }
+
+                const moveSpeed = keys.Shift ? this.speed * 1.45 : this.speed;
+
+                const nextX = this.x + dx * moveSpeed;
+                if (!checkCollision(nextX, this.y, this.radius)) {
+                    this.x = nextX;
+                }
+
+                const nextY = this.y + dy * moveSpeed;
+                if (!checkCollision(this.x, nextY, this.radius)) {
+                    this.y = nextY;
+                }
+
+                if (activeKey) {
+                    this.lastDirection = activeKey;
+                    this.animTimer += 1 / 60;
+                    if (this.animTimer >= 0.2) {
+                        this.animTimer = 0;
+                        this.currentAnimFrame = (this.currentAnimFrame + 1) % 9;
+                    }
+                } else {
+                    this.currentAnimFrame = 0;
+                    this.animTimer = 0;
+                }
+
+                if (dx !== 0 || dy !== 0) {
+                    this.angle = Math.atan2(dy, dx);
+                }
+
+                revealMinimapArea(this.x, this.y);
+            }
+
+            draw(cameraX, cameraY) {
+                const screenX = (this.x - cameraX) - 5;
+                const screenY = (this.y - cameraY) + 8 + 8; 
+
+                let spriteToDraw = null;
+                const isMoving = (keys.w || keys.Up || keys.s || keys.Down || keys.a || keys.Left || keys.d || keys.Right);
+
+                if (!isMoving) {
+                    if (amberImgLoaded) {
+                        spriteToDraw = amberImg;
+                    }
+                } else {
+                    if (this.lastDirection === 'cima') spriteToDraw = cimaImgs[this.currentAnimFrame];
+                    else if (this.lastDirection === 'baixo') spriteToDraw = baixoImgs[this.currentAnimFrame];
+                    else if (this.lastDirection === 'esquerda') spriteToDraw = esquerdaImgs[this.currentAnimFrame];
+                    else if (this.lastDirection === 'direita') spriteToDraw = direitaImgs[this.currentAnimFrame];
+                }
+
+                if (spriteToDraw && spriteToDraw.complete && spriteToDraw.naturalWidth !== 0) {
+                    ctx.save();
+                    ctx.drawImage(spriteToDraw, screenX - 17, screenY - 23, 34, 46);
+                    ctx.restore();
+                } else {
+                    ctx.fillStyle = '#334155';
+                    ctx.beginPath();
+                    ctx.arc(screenX, screenY, this.radius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#fbcfe8';
+                    ctx.beginPath();
+                    ctx.arc(screenX, screenY, this.radius * 0.55, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#fbbf24';
+                    const handX = screenX + Math.cos(this.angle) * 10;
+                    const handY = screenY + Math.sin(this.angle) * 10;
+                    ctx.beginPath();
+                    ctx.arc(handX, handY, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        class Slenderman {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 20;
+                this.baseSpeed = 2.1;
+                this.speed = this.baseSpeed;
+                this.renderWidth = 72;
+                this.renderHeight = 110;
+            }
+
+            update(player) {
+                const timeFactor = (INITIAL_GAME_DURATION - timeRemaining) / INITIAL_GAME_DURATION * 0.6;
+                this.speed = this.baseSpeed + (collectedPages * 0.35) + timeFactor;
+
+                const dx = player.x - this.x;
+                const dy = player.y - this.y;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist > 0) {
+                    const dirX = dx / dist;
+                    const dirY = dy / dist;
+
+                    const nextX = this.x + dirX * this.speed;
+                    const nextY = this.y + dirY * this.speed;
+
+                    if (!checkCollision(nextX, nextY, this.radius)) {
+                        this.x = nextX;
+                        this.y = nextY;
+                    } else if (!checkCollision(nextX, this.y, this.radius)) {
+                        this.x = nextX;
+                    } else if (!checkCollision(this.x, nextY, this.radius)) {
+                        this.y = nextY;
+                    }
+                }
+
+                if (dist > 1000) {
+                    this.teleportNearPlayer(player);
+                }
+            }
+
+            teleportNearPlayer(player) {
+                let placed = false;
+                let attempts = 0;
+                while (!placed && attempts < 60) {
+                    attempts++;
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 300 + Math.random() * 180;
+                    const tx = player.x + Math.cos(angle) * dist;
+                    const ty = player.y + Math.sin(angle) * dist;
+
+                    const col = Math.floor(tx / TILE_SIZE);
+                    const row = Math.floor(ty / TILE_SIZE);
+
+                    if (row > 0 && row < ROWS && col > 0 && col < COLS && maze[row][col] === 0) {
+                        this.x = tx;
+                        this.y = ty;
+                        placed = true;
+                    }
+                }
+            }
+
+            draw(cameraX, cameraY) {
+                const screenX = this.x - cameraX;
+                const screenY = this.y - cameraY;
+
+                if (slenderImgLoaded) {
+                    ctx.save();
+                    ctx.drawImage(
+                        slenderImg, 
+                        screenX - this.renderWidth / 2, 
+                        screenY - this.renderHeight / 1.2, 
+                        this.renderWidth, 
+                        this.renderHeight
+                    );
+                    ctx.restore();
+                } else {
+                    ctx.strokeStyle = '#050505';
+                    ctx.lineWidth = 4;
+                    for (let i = 0; i < 6; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(screenX, screenY);
+                        const off = Math.sin(Date.now() * 0.007 + i * 1.5) * 18;
+                        const side = i % 2 === 0 ? 1 : -1;
+                        ctx.lineTo(screenX + side * (26 + i * 4), screenY - 26 + off);
+                        ctx.stroke();
+                    }
+
+                    ctx.fillStyle = '#0f172a';
+                    ctx.beginPath();
+                    ctx.arc(screenX, screenY, this.radius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.beginPath();
+                    ctx.ellipse(screenX, screenY - 4, this.radius * 0.55, this.radius * 0.75, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        class FakeSlender {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.renderWidth = 72;
+                this.renderHeight = 110;
+                this.lifetime = 180;
+            }
+
+            update() {
+                this.lifetime--;
+            }
+
+            draw(cameraX, cameraY) {
+                const screenX = this.x - cameraX;
+                const screenY = this.y - cameraY;
+
+                ctx.save();
+                ctx.globalAlpha = 0.6;
+                if (slenderImgLoaded) {
+                    ctx.drawImage(
+                        slenderImg, 
+                        screenX - this.renderWidth / 2, 
+                        screenY - this.renderHeight / 1.2, 
+                        this.renderWidth, 
+                        this.renderHeight
+                    );
+                }
+                ctx.restore();
+            }
+        }
+
+        function generateMaze() {
+            maze = Array(ROWS).fill(null).map(() => Array(COLS).fill(1));
+            exploredMap = Array(ROWS).fill(null).map(() => Array(COLS).fill(false));
+            treeDetails = Array(ROWS).fill(null).map(() => Array(COLS).fill(null));
+
+            function carve(r, c) {
+                maze[r][c] = 0;
+                const dirs = [
+                    [-2, 0], [2, 0], [0, -2], [0, 2]
+                ].sort(() => Math.random() - 0.5);
+
+                for (let [dr, dc] of dirs) {
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    if (nr > 0 && nr < ROWS - 1 && nc > 0 && nc < COLS - 1 && maze[nr][nc] === 1) {
+                        maze[r + dr / 2][c + dc / 2] = 0;
+                        carve(nr, nc);
+                    }
+                }
+            }
+
+            carve(1, 1);
+
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (maze[r][c] === 1) {
+                        treeDetails[r][c] = {
+                            type: Math.random() > 0.18 ? 'pine' : 'rock',
+                            scale: 1.05 + Math.random() * 0.35,
+                            rotation: Math.random() * Math.PI * 2
+                        };
+                    }
+                }
+            }
+        }
+
+        function revealMinimapArea(px, py) {
+            const col = Math.floor(px / TILE_SIZE);
+            const row = Math.floor(py / TILE_SIZE);
+            const radius = 3;
+
+            for (let r = Math.max(0, row - radius); r <= Math.min(ROWS - 1, row + radius); r++) {
+                for (let c = Math.max(0, col - radius); c <= Math.min(COLS - 1, col + radius); c++) {
+                    exploredMap[r][c] = true;
+                }
+            }
+        }
+
+        function checkCollision(x, y, radius) {
+            const minCol = Math.floor((x - radius) / TILE_SIZE);
+            const maxCol = Math.floor((x + radius) / TILE_SIZE);
+            const minRow = Math.floor((y - radius) / TILE_SIZE);
+            const maxRow = Math.floor((y + radius) / TILE_SIZE);
+
+            for (let r = minRow; r <= maxRow; r++) {
+                for (let c = minCol; c <= maxCol; c++) {
+                    if (r < 0 || r >= ROWS || c < 0 || c >= COLS || maze[r][c] === 1) {
+                        const wallX = c * TILE_SIZE;
+                        const wallY = r * TILE_SIZE;
+
+                        const closestX = Math.max(wallX, Math.min(x, wallX + TILE_SIZE));
+                        const closestY = Math.max(wallY, Math.min(y, wallY + TILE_SIZE));
+
+                        const distX = x - closestX;
+                        const distY = y - closestY;
+                        const distance = Math.hypot(distX, distY);
+
+                        if (distance < radius) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        function spawnPages() {
+            pages = [];
+            const emptyCells = [];
+
+            for (let r = 1; r < ROWS - 1; r++) {
+                for (let c = 1; c < COLS - 1; c++) {
+                    if (maze[r][c] === 0 && !(r === 1 && c === 1)) {
+                        emptyCells.push({ r, c });
+                    }
+                }
+            }
+
+            emptyCells.sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < TOTAL_PAGES && i < emptyCells.length; i++) {
+                const cell = emptyCells[i];
+                pages.push({
+                    x: cell.c * TILE_SIZE + TILE_SIZE / 2,
+                    y: cell.r * TILE_SIZE + TILE_SIZE / 2,
+                    collected: false
+                });
+            }
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeRemaining = INITIAL_GAME_DURATION;
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                if (gameState !== 'PLAYING') return;
+
+                timeRemaining--;
+                updateTimerDisplay();
+
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('gameOverText').innerText = "O TEMPO ACABOU! Slenderman te encontrou na escuridão.";
+                    endGame(false);
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const formatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            const timerEl = document.getElementById('timerDisplay');
+            timerEl.innerText = formatted;
+
+            if (timeRemaining <= 10) {
+                timerEl.classList.add('timer-warning');
+            } else {
+                timerEl.classList.remove('timer-warning');
+            }
+        }
+
+        function initGame() {
+            resizeCanvas();
+            generateMaze();
+
+            player = new Player(1.5 * TILE_SIZE, 1.5 * TILE_SIZE);
+            slenderman = new Slenderman((COLS - 2.5) * TILE_SIZE, (ROWS - 2.5) * TILE_SIZE);
+            fakeSlenders = [];
+
+            spawnPages();
+            collectedPages = 0;
+            fearLevel = 0;
+
+            updateHUD();
+            startTimer();
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            TILE_SIZE = Math.max(60, Math.min(window.innerWidth, window.innerHeight) / 9);
+
+            minimapCanvas.width = 160;
+            minimapCanvas.height = 160;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        window.addEventListener('keydown', (e) => {
+            const k = e.key.toLowerCase();
+            if (k === 'w' || k === 'arrowup') keys.w = keys.Up = true;
+            if (k === 'a' || k === 'arrowleft') keys.a = keys.Left = true;
+            if (k === 's' || k === 'arrowdown') keys.s = keys.Down = true;
+            if (k === 'd' || k === 'arrowright') keys.d = keys.Right = true;
+            if (e.key === 'Shift') keys.Shift = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const k = e.key.toLowerCase();
+            if (k === 'w' || k === 'arrowup') keys.w = keys.Up = false;
+            if (k === 'a' || k === 'arrowleft') keys.a = keys.Left = false;
+            if (k === 's' || k === 'arrowdown') keys.s = keys.Down = false;
+            if (k === 'd' || k === 'arrowright') keys.d = keys.Right = false;
+            if (e.key === 'Shift') keys.Shift = false;
+        });
+
+        const bindTouch = (id, keyName) => {
+            const btn = document.getElementById(id);
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyName] = true; });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyName] = false; });
+        };
+        bindTouch('btnUp', 'Up');
+        bindTouch('btnDown', 'Down');
+        bindTouch('btnLeft', 'Left');
+        bindTouch('btnRight', 'Right');
+
+        function drawMinimap() {
+            const mw = minimapCanvas.width;
+            const mh = minimapCanvas.height;
+            const centerX = mw / 2;
+            const centerY = mh / 2;
+
+            miniCtx.clearRect(0, 0, mw, mh);
+            miniCtx.fillStyle = '#020617';
+            miniCtx.fillRect(0, 0, mw, mh);
+
+            const scale = mw / (COLS * TILE_SIZE);
+
+            miniCtx.save();
+            miniCtx.translate(centerX, centerY);
+
+            const pCol = player.x * scale;
+            const pRow = player.y * scale;
+
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const x = c * TILE_SIZE * scale - pCol;
+                    const y = r * TILE_SIZE * scale - pRow;
+                    const w = TILE_SIZE * scale;
+
+                    if (exploredMap[r][c]) {
+                        if (maze[r][c] === 1) {
+                            miniCtx.fillStyle = '#14532d';
+                            miniCtx.fillRect(x, y, w + 0.5, w + 0.5);
+                        } else {
+                            miniCtx.fillStyle = '#1e293b';
+                            miniCtx.fillRect(x, y, w + 0.5, w + 0.5);
+                        }
+                    } else {
+                        miniCtx.fillStyle = '#000000';
+                        miniCtx.fillRect(x, y, w + 0.5, w + 0.5);
+                    }
+                }
+            }
+
+            pages.forEach(p => {
+                if (!p.collected) {
+                    const col = Math.floor(p.x / TILE_SIZE);
+                    const row = Math.floor(p.y / TILE_SIZE);
+                    if (exploredMap[row][col]) {
+                        const px = p.x * scale - pCol;
+                        const py = p.y * scale - pRow;
+                        miniCtx.fillStyle = '#facc15';
+                        miniCtx.beginPath();
+                        miniCtx.arc(px, py, 2.5, 0, Math.PI * 2);
+                        miniCtx.fill();
+                    }
+                }
+            });
+
+            miniCtx.fillStyle = '#38bdf8';
+            miniCtx.beginPath();
+            miniCtx.arc(0, 0, 3.5, 0, Math.PI * 2);
+            miniCtx.fill();
+
+            miniCtx.strokeStyle = 'rgba(250, 204, 21, 0.6)';
+            miniCtx.lineWidth = 1.5;
+            miniCtx.beginPath();
+            miniCtx.moveTo(0, 0);
+            miniCtx.arc(0, 0, 18, player.angle - 0.35, player.angle + 0.35);
+            miniCtx.closePath();
+            miniCtx.stroke();
+
+            miniCtx.restore();
+        }
+
+        function drawTaigaTree(x, y, size, details) {
+            ctx.save();
+            ctx.translate(x + size / 2, y + size / 2);
+
+            const treeRenderSize = size * 1.5;
+
+            if (treeImgLoaded) {
+                ctx.drawImage(treeImg, -treeRenderSize / 2, -treeRenderSize / 2, treeRenderSize, treeRenderSize);
+                ctx.restore();
+                return;
+            }
+
+            if (details.type === 'rock') {
+                ctx.fillStyle = '#1e293b';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, size * 0.45, size * 0.35, details.rotation, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                return;
+            }
+
+            const treeScale = details.scale * 1.25;
+
+            ctx.fillStyle = '#1f1614';
+            ctx.beginPath();
+            ctx.arc(0, 0, size * 0.15 * treeScale, 0, Math.PI * 2);
+            ctx.fill();
+
+            const layers = [
+                { r: size * 0.55 * treeScale, color: '#02180a' },
+                { r: size * 0.42 * treeScale, color: '#033216' },
+                { r: size * 0.28 * treeScale, color: '#055427' }
+            ];
+
+            layers.forEach((layer) => {
+                ctx.fillStyle = layer.color;
+                ctx.beginPath();
+                const points = 8;
+                for (let i = 0; i < points * 2; i++) {
+                    const radius = i % 2 === 0 ? layer.r : layer.r * 0.68;
+                    const a = (i / points) * Math.PI + details.rotation;
+                    const px = Math.cos(a) * radius;
+                    const py = Math.sin(a) * radius;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fill();
+            });
+
+            ctx.restore();
+        }
+
+        function drawForestFloor(cameraX, cameraY) {
+            ctx.fillStyle = '#02060b';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const startCol = Math.max(0, Math.floor(cameraX / TILE_SIZE));
+            const endCol = Math.min(COLS, Math.ceil((cameraX + canvas.width) / TILE_SIZE));
+            const startRow = Math.max(0, Math.floor(cameraY / TILE_SIZE));
+            const endRow = Math.min(ROWS, Math.ceil((cameraY + canvas.height) / TILE_SIZE));
+
+            for (let r = startRow; r < endRow; r++) {
+                for (let c = startCol; c < endCol; c++) {
+                    const x = c * TILE_SIZE - cameraX;
+                    const y = r * TILE_SIZE - cameraY;
+
+                    if (maze[r][c] === 0) {
+                        ctx.fillStyle = '#081119';
+                        ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+
+                        ctx.fillStyle = 'rgba(16, 185, 129, 0.04)';
+                        ctx.fillRect(x + 4, y + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+                    }
+                }
+            }
+
+            for (let r = startRow; r < endRow; r++) {
+                for (let c = startCol; c < endCol; c++) {
+                    const x = c * TILE_SIZE - cameraX;
+                    const y = r * TILE_SIZE - cameraY;
+
+                    if (maze[r][c] === 1 && treeDetails[r][c]) {
+                        drawTaigaTree(x, y, TILE_SIZE, treeDetails[r][c]);
+                    }
+                }
+            }
+        }
+
+        function drawPages(cameraX, cameraY) {
+            pages.forEach((page) => {
+                if (!page.collected) {
+                    const x = page.x - cameraX;
+                    const y = page.y - cameraY;
+
+                    ctx.fillStyle = '#fef08a';
+                    ctx.fillRect(x - 6, y - 8, 12, 16);
+
+                    ctx.fillStyle = '#1c1917';
+                    ctx.fillRect(x - 4, y - 4, 8, 1.5);
+                    ctx.fillRect(x - 4, y - 1, 8, 1.5);
+                    ctx.fillRect(x - 4, y + 2, 6, 1.5);
+                }
+            });
+        }
+
+        function drawDirectionalFlashlight(cameraX, cameraY) {
+            const screenX = (player.x - cameraX) - 5;
+            const screenY = (player.y - cameraY) + 8 + 8;
+
+            ctx.save();
+
+            const flicker = Math.random() * 5;
+            const coneAngle = 0.58;
+            const beamLength = 340 + flicker - (fearLevel * 0.8);
+
+            const lightCanvas = document.createElement('canvas');
+            lightCanvas.width = canvas.width;
+            lightCanvas.height = canvas.height;
+            const lCtx = lightCanvas.getContext('2d');
+
+            lCtx.fillStyle = 'rgba(2, 5, 10, 0.985)';
+            lCtx.fillRect(0, 0, lightCanvas.width, lightCanvas.height);
+
+            lCtx.globalCompositeOperation = 'destination-out';
+
+            lCtx.beginPath();
+            lCtx.moveTo(screenX, screenY);
+            lCtx.arc(screenX, screenY, beamLength, player.angle - coneAngle / 2, player.angle + coneAngle / 2);
+            lCtx.closePath();
+            lCtx.fill();
+
+            lCtx.beginPath();
+            lCtx.arc(screenX, screenY, 32, 0, Math.PI * 2);
+            lCtx.fill();
+
+            ctx.drawImage(lightCanvas, 0, 0);
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'screen';
+
+            const beamGrad = ctx.createRadialGradient(screenX, screenY, 10, screenX, screenY, beamLength);
+            beamGrad.addColorStop(0, 'rgba(254, 240, 138, 0.48)');
+            beamGrad.addColorStop(0.35, 'rgba(253, 224, 71, 0.25)');
+            beamGrad.addColorStop(0.7, 'rgba(234, 179, 8, 0.08)');
+            beamGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            ctx.fillStyle = beamGrad;
+            ctx.beginPath();
+            ctx.moveTo(screenX, screenY);
+            ctx.arc(screenX, screenY, beamLength, player.angle - coneAngle / 2, player.angle + coneAngle / 2);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.restore();
+            ctx.restore();
+        }
+
+        function drawStaticOverlay() {
+            if (fearLevel <= 5) return;
+
+            const opacity = (fearLevel / 100) * 0.5;
+            ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+
+            const numDots = Math.floor((canvas.width * canvas.height) / 800) * (fearLevel / 20);
+            for (let i = 0; i < numDots; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const size = Math.random() * 2 + 1;
+                ctx.fillRect(x, y, size, size);
+            }
+        }
+
+        function handleHallucinations(distToSlender) {
+            const hallucinationOverlay = document.getElementById('hallucinationOverlay');
+            const hallucinationImg = document.getElementById('hallucinationImg');
+            const hallucinationText = document.getElementById('hallucinationText');
+
+            if (fearLevel > 40 && distToSlender < 350) {
+                hallucinationOverlay.classList.remove('hidden');
+                hallucinationTimer++;
+
+                if (hallucinationTimer % 75 === 0) {
+                    const showImage = Math.random() > 0.3;
+                    const showText = Math.random() > 0.2;
+
+                    if (showImage) {
+                        const randomImg = hallucinationImages[Math.floor(Math.random() * hallucinationImages.length)];
+                        hallucinationImg.src = randomImg.src;
+                        hallucinationImg.classList.remove('hidden');
+                    } else {
+                        hallucinationImg.classList.add('hidden');
+                    }
+
+                    if (showText) {
+                        const randomText = hallucinationPhrases[Math.floor(Math.random() * hallucinationPhrases.length)];
+                        hallucinationText.innerText = randomText;
+                        hallucinationText.style.opacity = '1';
+                    } else {
+                        hallucinationText.style.opacity = '0';
+                    }
+                } else if (hallucinationTimer % 75 === 25) {
+                    hallucinationImg.classList.add('hidden');
+                    hallucinationText.style.opacity = '0';
+                }
+            } else {
+                hallucinationOverlay.classList.add('hidden');
+                hallucinationImg.classList.add('hidden');
+                hallucinationText.style.opacity = '0';
+                hallucinationTimer = 0;
+            }
+        }
+
+        function spawnFakeSlendersOnPageCollect() {
+            const count = 1 + Math.floor(Math.random() * 2);
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 150 + Math.random() * 250;
+                const fx = player.x + Math.cos(angle) * dist;
+                const fy = player.y + Math.sin(angle) * dist;
+                fakeSlenders.push(new FakeSlender(fx, fy));
+            }
+            slenderman.teleportNearPlayer(player);
+        }
+
+        function checkInteractions() {
+            pages.forEach((page) => {
+                if (!page.collected) {
+                    const dist = Math.hypot(player.x - page.x, player.y - page.y);
+                    if (dist < player.radius + 14) {
+                        page.collected = true;
+                        collectedPages++;
+                        playCollectSound();
+                        
+                        timeRemaining += 10;
+                        updateTimerDisplay();
+
+                        updateHUD();
+
+                        spawnFakeSlendersOnPageCollect();
+
+                        if (collectedPages >= TOTAL_PAGES) {
+                            endGame(true);
+                        }
+                    }
+                }
+            });
+
+            for (let i = fakeSlenders.length - 1; i >= 0; i--) {
+                fakeSlenders[i].update();
+                if (fakeSlenders[i].lifetime <= 0) {
+                    fakeSlenders.splice(i, 1);
+                }
+            }
+
+            const distToSlender = Math.hypot(player.x - slenderman.x, player.y - slenderman.y);
+            const maxDistThreshold = 450;
+
+            if (distToSlender < maxDistThreshold) {
+                fearLevel = Math.min(100, Math.floor(((maxDistThreshold - distToSlender) / maxDistThreshold) * 100));
+            } else {
+                fearLevel = 0;
+            }
+
+            handleHallucinations(distToSlender);
+
+            if (distToSlender < 500) {
+                const tensionVol = Math.max(0, Math.min(1, (500 - distToSlender) / 400));
+                tensionMusic.volume = tensionVol;
+                if (tensionMusic.paused && gameState === 'PLAYING') {
+                    tensionMusic.play().catch(() => {});
+                }
+            } else {
+                tensionMusic.volume = 0;
+                if (!tensionMusic.paused) {
+                    tensionMusic.pause();
+                }
+            }
+
+            if (staticGainNode) {
+                staticGainNode.gain.setTargetAtTime((fearLevel / 100) * 0.18, audioCtx.currentTime, 0.1);
+            }
+
+            document.getElementById('fearBar').style.width = fearLevel + '%';
+            document.getElementById('fearPercent').innerText = fearLevel + '%';
+
+            if (distToSlender < player.radius + slenderman.radius) {
+                document.getElementById('gameOverText').innerText = "Slenderman te capturou no silêncio da floresta!";
+                endGame(false);
+            }
+        }
+
+        function updateHUD() {
+            document.getElementById('pageCount').innerText = `${collectedPages} / ${TOTAL_PAGES}`;
+        }
+
+        function gameLoop() {
+            if (gameState !== 'PLAYING') return;
+
+            player.update();
+            slenderman.update(player);
+            checkInteractions();
+
+            if (gameState !== 'PLAYING') return;
+
+            const cameraX = player.x - canvas.width / 2;
+            const cameraY = player.y - canvas.height / 2;
+
+            drawForestFloor(cameraX, cameraY);
+            drawPages(cameraX, cameraY);
+            player.draw(cameraX, cameraY);
+            
+            fakeSlenders.forEach(fs => fs.draw(cameraX, cameraY));
+
+            slenderman.draw(cameraX, cameraY);
+            drawDirectionalFlashlight(cameraX, cameraY);
+            drawStaticOverlay();
+            drawMinimap();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function startGame() {
+            initAudio();
+            gameState = 'PLAYING';
+
+            bgMusic.currentTime = 0;
+            bgMusic.play().catch(() => {});
+
+            tensionMusic.pause();
+            tensionMusic.currentTime = 0;
+
+            document.getElementById('startMenu').classList.add('hidden');
+            document.getElementById('gameOverMenu').classList.add('hidden');
+            document.getElementById('winMenu').classList.add('hidden');
+
+            document.getElementById('hud').classList.remove('hidden');
+            document.getElementById('mobileControls').classList.remove('hidden');
+
+            initGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function endGame(won) {
+            gameState = won ? 'WIN' : 'GAMEOVER';
+            clearInterval(timerInterval);
+
+            bgMusic.pause();
+            tensionMusic.pause();
+
+            document.getElementById('hallucinationOverlay').classList.add('hidden');
+
+            if (staticGainNode) {
+                staticGainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            }
+
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('mobileControls').classList.add('hidden');
+
+            if (won) {
+                document.getElementById('winMenu').classList.remove('hidden');
+            } else {
+                screamerAudio.currentTime = 0;
+                screamerAudio.play().catch(() => {});
+
+                document.getElementById('gameOverMenu').classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('winRestartBtn').addEventListener('click', startGame);
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,3169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APENAS UMA LUZ</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    background:#020203;
+    color:white;
+    font-family:Arial,Helvetica,sans-serif;
+    overflow:hidden;
+}
+
+#game{
+    display:block;
+    margin:auto;
+    background:#050505;
+}
+
+.screen{
+    position:fixed;
+    inset:0;
+    background:
+        radial-gradient(circle at center,#151515 0%,#050505 45%,#000 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:20;
+}
+
+.hidden{
+    display:none !important;
+}
+
+.menuBox{
+    text-align:center;
+    width:min(90%,700px);
+}
+
+.title{
+    font-size:clamp(50px,9vw,100px);
+    letter-spacing:10px;
+    color:#eee;
+    text-shadow:
+        0 0 10px #fff,
+        0 0 35px #777;
+    margin-bottom:12px;
+}
+
+.subtitle{
+    color:#777;
+    letter-spacing:4px;
+    font-size:15px;
+    margin-bottom:45px;
+}
+
+button{
+    background:#090909;
+    border:1px solid #777;
+    color:white;
+    padding:16px 38px;
+    font-size:16px;
+    letter-spacing:3px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+button:hover{
+    background:#eee;
+    color:#000;
+    box-shadow:0 0 20px #aaa;
+}
+
+.storyBox{
+    width:min(850px,90%);
+    text-align:center;
+}
+
+.storyText{
+    min-height:180px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:clamp(20px,3vw,30px);
+    line-height:1.6;
+    color:#ddd;
+    text-shadow:0 0 15px #000;
+}
+
+.storySmall{
+    color:#666;
+    font-size:13px;
+    letter-spacing:3px;
+    margin-bottom:25px;
+}
+
+#hud{
+    position:fixed;
+    top:15px;
+    left:15px;
+    z-index:5;
+    font-size:14px;
+    letter-spacing:1px;
+    text-shadow:0 0 5px black;
+    pointer-events:none;
+}
+
+.hudLine{
+    margin-bottom:7px;
+}
+
+.bar{
+    width:180px;
+    height:9px;
+    border:1px solid #aaa;
+    margin-top:5px;
+    background:#111;
+}
+
+#batteryBar{
+    height:100%;
+    width:100%;
+    background:#ddd;
+}
+
+#message{
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    z-index:10;
+    width:min(800px,85%);
+    text-align:center;
+    font-size:clamp(22px,4vw,40px);
+    line-height:1.5;
+    color:white;
+    text-shadow:
+        0 0 5px black,
+        0 0 20px black,
+        0 0 40px black;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .3s;
+}
+
+#message.show{
+    opacity:1;
+}
+
+#ending{
+    position:fixed;
+    inset:0;
+    z-index:25;
+    background:#000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+}
+
+.endingBox{
+    width:min(850px,90%);
+    position:relative;
+    z-index:4;
+}
+
+.endingTitle{
+    font-size:clamp(42px,8vw,85px);
+    letter-spacing:8px;
+    margin-bottom:30px;
+    text-shadow:0 0 20px #555;
+}
+
+.endingText{
+    color:#aaa;
+    font-size:18px;
+    line-height:2;
+    margin-bottom:35px;
+}
+
+.monsterEnding{
+    position:absolute;
+    width:260px;
+    height:390px;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    opacity:.13;
+    pointer-events:none;
+    z-index:1;
+}
+
+.monsterBody{
+    position:absolute;
+    left:50%;
+    bottom:0;
+    transform:translateX(-50%);
+    width:110px;
+    height:240px;
+    background:#020202;
+    border-radius:50% 50% 20% 20%;
+    box-shadow:0 0 70px #000;
+}
+
+.eye{
+    position:absolute;
+    width:16px;
+    height:9px;
+    background:#eee;
+    border-radius:50%;
+    top:55px;
+    box-shadow:0 0 15px white;
+}
+
+.eye.left{
+    left:25px;
+}
+
+.eye.right{
+    right:25px;
+}
+
+.growing{
+    animation:growMonster 3.5s forwards;
+}
+
+@keyframes growMonster{
+    0%{
+        transform:translate(-50%,-50%) scale(.5);
+        opacity:.15;
+    }
+
+    35%{
+        opacity:.5;
+    }
+
+    70%{
+        opacity:.8;
+    }
+
+    100%{
+        transform:translate(-50%,-50%) scale(2.5);
+        opacity:1;
+    }
+}
+
+.defeated{
+    animation:defeatMonster 3.2s forwards;
+}
+
+@keyframes defeatMonster{
+
+    0%{
+        transform:translate(-50%,-50%) scale(1);
+        opacity:.9;
+    }
+
+    25%{
+        transform:translate(-50%,-50%) scale(1.15) rotate(-5deg);
+        opacity:.75;
+    }
+
+    50%{
+        transform:translate(-50%,-50%) scale(1.25) rotate(6deg);
+        opacity:.5;
+    }
+
+    75%{
+        transform:translate(-50%,-50%) scale(.75) rotate(-12deg);
+        opacity:.25;
+    }
+
+    100%{
+        transform:translate(-50%,20%) scale(.15) rotate(30deg);
+        opacity:0;
+    }
+}
+
+.shake{
+    animation:shake .12s infinite;
+}
+
+@keyframes shake{
+    0%{transform:translate(0)}
+    25%{transform:translate(3px,-2px)}
+    50%{transform:translate(-3px,2px)}
+    75%{transform:translate(2px,3px)}
+    100%{transform:translate(0)}
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game" width="1075" height="675"></canvas>
+
+<div id="hud" class="hidden">
+
+    <div class="hudLine">🔦 LUZ</div>
+
+    <div class="bar">
+        <div id="batteryBar"></div>
+    </div>
+
+    <div class="hudLine" id="keyHud">
+        🔑 Chave: NÃO
+    </div>
+
+</div>
+
+<div id="message"></div>
+
+
+<!-- MENU -->
+
+<div id="menu" class="screen">
+
+    <div class="menuBox">
+
+        <div class="title">
+            APENAS UMA LUZ
+        </div>
+
+        <div class="subtitle">
+            UMA COISA VOCÊ PRECISA. UMA COISA TE SEGUE.
+        </div>
+
+        <button onclick="comecarHistoria()">
+            COMEÇAR
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- HISTÓRIA -->
+
+<div id="story" class="screen hidden">
+
+    <div class="storyBox">
+
+        <div class="storySmall" id="storyCounter">
+            01 / 12
+        </div>
+
+        <div class="storyText" id="storyText">
+            23:47.
+        </div>
+
+        <button onclick="proximaHistoria()">
+            CONTINUAR
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- TELA FINAL -->
+
+<div id="ending" class="hidden">
+
+    <div class="endingBox">
+
+        <div id="endingTitle" class="endingTitle">
+            VOCÊ ESCAPOU
+        </div>
+
+        <div id="endingText" class="endingText">
+            A porta abriu.
+        </div>
+
+        <button onclick="location.reload()">
+            JOGAR NOVAMENTE
+        </button>
+
+    </div>
+
+
+    <!-- MONSTRO FINAL -->
+
+    <div id="monsterEnding" class="monsterEnding">
+
+        <div class="monsterBody">
+
+            <div class="eye left"></div>
+            <div class="eye right"></div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   CONFIGURAÇÕES
+========================================================= */
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const TILE = 25;
+
+const COLS = 43;
+const ROWS = 27;
+
+let map = [];
+
+let player = {
+    x:0,
+    y:0,
+    speed:2.25
+};
+
+let key = {
+    x:0,
+    y:0,
+    collected:false
+};
+
+let door = {
+    x:0,
+    y:0
+};
+
+let monster = {
+    x:0,
+    y:0,
+    active:false,
+    chasing:false,
+    speed:1.15,
+    visible:false
+};
+
+let battery = 100;
+
+let gameRunning = false;
+
+let lastTime = 0;
+
+let monsterStage = 0;
+
+let storyIndex = 0;
+
+let audioCtx = null;
+
+let ambientOsc = null;
+
+let keysPressed = {};
+
+
+/* =========================================================
+   HISTÓRIA
+========================================================= */
+
+const storyScenes = [
+
+"23:47.<br><br>O celular perdeu o sinal.",
+
+"23:58.<br><br>A estrada parecia diferente.<br>Você não lembrava daquela curva.",
+
+"Você viu uma luz entre as árvores.",
+
+"Você parou o carro.",
+
+"Quando abriu os olhos,<br>estava dentro de um prédio.",
+
+"Não havia ninguém.<br>Não havia sinal.<br>Não havia saída.",
+
+"Seu celular estava com 2% de bateria.",
+
+"A única coisa funcionando era a lanterna.",
+
+"Então você ouviu alguma coisa<br>do outro lado da parede.",
+
+"Você encontrou uma chave.",
+
+"Por alguns segundos,<br>tudo ficou completamente silencioso.",
+
+"Então você percebeu uma coisa:<br><br>você não estava sozinho."
+
+];
+
+
+/* =========================================================
+   AUDIO
+========================================================= */
+
+function initAudio(){
+
+    if(audioCtx) return;
+
+    audioCtx =
+        new (window.AudioContext || window.webkitAudioContext)();
+
+    ambientOsc =
+        audioCtx.createOscillator();
+
+    const gain =
+        audioCtx.createGain();
+
+    ambientOsc.type="sine";
+
+    ambientOsc.frequency.value=48;
+
+    gain.gain.value=.025;
+
+    ambientOsc.connect(gain);
+
+    gain.connect(audioCtx.destination);
+
+    ambientOsc.start();
+
+}
+
+
+function tone(freq,duration,type="sine",volume=.08){
+
+    if(!audioCtx) return;
+
+    const osc =
+        audioCtx.createOscillator();
+
+    const gain =
+        audioCtx.createGain();
+
+    osc.type=type;
+
+    osc.frequency.value=freq;
+
+    gain.gain.setValueAtTime(
+        volume,
+        audioCtx.currentTime
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+        .001,
+        audioCtx.currentTime+duration
+    );
+
+    osc.connect(gain);
+
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+
+    osc.stop(
+        audioCtx.currentTime+duration
+    );
+
+}
+
+
+function noise(duration=.3,volume=.04){
+
+    if(!audioCtx) return;
+
+    const buffer =
+        audioCtx.createBuffer(
+            1,
+            audioCtx.sampleRate*duration,
+            audioCtx.sampleRate
+        );
+
+    const data =
+        buffer.getChannelData(0);
+
+    for(let i=0;i<data.length;i++){
+
+        data[i]=Math.random()*2-1;
+
+    }
+
+    const source =
+        audioCtx.createBufferSource();
+
+    const gain =
+        audioCtx.createGain();
+
+    gain.gain.value=volume;
+
+    source.buffer=buffer;
+
+    source.connect(gain);
+
+    gain.connect(audioCtx.destination);
+
+    source.start();
+
+}
+
+
+function stepSound(){
+
+    tone(
+        75,
+        .04,
+        "triangle",
+        .025
+    );
+
+}
+
+
+function keySound(){
+
+    tone(
+        520,
+        .12,
+        "sine",
+        .08
+    );
+
+    setTimeout(()=>{
+
+        tone(
+            780,
+            .18,
+            "sine",
+            .06
+        );
+
+    },100);
+
+}
+
+
+function doorSound(){
+
+    tone(
+        90,
+        .6,
+        "sawtooth",
+        .08
+    );
+
+    setTimeout(()=>{
+
+        tone(
+            180,
+            .7,
+            "sine",
+            .07
+        );
+
+    },250);
+
+}
+
+
+function monsterSound(){
+
+    noise(
+        .5,
+        .08
+    );
+
+    tone(
+        42,
+        .8,
+        "sawtooth",
+        .09
+    );
+
+    setTimeout(()=>{
+
+        tone(
+            30,
+            1,
+            "sawtooth",
+            .08
+        );
+
+    },250);
+
+}
+
+
+function heartbeat(){
+
+    tone(
+        65,
+        .1,
+        "sine",
+        .07
+    );
+
+    setTimeout(()=>{
+
+        tone(
+            55,
+            .1,
+            "sine",
+            .06
+        );
+
+    },140);
+
+}
+
+
+function flickerSound(){
+
+    noise(
+        .08,
+        .025
+    );
+
+}
+
+
+function creak(){
+
+    tone(
+        110,
+        .7,
+        "sawtooth",
+        .035
+    );
+
+    setTimeout(()=>{
+
+        tone(
+            73,
+            .8,
+            "sawtooth",
+            .03
+        );
+
+    },250);
+
+}
+
+
+function interference(){
+
+    noise(
+        .35,
+        .07
+    );
+
+    tone(
+        800,
+        .05,
+        "square",
+        .025
+    );
+
+}
+
+
+/* =========================================================
+   MENU / HISTÓRIA
+========================================================= */
+
+function comecarHistoria(){
+
+    initAudio();
+
+    document
+        .getElementById("menu")
+        .classList.add("hidden");
+
+    document
+        .getElementById("story")
+        .classList.remove("hidden");
+
+    storyIndex=0;
+
+    atualizarHistoria();
+
+    interference();
+
+}
+
+
+function atualizarHistoria(){
+
+    const text =
+        document.getElementById("storyText");
+
+    const counter =
+        document.getElementById("storyCounter");
+
+    text.innerHTML =
+        storyScenes[storyIndex];
+
+    counter.innerText =
+        String(storyIndex+1).padStart(2,"0")
+        +" / "
+        +storyScenes.length;
+
+
+    if(storyIndex===0){
+
+        tone(
+            55,
+            .5,
+            "sine",
+            .03
+        );
+
+    }
+
+
+    if(storyIndex===2){
+
+        creak();
+
+    }
+
+
+    if(storyIndex===4){
+
+        noise(
+            .8,
+            .04
+        );
+
+    }
+
+
+    if(storyIndex===8){
+
+        heartbeat();
+
+    }
+
+
+    if(storyIndex===10){
+
+        interference();
+
+        setTimeout(()=>{
+
+            monsterSound();
+
+        },500);
+
+    }
+
+}
+
+
+function proximaHistoria(){
+
+    initAudio();
+
+    storyIndex++;
+
+    if(
+        storyIndex>=storyScenes.length
+    ){
+
+        document
+            .getElementById("story")
+            .classList.add("hidden");
+
+        iniciarJogo();
+
+        return;
+
+    }
+
+    atualizarHistoria();
+
+}
+
+
+/* =========================================================
+   MAPA
+========================================================= */
+
+function buildMap(){
+
+    map=[];
+
+
+    for(let y=0;y<ROWS;y++){
+
+        map[y]=[];
+
+        for(let x=0;x<COLS;x++){
+
+            map[y][x]=1;
+
+        }
+
+    }
+
+
+    function room(x1,y1,x2,y2){
+
+        for(
+            let y=y1;
+            y<=y2;
+            y++
+        ){
+
+            for(
+                let x=x1;
+                x<=x2;
+                x++
+            ){
+
+                map[y][x]=0;
+
+            }
+
+        }
+
+    }
+
+
+    function horizontal(x1,x2,y){
+
+        for(
+            let x=x1;
+            x<=x2;
+            x++
+        ){
+
+            if(map[y]){
+
+                map[y][x]=0;
+
+            }
+
+        }
+
+    }
+
+
+    function vertical(x,y1,y2){
+
+        for(
+            let y=y1;
+            y<=y2;
+            y++
+        ){
+
+            if(map[y]){
+
+                map[y][x]=0;
+
+            }
+
+        }
+
+    }
+
+
+    /* CORREDOR PRINCIPAL */
+
+    horizontal(
+        2,
+        40,
+        12
+    );
+
+    horizontal(
+        2,
+        40,
+        13
+    );
+
+    horizontal(
+        2,
+        40,
+        14
+    );
+
+
+    /* CORREDOR CENTRAL */
+
+    vertical(
+        20,
+        2,
+        24
+    );
+
+    vertical(
+        21,
+        2,
+        24
+    );
+
+    vertical(
+        22,
+        2,
+        24
+    );
+
+
+    /* SALA SUPERIOR ESQUERDA */
+
+    room(
+        3,
+        3,
+        15,
+        10
+    );
+
+
+    /* SALA SUPERIOR DIREITA */
+
+    room(
+        27,
+        3,
+        39,
+        10
+    );
+
+
+    /* SALA INFERIOR ESQUERDA */
+
+    room(
+        3,
+        17,
+        15,
+        23
+    );
+
+
+    /* SALA INFERIOR DIREITA */
+
+    room(
+        27,
+        17,
+        39,
+        23
+    );
+
+
+    /* RECEPÇÃO CENTRAL */
+
+    room(
+        17,
+        10,
+        25,
+        16
+    );
+
+
+    /* CORREDORES SUPERIORES */
+
+    horizontal(
+        14,
+        21,
+        6
+    );
+
+    horizontal(
+        21,
+        28,
+        6
+    );
+
+
+    /* CORREDORES INFERIORES */
+
+    horizontal(
+        14,
+        21,
+        20
+    );
+
+    horizontal(
+        21,
+        28,
+        20
+    );
+
+
+    /* ENTRADAS */
+
+    vertical(
+        8,
+        10,
+        12
+    );
+
+    vertical(
+        13,
+        10,
+        12
+    );
+
+    vertical(
+        28,
+        10,
+        12
+    );
+
+    vertical(
+        33,
+        10,
+        12
+    );
+
+
+    vertical(
+        8,
+        14,
+        17
+    );
+
+    vertical(
+        13,
+        14,
+        17
+    );
+
+    vertical(
+        28,
+        14,
+        17
+    );
+
+    vertical(
+        33,
+        14,
+        17
+    );
+
+
+    /* LIGAÇÕES LATERAIS */
+
+    vertical(
+        2,
+        12,
+        14
+    );
+
+    vertical(
+        40,
+        12,
+        14
+    );
+
+
+    /* ENTRADA */
+
+    horizontal(
+        20,
+        22,
+        24
+    );
+
+
+    /* SAÍDA */
+
+    horizontal(
+        20,
+        22,
+        2
+    );
+
+}
+
+
+/* =========================================================
+   COLISÃO / POSIÇÕES
+========================================================= */
+
+function isWall(x,y){
+
+    const tx=
+        Math.floor(x/TILE);
+
+    const ty=
+        Math.floor(y/TILE);
+
+    if(
+        tx<0 ||
+        ty<0 ||
+        tx>=COLS ||
+        ty>=ROWS
+    ){
+
+        return true;
+
+    }
+
+    return map[ty][tx]===1;
+
+}
+
+
+function isFreeTile(x,y){
+
+    return(
+        x>=0 &&
+        y>=0 &&
+        x<COLS &&
+        y<ROWS &&
+        map[y][x]===0
+    );
+
+}
+
+
+function distance(a,b,c,d){
+
+    return Math.hypot(
+        a-c,
+        b-d
+    );
+
+}
+
+
+function chooseLocations(){
+
+    const free=[];
+
+
+    for(
+        let y=1;
+        y<ROWS-1;
+        y++
+    ){
+
+        for(
+            let x=1;
+            x<COLS-1;
+            x++
+        ){
+
+            if(
+                isFreeTile(x,y)
+            ){
+
+                free.push({
+
+                    x:
+                        x*TILE+
+                        TILE/2,
+
+                    y:
+                        y*TILE+
+                        TILE/2
+
+                });
+
+            }
+
+        }
+
+    }
+
+
+    /* PORTAS POSSÍVEIS */
+
+    const exits=[
+
+        {
+            x:
+                21*TILE+
+                12.5,
+
+            y:
+                2*TILE+
+                12.5
+        },
+
+        {
+            x:
+                21*TILE+
+                12.5,
+
+            y:
+                24*TILE+
+                12.5
+        }
+
+    ];
+
+
+    door=
+        exits[
+            Math.floor(
+                Math.random()*
+                exits.length
+            )
+        ];
+
+
+    /* JOGADOR */
+
+    const playerCandidates =
+        free.filter(p=>
+
+            distance(
+                p.x,
+                p.y,
+                door.x,
+                door.y
+            )>250
+
+        );
+
+
+    const p =
+        playerCandidates[
+            Math.floor(
+                Math.random()*
+                playerCandidates.length
+            )
+        ];
+
+
+    player.x=p.x;
+    player.y=p.y;
+
+
+    /* CHAVE */
+
+    const keyCandidates =
+        free.filter(p=>
+
+            distance(
+                p.x,
+                p.y,
+                player.x,
+                player.y
+            )>300
+
+            &&
+
+            distance(
+                p.x,
+                p.y,
+                door.x,
+                door.y
+            )>150
+
+        );
+
+
+    const k =
+        keyCandidates[
+            Math.floor(
+                Math.random()*
+                keyCandidates.length
+            )
+        ];
+
+
+    key.x=k.x;
+    key.y=k.y;
+
+    key.collected=false;
+
+
+    /* MONSTRO */
+
+    const monsterCandidates =
+        free.filter(p=>
+
+            distance(
+                p.x,
+                p.y,
+                player.x,
+                player.y
+            )>350
+
+        );
+
+
+    const m =
+        monsterCandidates[
+            Math.floor(
+                Math.random()*
+                monsterCandidates.length
+            )
+        ];
+
+
+    monster.x=m.x;
+    monster.y=m.y;
+
+}
+
+
+/* =========================================================
+   INICIAR
+========================================================= */
+
+function iniciarJogo(){
+
+    initAudio();
+
+    buildMap();
+
+    chooseLocations();
+
+    battery=100;
+
+    monsterStage=0;
+
+    monster.active=false;
+
+    monster.chasing=false;
+
+    monster.visible=false;
+
+    gameRunning=true;
+
+    document
+        .getElementById("hud")
+        .classList.remove("hidden");
+
+    document
+        .getElementById("message")
+        .classList.remove("show");
+
+    lastTime=
+        performance.now();
+
+    requestAnimationFrame(
+        gameLoop
+    );
+
+
+    setTimeout(()=>{
+
+        mostrarMensagem(
+            "ENCONTRE A CHAVE.<br><br>E NÃO APAGUE A LUZ.",
+            3500
+        );
+
+    },500);
+
+}
+
+
+/* =========================================================
+   MOVIMENTO
+========================================================= */
+
+function canMoveTo(x,y){
+
+    const r=8;
+
+    const points=[
+
+        [x-r,y-r],
+        [x+r,y-r],
+        [x-r,y+r],
+        [x+r,y+r]
+
+    ];
+
+
+    for(
+        const p of points
+    ){
+
+        if(
+            isWall(
+                p[0],
+                p[1]
+            )
+        ){
+
+            return false;
+
+        }
+
+    }
+
+    return true;
+
+}
+
+
+function movePlayer(dx,dy){
+
+    const nx=
+        player.x+dx;
+
+    const ny=
+        player.y+dy;
+
+
+    if(
+        canMoveTo(
+            nx,
+            player.y
+        )
+    ){
+
+        player.x=nx;
+
+    }
+
+
+    if(
+        canMoveTo(
+            player.x,
+            ny
+        )
+    ){
+
+        player.y=ny;
+
+    }
+
+}
+
+
+/* =========================================================
+   TECLADO
+========================================================= */
+
+window.addEventListener(
+    "keydown",
+    e=>{
+
+        keysPressed[
+            e.key.toLowerCase()
+        ]=true;
+
+    }
+);
+
+
+window.addEventListener(
+    "keyup",
+    e=>{
+
+        keysPressed[
+            e.key.toLowerCase()
+        ]=false;
+
+    }
+);
+
+
+/* =========================================================
+   MENSAGENS
+========================================================= */
+
+let messageTimeout;
+
+function mostrarMensagem(
+    text,
+    time=2500
+){
+
+    const el =
+        document.getElementById("message");
+
+    clearTimeout(
+        messageTimeout
+    );
+
+    el.innerHTML=text;
+
+    el.classList.add("show");
+
+
+    messageTimeout=
+        setTimeout(()=>{
+
+            el.classList.remove(
+                "show"
+            );
+
+        },time);
+
+}
+
+
+/* =========================================================
+   CHAVE
+========================================================= */
+
+function checkKey(){
+
+    if(key.collected) return;
+
+
+    if(
+        distance(
+            player.x,
+            player.y,
+            key.x,
+            key.y
+        )<22
+    ){
+
+        key.collected=true;
+
+        keySound();
+
+
+        mostrarMensagem(
+            "VOCÊ PEGOU A CHAVE.<br><br>...<br><br>POR QUE ESTÁ FRIA?",
+            4000
+        );
+
+
+        document
+            .getElementById("keyHud")
+            .innerText=
+            "🔑 Chave: SIM";
+
+
+        /* PRIMEIRA APARIÇÃO */
+
+        setTimeout(()=>{
+
+            monsterStage=1;
+
+            monster.visible=true;
+
+            monsterSound();
+
+
+            mostrarMensagem(
+                "VOCÊ OUVIU PASSOS.",
+                2500
+            );
+
+
+            setTimeout(()=>{
+
+                monster.visible=false;
+
+                interference();
+
+            },1800);
+
+
+        },2000);
+
+
+        /* SEGUNDA APARIÇÃO */
+
+        setTimeout(()=>{
+
+            monsterStage=2;
+
+            monster.visible=true;
+
+            monsterSound();
+
+
+            mostrarMensagem(
+                "NÃO OLHE PARA TRÁS.",
+                2500
+            );
+
+
+            setTimeout(()=>{
+
+                monster.visible=false;
+
+
+                setTimeout(()=>{
+
+                    monsterStage=3;
+
+                    monster.active=true;
+
+                    monster.chasing=true;
+
+                    monster.visible=true;
+
+                    monster.speed=0.75;
+
+                    monsterSound();
+
+
+                    mostrarMensagem(
+                        "ELE TE VIU.",
+                        2000
+                    );
+
+
+                },1500);
+
+
+            },1800);
+
+
+        },7000);
+
+    }
+
+}
+
+
+/* =========================================================
+   MONSTRO
+========================================================= */
+
+function monsterMove(){
+
+    if(!monster.active)
+        return;
+
+
+    const dx=
+        player.x-monster.x;
+
+    const dy=
+        player.y-monster.y;
+
+    const d=
+        Math.hypot(
+            dx,
+            dy
+        );
+
+
+    if(d>0){
+
+        monster.x +=
+            (dx/d)*
+            monster.speed;
+
+        monster.y +=
+            (dy/d)*
+            monster.speed;
+
+    }
+
+}
+
+
+function checkMonster(){
+
+    if(!monster.active)
+        return;
+
+
+    const d=
+        distance(
+            player.x,
+            player.y,
+            monster.x,
+            monster.y
+        );
+
+
+    if(d<25){
+
+        perderJogo();
+
+    }
+
+}
+
+
+/* =========================================================
+   PORTA
+========================================================= */
+
+function checkDoor(){
+
+    if(
+        distance(
+            player.x,
+            player.y,
+            door.x,
+            door.y
+        )<35
+    ){
+
+        if(key.collected){
+
+            vencerJogo();
+
+        }else{
+
+            mostrarMensagem(
+                "ESTÁ TRANCADA.",
+                1500
+            );
+
+            doorSound();
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   BATERIA
+========================================================= */
+
+function updateBattery(){
+
+    battery-=0.014;
+
+
+    if(battery<0){
+
+        battery=0;
+
+    }
+
+
+    const bar=
+        document.getElementById(
+            "batteryBar"
+        );
+
+
+    bar.style.width=
+        battery+"%";
+
+
+    if(battery<25){
+
+        bar.style.background="#777";
+
+
+        if(
+            Math.random()<.025
+        ){
+
+            flickerSound();
+
+        }
+
+    }
+
+
+    if(battery<10){
+
+        if(
+            Math.random()<.015
+        ){
+
+            heartbeat();
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   RAIO DA LANTERNA
+========================================================= */
+
+function getLightRadius(){
+
+    let radius=
+        125+
+        battery*1.35;
+
+
+    if(battery<25){
+
+        radius-=
+            Math.random()*35;
+
+    }
+
+
+    return Math.max(
+        65,
+        radius
+    );
+
+}
+
+
+/* =========================================================
+   MAPA VISUAL
+========================================================= */
+
+function desenharMapa(){
+
+    for(
+        let y=0;
+        y<ROWS;
+        y++
+    ){
+
+        for(
+            let x=0;
+            x<COLS;
+            x++
+        ){
+
+            if(
+                map[y][x]===1
+            ){
+
+                /* PAREDE */
+
+                ctx.fillStyle="#151515";
+
+                ctx.fillRect(
+                    x*TILE,
+                    y*TILE,
+                    TILE,
+                    TILE
+                );
+
+
+                ctx.strokeStyle="#242424";
+
+                ctx.strokeRect(
+                    x*TILE+.5,
+                    y*TILE+.5,
+                    TILE-1,
+                    TILE-1
+                );
+
+
+            }else{
+
+                /* CHÃO */
+
+                ctx.fillStyle="#3a3a38";
+
+                ctx.fillRect(
+                    x*TILE,
+                    y*TILE,
+                    TILE,
+                    TILE
+                );
+
+
+                /* DETALHES */
+
+                ctx.fillStyle="#333";
+
+
+                if(
+                    (x+y)%4===0
+                ){
+
+                    ctx.fillRect(
+                        x*TILE+5,
+                        y*TILE+5,
+                        2,
+                        2
+                    );
+
+                }
+
+            }
+
+        }
+
+    }
+
+
+    desenharDecoracao();
+
+}
+
+
+/* =========================================================
+   DECORAÇÃO DO PRÉDIO
+========================================================= */
+
+function desenharDecoracao(){
+
+    /* JANELAS */
+
+    const windows=[
+
+        [4,4],
+        [7,4],
+        [10,4],
+        [13,4],
+
+        [28,4],
+        [31,4],
+        [34,4],
+        [37,4],
+
+        [4,22],
+        [7,22],
+        [10,22],
+        [13,22],
+
+        [28,22],
+        [31,22],
+        [34,22],
+        [37,22]
+
+    ];
+
+
+    for(
+        const w of windows
+    ){
+
+        const x=w[0]*TILE;
+        const y=w[1]*TILE;
+
+
+        ctx.fillStyle="#111";
+
+        ctx.fillRect(
+            x+3,
+            y+4,
+            TILE-6,
+            TILE-8
+        );
+
+
+        ctx.strokeStyle="#666";
+
+        ctx.strokeRect(
+            x+3,
+            y+4,
+            TILE-6,
+            TILE-8
+        );
+
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x+TILE/2,
+            y+4
+        );
+
+        ctx.lineTo(
+            x+TILE/2,
+            y+TILE-4
+        );
+
+        ctx.stroke();
+
+    }
+
+
+    /* MESAS */
+
+    const tables=[
+
+        [5,7],
+        [11,8],
+        [30,7],
+        [36,8],
+
+        [5,19],
+        [11,21],
+        [30,19],
+        [36,21]
+
+    ];
+
+
+    for(
+        const t of tables
+    ){
+
+        const x=t[0]*TILE;
+        const y=t[1]*TILE;
+
+
+        ctx.fillStyle="#292522";
+
+        ctx.fillRect(
+            x,
+            y,
+            TILE*2,
+            TILE
+        );
+
+
+        ctx.strokeStyle="#111";
+
+        ctx.strokeRect(
+            x,
+            y,
+            TILE*2,
+            TILE
+        );
+
+    }
+
+
+    /* PORTAS INTERNAS */
+
+    const doors=[
+
+        [8,10],
+        [13,10],
+        [28,10],
+        [33,10],
+
+        [8,14],
+        [13,14],
+        [28,14],
+        [33,14]
+
+    ];
+
+
+    for(
+        const d of doors
+    ){
+
+        const x=d[0]*TILE;
+        const y=d[1]*TILE;
+
+
+        ctx.fillStyle="#17100d";
+
+        ctx.fillRect(
+            x,
+            y,
+            TILE,
+            TILE
+        );
+
+
+        ctx.strokeStyle="#8a776d";
+
+        ctx.strokeRect(
+            x+3,
+            y+2,
+            TILE-6,
+            TILE-4
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   PERSONAGEM + LANTERNA
+========================================================= */
+
+function desenharJogador(){
+
+    const x=player.x;
+    const y=player.y;
+
+
+    /* SOMBRA */
+
+    ctx.fillStyle=
+        "rgba(0,0,0,.65)";
+
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        x,
+        y+11,
+        11,
+        5,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* CORPO */
+
+    ctx.fillStyle="#9d9d9d";
+
+    ctx.fillRect(
+        x-6,
+        y,
+        12,
+        15
+    );
+
+
+    /* CABEÇA */
+
+    ctx.fillStyle="#d0b7a0";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x,
+        y-7,
+        6,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* CABELO */
+
+    ctx.fillStyle="#111";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x,
+        y-9,
+        6,
+        Math.PI,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* BRAÇO ESQUERDO */
+
+    ctx.strokeStyle="#aaa";
+
+    ctx.lineWidth=3;
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        x-5,
+        y+3
+    );
+
+    ctx.lineTo(
+        x-10,
+        y+7
+    );
+
+    ctx.stroke();
+
+
+    /* BRAÇO DIREITO */
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        x+5,
+        y+3
+    );
+
+    ctx.lineTo(
+        x+11,
+        y+1
+    );
+
+    ctx.stroke();
+
+
+    /* LANTERNA */
+
+    ctx.save();
+
+    ctx.translate(
+        x+13,
+        y
+    );
+
+
+    /* CORPO */
+
+    ctx.fillStyle="#222";
+
+    ctx.fillRect(
+        -4,
+        -3,
+        10,
+        6
+    );
+
+
+    /* FRENTE */
+
+    ctx.fillStyle="#aaa";
+
+    ctx.fillRect(
+        5,
+        -4,
+        4,
+        8
+    );
+
+
+    /* LUZ */
+
+    ctx.fillStyle="#fff";
+
+    ctx.shadowColor="#fff";
+
+    ctx.shadowBlur=12;
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+        9,
+        0,
+        2.5,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.restore();
+
+}
+
+
+/* =========================================================
+   CHAVE
+========================================================= */
+
+function desenharChave(){
+
+    if(key.collected)
+        return;
+
+
+    const x=key.x;
+    const y=key.y;
+
+
+    ctx.save();
+
+    ctx.translate(
+        x,
+        y
+    );
+
+    ctx.rotate(
+        Math.PI/4
+    );
+
+
+    ctx.strokeStyle="#ddd";
+
+    ctx.lineWidth=3;
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+        -5,
+        0,
+        5,
+        0,
+        Math.PI*2
+    );
+
+    ctx.stroke();
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        0,
+        0
+    );
+
+    ctx.lineTo(
+        14,
+        0
+    );
+
+
+    ctx.moveTo(
+        9,
+        0
+    );
+
+    ctx.lineTo(
+        9,
+        5
+    );
+
+
+    ctx.moveTo(
+        13,
+        0
+    );
+
+    ctx.lineTo(
+        13,
+        5
+    );
+
+    ctx.stroke();
+
+    ctx.restore();
+
+}
+
+
+/* =========================================================
+   PORTA REALISTA
+========================================================= */
+
+function desenharPorta(){
+
+    const x=door.x;
+    const y=door.y;
+
+
+    ctx.save();
+
+
+    /* BATENTE */
+
+    ctx.fillStyle="#090909";
+
+    ctx.fillRect(
+        x-18,
+        y-20,
+        36,
+        40
+    );
+
+
+    /* MOLDURA */
+
+    ctx.strokeStyle="#777";
+
+    ctx.lineWidth=3;
+
+    ctx.strokeRect(
+        x-17,
+        y-19,
+        34,
+        38
+    );
+
+
+    /* PORTA */
+
+    ctx.fillStyle="#35251d";
+
+    ctx.fillRect(
+        x-13,
+        y-16,
+        26,
+        32
+    );
+
+
+    /* DETALHES */
+
+    ctx.strokeStyle="#19120f";
+
+    ctx.lineWidth=2;
+
+
+    ctx.strokeRect(
+        x-9,
+        y-12,
+        18,
+        10
+    );
+
+
+    ctx.strokeRect(
+        x-9,
+        y+2,
+        18,
+        10
+    );
+
+
+    /* MAÇANETA */
+
+    ctx.fillStyle=
+        key.collected
+        ? "#ddd"
+        : "#777";
+
+
+    ctx.shadowColor=
+        key.collected
+        ? "#fff"
+        : "transparent";
+
+
+    ctx.shadowBlur=
+        key.collected
+        ? 8
+        : 0;
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x+7,
+        y,
+        2.5,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* PLACA */
+
+    ctx.shadowBlur=0;
+
+    ctx.fillStyle="#111";
+
+    ctx.fillRect(
+        x-14,
+        y-27,
+        28,
+        7
+    );
+
+
+    ctx.fillStyle="#aaa";
+
+    ctx.font="5px Arial";
+
+    ctx.textAlign="center";
+
+
+    ctx.fillText(
+        "SAÍDA",
+        x,
+        y-22
+    );
+
+
+    /* LUZ ACIMA DA PORTA */
+
+    ctx.fillStyle=
+        key.collected
+        ? "rgba(220,220,220,.7)"
+        : "rgba(80,80,80,.5)";
+
+
+    ctx.shadowColor=
+        key.collected
+        ? "#fff"
+        : "transparent";
+
+
+    ctx.shadowBlur=
+        key.collected
+        ? 10
+        : 0;
+
+
+    ctx.fillRect(
+        x-5,
+        y-31,
+        10,
+        3
+    );
+
+
+    ctx.restore();
+
+}
+
+
+/* =========================================================
+   MONSTRO
+========================================================= */
+
+function desenharMonstro(){
+
+    if(!monster.visible)
+        return;
+
+
+    const x=monster.x;
+    const y=monster.y;
+
+
+    let scale=1;
+
+
+    if(monster.chasing){
+
+        scale=
+            1+
+            Math.min(
+                .8,
+                (100-battery)/100
+            );
+
+    }
+
+
+    ctx.save();
+
+    ctx.translate(
+        x,
+        y
+    );
+
+    ctx.scale(
+        scale,
+        scale
+    );
+
+
+    /* CORPO */
+
+    ctx.fillStyle="#020202";
+
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        0,
+        5,
+        22,
+        35,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* CABEÇA */
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        -25,
+        17,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /* OLHOS */
+
+    ctx.fillStyle="#eee";
+
+    ctx.shadowColor="#fff";
+
+    ctx.shadowBlur=15;
+
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        -7,
+        -27,
+        4,
+        2.5,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        7,
+        -27,
+        4,
+        2.5,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.restore();
+
+}
+
+
+/* =========================================================
+   ESCURIDÃO
+========================================================= */
+
+function desenharEscuridao(){
+
+    const radius=
+        getLightRadius();
+
+
+    const gradient=
+        ctx.createRadialGradient(
+            player.x,
+            player.y,
+            radius*.12,
+            player.x,
+            player.y,
+            radius
+        );
+
+
+    gradient.addColorStop(
+        0,
+        "rgba(0,0,0,0)"
+    );
+
+
+    gradient.addColorStop(
+        .55,
+        "rgba(0,0,0,.45)"
+    );
+
+
+    gradient.addColorStop(
+        .8,
+        "rgba(0,0,0,.85)"
+    );
+
+
+    gradient.addColorStop(
+        1,
+        "rgba(0,0,0,1)"
+    );
+
+
+    ctx.fillStyle=gradient;
+
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    const edge=
+        ctx.createRadialGradient(
+            player.x,
+            player.y,
+            radius*.5,
+            player.x,
+            player.y,
+            radius*1.4
+        );
+
+
+    edge.addColorStop(
+        0,
+        "rgba(0,0,0,0)"
+    );
+
+
+    edge.addColorStop(
+        1,
+        "rgba(0,0,0,.95)"
+    );
+
+
+    ctx.fillStyle=edge;
+
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+}
+
+
+/* =========================================================
+   DESENHO
+========================================================= */
+
+function desenhar(){
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    desenharMapa();
+
+    desenharPorta();
+
+    desenharChave();
+
+
+    if(monster.visible){
+
+        desenharMonstro();
+
+    }
+
+
+    desenharJogador();
+
+    desenharEscuridao();
+
+}
+
+
+/* =========================================================
+   LOOP DO JOGO
+========================================================= */
+
+function gameLoop(time){
+
+    if(!gameRunning)
+        return;
+
+
+    const dt=
+        Math.min(
+            (time-lastTime)/16.67,
+            2
+        );
+
+
+    lastTime=time;
+
+
+    let dx=0;
+    let dy=0;
+
+
+    if(
+        keysPressed["w"] ||
+        keysPressed["arrowup"]
+    ){
+
+        dy-=1;
+
+    }
+
+
+    if(
+        keysPressed["s"] ||
+        keysPressed["arrowdown"]
+    ){
+
+        dy+=1;
+
+    }
+
+
+    if(
+        keysPressed["a"] ||
+        keysPressed["arrowleft"]
+    ){
+
+        dx-=1;
+
+    }
+
+
+    if(
+        keysPressed["d"] ||
+        keysPressed["arrowright"]
+    ){
+
+        dx+=1;
+
+    }
+
+
+    if(
+        dx!==0 ||
+        dy!==0
+    ){
+
+        const len=
+            Math.hypot(
+                dx,
+                dy
+            );
+
+
+        dx/=len;
+        dy/=len;
+
+
+        movePlayer(
+            dx*
+            player.speed*
+            dt,
+
+            dy*
+            player.speed*
+            dt
+        );
+
+
+        if(
+            Math.random()<.04
+        ){
+
+            stepSound();
+
+        }
+
+    }
+
+
+    updateBattery();
+
+    checkKey();
+
+
+    if(
+        monster.chasing
+    ){
+
+        monsterMove();
+
+        checkMonster();
+
+    }
+
+
+    checkDoor();
+
+    desenhar();
+
+
+    requestAnimationFrame(
+        gameLoop
+    );
+
+}
+
+
+/* =========================================================
+   DERROTA
+========================================================= */
+
+function perderJogo(){
+
+    if(!gameRunning)
+        return;
+
+
+    gameRunning=false;
+
+    monster.visible=true;
+
+    monster.chasing=false;
+
+    monsterSound();
+
+    document.body.classList.add(
+        "shake"
+    );
+
+
+    setTimeout(()=>{
+
+        document.body.classList.remove(
+            "shake"
+        );
+
+
+        const ending=
+            document.getElementById(
+                "ending"
+            );
+
+
+        const title=
+            document.getElementById(
+                "endingTitle"
+            );
+
+
+        const text=
+            document.getElementById(
+                "endingText"
+            );
+
+
+        const monsterVisual=
+            document.getElementById(
+                "monsterEnding"
+            );
+
+
+        title.innerText=
+            "VOCÊ NÃO SAIU.";
+
+
+        title.style.color="#aaa";
+
+
+        text.innerHTML=
+            "A luz acabou.<br><br>" +
+
+            "Você ouviu passos se aproximando.<br>" +
+
+            "Depois, nada.<br><br>" +
+
+            "Quando percebeu, ele estava perto demais.";
+
+
+        ending.classList.remove(
+            "hidden"
+        );
+
+
+        /*
+           MONSTRO GRANDE NO CENTRO
+        */
+
+        monsterVisual.style.left="50%";
+
+        monsterVisual.style.top="50%";
+
+        monsterVisual.style.width="260px";
+
+        monsterVisual.style.height="390px";
+
+
+        monsterVisual.classList.add(
+            "growing"
+        );
+
+
+    },700);
+
+}
+
+
+/* =========================================================
+   VITÓRIA
+========================================================= */
+
+function vencerJogo(){
+
+    if(!gameRunning)
+        return;
+
+
+    gameRunning=false;
+
+    doorSound();
+
+
+    setTimeout(()=>{
+
+        const ending=
+            document.getElementById(
+                "ending"
+            );
+
+
+        const title=
+            document.getElementById(
+                "endingTitle"
+            );
+
+
+        const text=
+            document.getElementById(
+                "endingText"
+            );
+
+
+        const monsterVisual=
+            document.getElementById(
+                "monsterEnding"
+            );
+
+
+        title.innerText=
+            "VOCÊ ESCAPOU";
+
+
+        title.style.color="#ddd";
+
+
+        text.innerHTML=
+            "A porta abriu.<br>" +
+
+            "Você correu sem olhar para trás.<br><br>" +
+
+            "Do lado de fora, a estrada estava exatamente como antes.<br>" +
+
+            "Seu celular voltou a funcionar.<br><br>" +
+
+            "Uma nova mensagem apareceu:<br><br>" +
+
+            "<strong>VOCÊ ESQUECEU DELE.</strong>";
+
+
+        ending.classList.remove(
+            "hidden"
+        );
+
+
+        /*
+           MONSTRO NO CENTRO
+           SENDO DERROTADO
+        */
+
+        monsterVisual.style.left="50%";
+
+        monsterVisual.style.top="50%";
+
+        monsterVisual.style.width="260px";
+
+        monsterVisual.style.height="390px";
+
+
+        monsterVisual.classList.add(
+            "defeated"
+        );
+
+
+        setTimeout(()=>{
+
+            tone(
+                45,
+                1.5,
+                "sine",
+                .05
+            );
+
+        },700);
+
+
+    },800);
+
+}
+
+
+/* =========================================================
+   INÍCIO
+========================================================= */
+
+desenhar();
+
+</script>
+
+</body>
+</html>

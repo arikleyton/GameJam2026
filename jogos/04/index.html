@@ -1,0 +1,3076 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captus Gator vs Wizard Weasel - Enhanced Edition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background-color: #08030c;
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            flex-direction: column;
+        }
+        #game-wrapper {
+            position: relative;
+            box-shadow: 0 0 40px rgba(255, 23, 68, 0.4), 0 0 0 10px #1a0a2a, 0 0 0 16px #08030c;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #game-wrapper::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.3) 50%),
+                        linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,255,0.03));
+            z-index: 10;
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+        }
+        #game-container {
+            width: 800px;
+            height: 600px;
+            background-color: #000;
+        }
+
+        /* ============================================
+           CONSOLE SECRETO DE DESENVOLVEDOR
+           ============================================ */
+        #dev-console {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw;
+            height: 45vh;
+            background: linear-gradient(180deg, rgba(3, 8, 3, 0.97) 0%, rgba(0, 0, 0, 0.97) 100%);
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            z-index: 99999;
+            display: none;
+            flex-direction: column;
+            border-bottom: 2px solid #0f0;
+            box-shadow: 0 0 40px rgba(0, 255, 0, 0.35);
+            animation: consoleSlideIn 0.18s ease-out;
+        }
+        #dev-console.visible { display: flex; }
+        @keyframes consoleSlideIn {
+            from { transform: translateY(-100%); opacity: 0; }
+            to   { transform: translateY(0); opacity: 1; }
+        }
+        #dev-console-header {
+            background: #0a1a0a;
+            border-bottom: 1px solid #0f0;
+            padding: 6px 12px;
+            font-size: 11px;
+            color: #0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            letter-spacing: 1px;
+            /* Fonte principal restaurada: Press Start 2P */
+    font-family: 'Press Start 2P', monospace;
+        }
+        #dev-console-header .title { color: #0f0; text-shadow: 0 0 8px rgba(0,255,0,0.7); }
+        #dev-console-header .hint { color: #6f6; font-size: 9px; }
+        #dev-console-output {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 14px;
+            white-space: pre-wrap;
+            line-height: 1.5;
+            scrollbar-width: thin;
+            scrollbar-color: #0f0 #000;
+        }
+        #dev-console-output::-webkit-scrollbar { width: 8px; }
+        #dev-console-output::-webkit-scrollbar-track { background: #000; }
+        #dev-console-output::-webkit-scrollbar-thumb { background: #0f0; }
+        #dev-console-output .line-echo  { color: #0ff; }
+        #dev-console-output .line-ok    { color: #0f0; }
+        #dev-console-output .line-warn  { color: #ff0; }
+        #dev-console-output .line-error { color: #f44; }
+        #dev-console-output .line-info  { color: #8f8; }
+        #dev-console-output .line-sys   { color: #f0f; }
+        #dev-console-input-row {
+            display: flex;
+            align-items: center;
+            border-top: 1px solid #0f0;
+            background: #000;
+            padding: 6px 10px;
+        }
+        #dev-console-prompt {
+            color: #0f0;
+            margin-right: 8px;
+            font-weight: bold;
+            text-shadow: 0 0 6px rgba(0,255,0,0.8);
+        }
+        #dev-console-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            caret-color: #0f0;
+        }
+        #dev-console-input::placeholder { color: #0a5a0a; }
+        #dev-console-badge {
+            position: fixed;
+            top: 6px;
+            left: 6px;
+            background: rgba(0, 20, 0, 0.85);
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            padding: 3px 8px;
+            border: 1px solid #0f0;
+            border-radius: 3px;
+            z-index: 99998;
+            display: none;
+            letter-spacing: 1px;
+            text-shadow: 0 0 6px rgba(0,255,0,0.9);
+            animation: pulseBadge 1.6s ease-in-out infinite;
+        }
+        #dev-console-badge.visible { display: block; }
+        @keyframes pulseBadge {
+            0%, 100% { opacity: 0.85; }
+            50%      { opacity: 1; }
+        }
+
+        /* Badge de áudio */
+        #audio-badge {
+            position: fixed;
+            top: 6px;
+            right: 6px;
+            background: rgba(20, 0, 30, 0.85);
+            color: #ffd54f;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            padding: 3px 8px;
+            border: 1px solid #ffd54f;
+            border-radius: 3px;
+            z-index: 99998;
+            display: none;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+        #audio-badge.visible { display: block; }
+        #audio-badge.muted { color: #f44; border-color: #f44; }
+    </style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <div id="game-container"></div>
+    </div>
+
+    <!-- ============================================================
+         CONSOLE SECRETO DE DESENVOLVEDOR — só aparece com F12
+         ============================================================ -->
+    <div id="dev-console-badge">[ DEV MODE ON ]</div>
+    <div id="audio-badge" title="Clique para mutar/desmutar">🔊 [M] SOM ON</div>
+    <div id="dev-console" aria-hidden="true">
+        <div id="dev-console-header">
+            <span class="title">▶ CAPTUS GATOR DEV CONSOLE</span>
+            <span class="hint">digite "help" para ver os comandos • ESC fecha</span>
+        </div>
+        <div id="dev-console-output"></div>
+        <div id="dev-console-input-row">
+            <span id="dev-console-prompt">▶</span>
+            <input id="dev-console-input" type="text" autocomplete="off" spellcheck="false" placeholder="comando...">
+        </div>
+    </div>
+
+<script>
+// ==========================================
+// SISTEMA DE ÁUDIO — Web Audio API
+// ==========================================
+const Sound = (() => {
+    let ctx = null;
+    let muted = false;
+    let masterGain = null;
+    let musicGain = null;
+    let sfxGain = null;
+
+    function ensureCtx() {
+        if (ctx) return ctx;
+        try {
+            ctx = new (window.AudioContext || window.webkitAudioContext)();
+            masterGain = ctx.createGain();
+            masterGain.gain.value = 0.5;
+            masterGain.connect(ctx.destination);
+
+            sfxGain = ctx.createGain();
+            sfxGain.gain.value = 0.7;
+            sfxGain.connect(masterGain);
+
+            musicGain = ctx.createGain();
+            musicGain.gain.value = 0.35;
+            musicGain.connect(masterGain);
+        } catch (err) {
+            console.warn('Web Audio não suportado:', err);
+        }
+        return ctx;
+    }
+
+    // Resume o contexto no primeiro clique/tecla (política dos navegadores).
+    function resume() {
+        const c = ensureCtx();
+        if (c && c.state === 'suspended') c.resume();
+    }
+
+    window.addEventListener('pointerdown', resume, { once: false });
+    window.addEventListener('keydown', resume, { once: false });
+
+    function setMuted(v) {
+        muted = v;
+        if (masterGain) masterGain.gain.value = v ? 0 : 0.5;
+        const badge = document.getElementById('audio-badge');
+        if (badge) {
+            badge.classList.toggle('muted', v);
+            badge.textContent = v ? '🔇 [M] SOM OFF' : '🔊 [M] SOM ON';
+        }
+    }
+    function toggleMute() { setMuted(!muted); }
+    function isMuted() { return muted; }
+
+    // Toca uma nota com envelope ADSR simples.
+    function tone(freq, duration, type = 'square', vol = 0.3, target = null, detune = 0) {
+        const c = ensureCtx();
+        if (!c || muted) return;
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        if (detune) osc.detune.value = detune;
+
+        const now = c.currentTime;
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(vol, now + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(target || sfxGain);
+        osc.start(now);
+        osc.stop(now + duration + 0.02);
+    }
+
+    // Sweep de frequência (bom pra dash, pulo, magia).
+    function sweep(freqStart, freqEnd, duration, type = 'sawtooth', vol = 0.3) {
+        const c = ensureCtx();
+        if (!c || muted) return;
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        osc.type = type;
+        const now = c.currentTime;
+        osc.frequency.setValueAtTime(freqStart, now);
+        osc.frequency.exponentialRampToValueAtTime(Math.max(20, freqEnd), now + duration);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(vol, now + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(sfxGain);
+        osc.start(now);
+        osc.stop(now + duration + 0.02);
+    }
+
+    // Ruído branco — bom pra explosões e hits.
+    function noise(duration, vol = 0.3, filterFreq = 1200, type = 'lowpass') {
+        const c = ensureCtx();
+        if (!c || muted) return;
+        const bufferSize = Math.floor(c.sampleRate * duration);
+        const buffer = c.createBuffer(1, bufferSize, c.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+        const src = c.createBufferSource();
+        src.buffer = buffer;
+        const filter = c.createBiquadFilter();
+        filter.type = type;
+        filter.frequency.value = filterFreq;
+        const gain = c.createGain();
+        const now = c.currentTime;
+        gain.gain.setValueAtTime(vol, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        src.connect(filter);
+        filter.connect(gain);
+        gain.connect(sfxGain);
+        src.start(now);
+        src.stop(now + duration + 0.02);
+    }
+
+    // ==========================================
+    // EFEITOS ESPECÍFICOS
+    // ==========================================
+    return {
+        resume, toggleMute, isMuted, setMuted,
+
+        shoot() {
+            // Pew curto e agudo — arpejo de 2 notas rápidas
+            tone(880, 0.06, 'square', 0.15);
+            setTimeout(() => tone(1320, 0.06, 'square', 0.12), 25);
+        },
+        jump() {
+            sweep(220, 660, 0.14, 'square', 0.22);
+        },
+        doubleJump() {
+            sweep(330, 990, 0.16, 'triangle', 0.25);
+            setTimeout(() => tone(1320, 0.08, 'square', 0.15), 60);
+        },
+        dash() {
+            sweep(1200, 200, 0.24, 'sawtooth', 0.28);
+            noise(0.22, 0.12, 2500, 'highpass');
+        },
+        parry() {
+            // TING cristalino — dois tons harmônicos
+            tone(1760, 0.35, 'triangle', 0.35);
+            setTimeout(() => tone(2640, 0.35, 'triangle', 0.25), 30);
+            setTimeout(() => tone(3520, 0.25, 'sine', 0.18), 60);
+        },
+        hitBoss() {
+            noise(0.08, 0.25, 1800, 'bandpass');
+            tone(220, 0.06, 'square', 0.18);
+        },
+        hitRabbit() {
+            noise(0.1, 0.22, 900, 'lowpass');
+            tone(180, 0.08, 'square', 0.15);
+        },
+        specialCast() {
+            // Carregamento mágico
+            sweep(200, 1500, 0.5, 'sine', 0.22);
+        },
+        specialExplode() {
+            noise(0.5, 0.4, 800, 'lowpass');
+            tone(110, 0.5, 'sawtooth', 0.35);
+            setTimeout(() => tone(80, 0.6, 'sine', 0.28), 60);
+            setTimeout(() => noise(0.3, 0.25, 3000, 'highpass'), 100);
+        },
+        bossShoot() {
+            sweep(660, 220, 0.18, 'triangle', 0.18);
+        },
+        playerHurt() {
+            sweep(400, 80, 0.4, 'sawtooth', 0.32);
+            noise(0.35, 0.25, 600, 'lowpass');
+        },
+        bossDefeat() {
+            // Fanfarra de vitória
+            [523, 659, 784, 1046].forEach((f, i) => {
+                setTimeout(() => tone(f, 0.28, 'square', 0.28), i * 110);
+            });
+            setTimeout(() => noise(0.6, 0.25, 500, 'lowpass'), 200);
+        },
+        playerDeath() {
+            // Acorde menor descendente
+            [440, 415, 349, 262].forEach((f, i) => {
+                setTimeout(() => tone(f, 0.32, 'triangle', 0.3), i * 130);
+            });
+        },
+        phaseChange() {
+            [523, 659, 784].forEach((f, i) => {
+                setTimeout(() => tone(f, 0.22, 'square', 0.25), i * 80);
+            });
+        },
+        konami() {
+            // Arpejo mágico ascendente
+            [523, 587, 659, 698, 784, 880, 988, 1046].forEach((f, i) => {
+                setTimeout(() => tone(f, 0.14, 'triangle', 0.22), i * 60);
+            });
+        },
+        menuSelect() {
+            tone(660, 0.08, 'square', 0.2);
+            setTimeout(() => tone(990, 0.08, 'square', 0.16), 60);
+        },
+        specialReady() {
+            [880, 1174, 1568].forEach((f, i) => {
+                setTimeout(() => tone(f, 0.18, 'triangle', 0.22), i * 70);
+            });
+        },
+        rageGrow() {
+            sweep(180, 720, 0.55, 'sawtooth', 0.24);
+            setTimeout(() => tone(900, 0.18, 'square', 0.20), 180);
+            setTimeout(() => tone(1200, 0.24, 'triangle', 0.22), 290);
+            setTimeout(() => noise(0.32, 0.16, 1800, 'highpass'), 250);
+        }
+    };
+})();
+
+// Atalho M para mutar/desmutar.
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'm' || e.key === 'M') {
+        // Não atrapalha se o console dev estiver aberto.
+        const c = document.getElementById('dev-console');
+        if (c && c.classList.contains('visible')) return;
+        if (e.target && e.target.id === 'dev-console-input') return;
+        Sound.toggleMute();
+    }
+});
+
+// ==========================================
+// CONSOLE SECRETO DE DESENVOLVEDOR
+// ==========================================
+const DevConsole = (() => {
+    const panel   = document.getElementById('dev-console');
+    const output  = document.getElementById('dev-console-output');
+    const input   = document.getElementById('dev-console-input');
+    const badge   = document.getElementById('dev-console-badge');
+
+    let visible = false;
+    const history = [];
+    let historyIndex = -1;
+
+    function print(text, cls = 'line-ok') {
+        const div = document.createElement('div');
+        div.className = cls;
+        div.textContent = text;
+        output.appendChild(div);
+        output.scrollTop = output.scrollHeight;
+    }
+
+    function open() {
+        if (visible) return;
+        visible = true;
+        panel.classList.add('visible');
+        badge.classList.add('visible');
+        setTimeout(() => input.focus(), 30);
+        const activeScene = PhaserGame && PhaserGame.scene ? PhaserGame.scene.getScenes(true)[0] : null;
+        if (activeScene && activeScene.input && activeScene.input.keyboard) {
+            activeScene.input.keyboard.enabled = false;
+        }
+        print('╔══════════════════════════════════════════╗', 'line-sys');
+        print('║  DEV CONSOLE ONLINE • Captus Gator v2.0  ║', 'line-sys');
+        print('╚══════════════════════════════════════════╝', 'line-sys');
+        print('Digite "help" para ver os comandos.', 'line-info');
+    }
+
+    function close() {
+        if (!visible) return;
+        visible = false;
+        panel.classList.remove('visible');
+        badge.classList.remove('visible');
+        const activeScene = PhaserGame && PhaserGame.scene ? PhaserGame.scene.getScenes(true)[0] : null;
+        if (activeScene && activeScene.input && activeScene.input.keyboard) {
+            activeScene.input.keyboard.enabled = true;
+        }
+    }
+
+    function toggle() { visible ? close() : open(); }
+
+    function getActiveScene() {
+        if (!PhaserGame || !PhaserGame.scene) return null;
+        const scenes = PhaserGame.scene.getScenes(true);
+        return scenes.length ? scenes[0] : null;
+    }
+
+    const commands = {
+        help() {
+            print('┌─ COMANDOS ─────────────────────────────────┐', 'line-info');
+            print('│ help / clear / close / state               │', 'line-info');
+            print('│ hp / damage <n> / kill / godboss on|off    │', 'line-info');
+            print('│ immortal on|off / noclip on|off            │', 'line-info');
+            print('│ special / phase1..phase4                   │', 'line-info');
+            print('│ coords / killemall / rainbow               │', 'line-info');
+            print('│ mute / unmute / volume <0-1>               │', 'line-info');
+            print('└────────────────────────────────────────────┘', 'line-info');
+        },
+        clear() { output.innerHTML = ''; print('Console limpo.', 'line-info'); },
+        close() { close(); },
+        state() {
+            const s = getActiveScene();
+            if (!s) return print('Nenhuma cena ativa.', 'line-warn');
+            print(`Cena ativa: ${s.scene.key}`, 'line-ok');
+            if (s.bossHP !== undefined) print(`Boss HP: ${s.bossHP}/${s.bossMaxHP}`, 'line-ok');
+            if (s.bossPhase !== undefined) print(`Fase atual: ${s.bossPhase}`, 'line-ok');
+            if (s.specialHits !== undefined) print(`Especial: ${s.specialHits}/${s.specialRequired}${s.specialReady ? ' (PRONTO)' : ''}`, 'line-ok');
+            if (s.konamiImmortal !== undefined) print(`Imortal: ${s.konamiImmortal ? 'SIM' : 'não'}`, 'line-ok');
+            print(`Áudio: ${Sound.isMuted() ? 'MUDO' : 'LIGADO'}`, 'line-ok');
+        },
+        hp() {
+            const s = getActiveScene();
+            if (!s || s.bossHP === undefined) return print('Sem boss ativo.', 'line-warn');
+            print(`Boss HP: ${s.bossHP}/${s.bossMaxHP}`, 'line-ok');
+            print(`Coelho HP: ${s.rabbitHP !== undefined ? s.rabbitHP : '-'}/${s.rabbitMaxHP !== undefined ? s.rabbitMaxHP : '-'}`, 'line-ok');
+        },
+        damage(args) {
+            const s = getActiveScene();
+            if (!s || !s.applyBossDamage) return print('Sem boss ativo.', 'line-warn');
+            const n = parseInt(args[0], 10);
+            if (!Number.isFinite(n)) return print('Uso: damage <número>', 'line-error');
+            s.applyBossDamage(n);
+            print(`Dano: ${n}. HP: ${s.bossHP}`, 'line-ok');
+        },
+        kill() {
+            const s = getActiveScene();
+            if (!s || !s.applyBossDamage) return print('Sem boss ativo.', 'line-warn');
+            s.applyBossDamage(s.bossHP);
+            print('Boss derrotado.', 'line-ok');
+        },
+        godboss(args) {
+            const s = getActiveScene();
+            if (!s) return print('Sem cena ativa.', 'line-warn');
+            const on = (args[0] || 'on').toLowerCase() === 'on';
+            s.__godboss = on;
+            print(`Godboss: ${on ? 'ATIVADO' : 'DESATIVADO'}`, 'line-ok');
+        },
+        immortal(args) {
+            const s = getActiveScene();
+            if (!s) return print('Sem cena ativa.', 'line-warn');
+            const on = (args[0] || 'on').toLowerCase() === 'on';
+            s.konamiImmortal = on;
+            if (s.immortalHud) s.immortalHud.setVisible(on);
+            print(`Imortalidade: ${on ? 'ATIVADA' : 'DESATIVADA'}`, 'line-ok');
+        },
+        noclip(args) {
+            const s = getActiveScene();
+            if (!s) return print('Sem cena ativa.', 'line-warn');
+            const on = (args[0] || 'on').toLowerCase() === 'on';
+            s.__noclip = on;
+            if (s.player && s.player.body) {
+                s.player.body.checkCollision.none = on;
+                s.player.body.allowGravity = !on;
+            }
+            print(`Noclip: ${on ? 'ATIVADO' : 'DESATIVADO'}`, 'line-ok');
+        },
+        special() {
+            const s = getActiveScene();
+            if (!s || s.specialHits === undefined) return print('Sem cena ativa.', 'line-warn');
+            s.specialHits = s.specialRequired;
+            s.specialReady = true;
+            if (s.updateSpecialMeter) s.updateSpecialMeter();
+            Sound.specialReady();
+            print('Especial carregado!', 'line-ok');
+        },
+        phase1() { return commands.__gotoPhase(1); },
+        phase2() { return commands.__gotoPhase(2); },
+        phase3() { return commands.__gotoPhase(3); },
+        phase4() { return commands.__gotoPhase(4); },
+        __gotoPhase(n) {
+            const s = getActiveScene();
+            if (!s || !s.transitionToPhase2) return print('Sem cena ativa.', 'line-warn');
+            if (n === 1) {
+                print('Reiniciando para Fase 1...', 'line-warn');
+                return PhaserGame.scene.getScene('GameScene').scene.restart();
+            }
+            if (n === 2 && s.bossPhase === 1) s.transitionToPhase2();
+            else if (n === 3 && s.bossPhase === 2) s.transitionToPhase3();
+            else if (n === 4 && s.bossPhase === 3) s.transitionToPhase4();
+            else {
+                s.bossPhase = n - 1;
+                if (n === 2) s.transitionToPhase2();
+                else if (n === 3) s.transitionToPhase3();
+                else if (n === 4) s.transitionToPhase4();
+            }
+            print(`Indo para fase ${n}.`, 'line-ok');
+        },
+        coords() {
+            const s = getActiveScene();
+            if (!s) return print('Sem cena ativa.', 'line-warn');
+            if (s.player) print(`Player: x=${Math.round(s.player.x)} y=${Math.round(s.player.y)}`, 'line-ok');
+            if (s.boss)   print(`Boss:   x=${Math.round(s.boss.x)} y=${Math.round(s.boss.y)}`, 'line-ok');
+            if (s.rabbit) print(`Coelho: x=${Math.round(s.rabbit.x)} y=${Math.round(s.rabbit.y)}`, 'line-ok');
+        },
+        killemall() {
+            const s = getActiveScene();
+            if (!s) return print('Sem cena ativa.', 'line-warn');
+            if (s.playerBullets) s.playerBullets.clear(true, true);
+            if (s.bossOrbs) { s.bossOrbs.children.iterate(o => { if (o.particles) o.particles.destroy(); }); s.bossOrbs.clear(true, true); }
+            if (s.carrots) s.carrots.clear(true, true);
+            print('Projéteis removidos.', 'line-ok');
+        },
+        rainbow() {
+            const s = getActiveScene();
+            if (!s || !s.player) return print('Sem player.', 'line-warn');
+            s.__rainbow = !s.__rainbow;
+            if (!s.__rainbow) {
+                s.player.clearTint();
+                if (s.__rainbowTimer) s.__rainbowTimer.remove();
+                print('Modo festa desativado.', 'line-info');
+                return;
+            }
+            let hue = 0;
+            s.__rainbowTimer = s.time.addEvent({
+                delay: 80, loop: true,
+                callback: () => {
+                    if (!s.player || !s.player.active) return;
+                    hue = (hue + 25) % 360;
+                    s.player.setTint(Phaser.Display.Color.HSVToRGB(hue / 360, 1, 1).color);
+                }
+            });
+            print('🌈 Modo festa ATIVADO.', 'line-sys');
+        },
+        mute()   { Sound.setMuted(true);  print('Áudio mutado.', 'line-ok'); },
+        unmute() { Sound.setMuted(false); print('Áudio ativado.', 'line-ok'); },
+        volume(args) {
+            const v = parseFloat(args[0]);
+            if (!Number.isFinite(v) || v < 0 || v > 1) return print('Uso: volume <0..1>', 'line-error');
+            Sound.setMuted(false);
+            if (window.__masterGainRef) window.__masterGainRef.gain.value = v;
+            print(`Volume master = ${v}`, 'line-ok');
+        }
+    };
+
+    function execute(raw) {
+        const text = raw.trim();
+        if (!text) return;
+        history.push(text);
+        historyIndex = history.length;
+        print(`> ${text}`, 'line-echo');
+
+        const parts = text.split(/\s+/);
+        const cmd = parts[0].toLowerCase();
+        const args = parts.slice(1);
+
+        if (commands[cmd]) {
+            try { commands[cmd](args); }
+            catch (err) { print('Erro: ' + err.message, 'line-error'); }
+        } else {
+            print(`Comando desconhecido: "${cmd}". Digite "help".`, 'line-error');
+        }
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'F12' || e.code === 'F12') {
+            e.preventDefault(); toggle(); return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j')) {
+            e.preventDefault(); toggle(); return;
+        }
+        if (e.key === 'Escape' && visible) {
+            e.preventDefault(); close(); return;
+        }
+    }, true);
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            execute(input.value);
+            input.value = '';
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (history.length === 0) return;
+            historyIndex = Math.max(0, historyIndex - 1);
+            input.value = history[historyIndex] || '';
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (history.length === 0) return;
+            historyIndex = Math.min(history.length, historyIndex + 1);
+            input.value = history[historyIndex] || '';
+        }
+    });
+
+    return { open, close, toggle, print, isOpen: () => visible };
+})();
+
+// Badge de áudio clicável.
+document.getElementById('audio-badge').addEventListener('click', () => Sound.toggleMute());
+
+// ==========================================
+// CONFIGURAÇÃO DE CONTROLES
+// ==========================================
+const CONTROL_DEFAULTS = {
+    left:    { code: 65, label: 'A' },
+    right:   { code: 68, label: 'D' },
+    jump:    { code: 87, label: 'W' },
+    down:    { code: 83, label: 'S' },
+    dash:    { code: 16, label: 'SHIFT' },
+    parry:   { code: 32, label: 'ESPAÇO' },
+    shoot:   { code: 88, label: 'X' },
+    special: { code: 86, label: 'V' }
+};
+
+const CONTROL_LABELS = {
+    left: 'MOVER PARA ESQUERDA',
+    right: 'MOVER PARA DIREITA',
+    jump: 'PULAR',
+    down: 'DESCER DA PLATAFORMA',
+    dash: 'DASH',
+    parry: 'PARRY',
+    shoot: 'ATIRAR',
+    special: 'ESPECIAL'
+};
+
+function cloneControlDefaults() {
+    const copy = {};
+    Object.keys(CONTROL_DEFAULTS).forEach((key) => { copy[key] = { ...CONTROL_DEFAULTS[key] }; });
+    return copy;
+}
+
+function getControlConfig() {
+    let config = cloneControlDefaults();
+    try {
+        const saved = JSON.parse(localStorage.getItem('captusGatorControls') || 'null');
+        if (saved && typeof saved === 'object') {
+            Object.keys(config).forEach((key) => {
+                if (saved[key] && Number.isFinite(saved[key].code)) {
+                    config[key] = {
+                        code: Number(saved[key].code),
+                        label: typeof saved[key].label === 'string' ? saved[key].label : CONTROL_DEFAULTS[key].label
+                    };
+                }
+            });
+        }
+    } catch (err) {}
+    return config;
+}
+
+function saveControlConfig(config) {
+    try { localStorage.setItem('captusGatorControls', JSON.stringify(config)); } catch (err) {}
+}
+
+function keyboardEventToBinding(event) {
+    const code = Number(event.which || event.keyCode || 0);
+    if (!code) return null;
+    let label = (event.key || event.code || '').toString();
+    const codeName = (event.code || '').toUpperCase();
+    const friendly = {
+        SPACE: 'ESPAÇO', ARROWLEFT: '←', ARROWRIGHT: '→', ARROWUP: '↑', ARROWDOWN: '↓',
+        SHIFTLEFT: 'SHIFT', SHIFTRIGHT: 'SHIFT', CONTROLLEFT: 'CTRL', CONTROLRIGHT: 'CTRL',
+        ALTLEFT: 'ALT', ALTRIGHT: 'ALT', ENTER: 'ENTER', TAB: 'TAB', BACKSPACE: 'BACKSPACE',
+        CAPSLOCK: 'CAPS LOCK', ESCAPE: 'ESC'
+    };
+    if (friendly[codeName]) label = friendly[codeName];
+    else if (/^KEY[A-Z]$/.test(codeName)) label = codeName.slice(3);
+    else if (/^DIGIT[0-9]$/.test(codeName)) label = codeName.slice(5);
+    else if (/^NUMPAD[0-9]$/.test(codeName)) label = 'NUM ' + codeName.slice(5);
+    else if (label.length === 1) label = label.toUpperCase();
+    else label = codeName || label.toUpperCase();
+    return { code, label };
+}
+
+function controlLabelForMenu(config, key) {
+    return config[key]?.label || CONTROL_DEFAULTS[key].label;
+}
+
+// ==========================================
+// SCENE: MENU PRINCIPAL
+// ==========================================
+class MenuScene extends Phaser.Scene {
+    constructor() { super({ key: 'MenuScene' }); }
+
+    create() {
+        const W = 800, H = 600;
+        this.konamiSequence = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','KeyB','KeyA'];
+        this.konamiIndex = 0;
+        this.konamiUnlocked = false;
+        this.startingGame = false;
+
+        // Fundo gradiente com estrelas
+        const bg = this.add.graphics();
+        bg.fillGradientStyle(0x1a0a2e, 0x1a0a2e, 0x08030c, 0x08030c, 1);
+        bg.fillRect(0, 0, W, H);
+
+        for (let i = 0; i < 60; i++) {
+            const x = Phaser.Math.Between(12, 788);
+            const y = Phaser.Math.Between(65, 560);
+            const r = Phaser.Math.Between(1, 3);
+            const star = this.add.circle(x, y, r, i % 4 === 0 ? 0xffd54f : 0xffffff, 0.5);
+            this.tweens.add({ targets: star, alpha: 0.1, duration: Phaser.Math.Between(500, 1400), yoyo: true, repeat: -1 });
+        }
+
+        // Topo de circo com lâmpadas animadas
+        this.add.rectangle(400, 42, 760, 58, 0x230d36).setStrokeStyle(2, 0xffca28);
+        for (let i = 0; i < 20; i++) {
+            const x = 20 + i * 40;
+            const bulb = this.add.circle(x, 40, 8, i % 2 === 0 ? 0xffd700 : 0xff1744);
+            const glow = this.add.circle(x, 40, 12, i % 2 === 0 ? 0xffd700 : 0xff1744, 0.25);
+            this.tweens.add({ targets: [bulb, glow], alpha: 0.55, duration: 500 + i * 30, yoyo: true, repeat: -1 });
+            this.add.circle(x, 40, 3, 0xffffff, 0.85);
+        }
+
+        // Tendas laterais
+        const leftTent = this.add.triangle(72, 235, 0, 170, 125, 170, 62, 20, 0x5a185f, 0.55);
+        const rightTent = this.add.triangle(728, 235, 675, 170, 800, 170, 737, 20, 0x5a185f, 0.55);
+        leftTent.setStrokeStyle(2, 0xff4081, 0.5);
+        rightTent.setStrokeStyle(2, 0xff4081, 0.5);
+
+        // Títulos com sombra pixel art
+        let title1 = this.add.text(400, 130, 'CAPTUS GATOR', {
+            fontFamily: '"Press Start 2P"', fontSize: '30px', fill: '#00e676',
+            stroke: '#001f0c', strokeThickness: 7,
+            shadow: { offsetX: 4, offsetY: 4, color: '#000000', blur: 0, stroke: true, fill: true }
+        }).setOrigin(0.5);
+
+        this.add.text(400, 173, '🎪  SHOW DE CIRCO DO DIAGRAMA  🎪', {
+            fontFamily: '"Press Start 2P"', fontSize: '10px', fill: '#ffd700',
+            stroke: '#000', strokeThickness: 2
+        }).setOrigin(0.5);
+
+        let title3 = this.add.text(400, 225, 'WIZARD WEASEL', {
+            fontFamily: '"Press Start 2P"', fontSize: '30px', fill: '#ff1744',
+            stroke: '#33000d', strokeThickness: 7,
+            shadow: { offsetX: 4, offsetY: 4, color: '#000000', blur: 0, stroke: true, fill: true }
+        }).setOrigin(0.5);
+
+        this.tweens.add({ targets: [title1, title3], y: '-=6', duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+
+        // Refletores do palco
+        this.add.rectangle(400, 278, 560, 4, 0xffca28, 0.5);
+        for (const x of [140, 240, 560, 660]) {
+            const lamp = this.add.circle(x, 285, 9, 0xffea00, 0.85);
+            const lampGlow = this.add.circle(x, 285, 16, 0xffea00, 0.18);
+            this.tweens.add({ targets: [lamp, lampGlow], scale: 1.25, alpha: 0.5, duration: 500, yoyo: true, repeat: -1 });
+        }
+
+        // Painel central
+        this.add.rectangle(400, 410, 710, 165, 0x0a0411, 0.97).setStrokeStyle(3, 0xffca28);
+        this.add.rectangle(400, 327, 710, 8, 0x3d164f);
+        this.add.text(400, 390, 'ESCOLHA SEU CAMINHO', {
+            fontFamily: '"Press Start 2P"', fontSize: '12px', fill: '#ffd54f',
+            stroke: '#000000', strokeThickness: 3
+        }).setOrigin(0.5);
+        this.add.text(400, 425, 'ENTRE NO SHOW OU ABRA AS CONFIGURAÇÕES', {
+            fontFamily: '"Press Start 2P"', fontSize: '8px', fill: '#ffffff'
+        }).setOrigin(0.5);
+        this.add.text(400, 450, 'F12 = CONSOLE SECRETO  •  M = MUDO', {
+            fontFamily: '"Press Start 2P"', fontSize: '7px', fill: '#ab47bc'
+        }).setOrigin(0.5);
+
+        let startTxt = this.add.text(285, 540, '✦  ESPAÇO/ENTER: ENTRAR  ✦', {
+            fontFamily: '"Press Start 2P"', fontSize: '9px', fill: '#ffd700',
+            stroke: '#000000', strokeThickness: 3
+        }).setOrigin(0.5);
+        this.tweens.add({ targets: startTxt, alpha: 0.25, scale: 1.03, duration: 500, yoyo: true, repeat: -1 });
+
+        const settingsButtonBg = this.add.rectangle(635, 540, 250, 42, 0x31124a)
+            .setStrokeStyle(2, 0xffca28).setInteractive({ useHandCursor: true });
+        const settingsButtonTxt = this.add.text(635, 540, '⚙ CONFIGURAÇÕES', {
+            fontFamily: '"Press Start 2P"', fontSize: '10px', fill: '#ffd54f'
+        }).setOrigin(0.5);
+        settingsButtonBg.on('pointerover', () => { settingsButtonBg.setFillStyle(0x51206d); settingsButtonTxt.setFill('#ffffff'); Sound.menuSelect(); });
+        settingsButtonBg.on('pointerout', () => { settingsButtonBg.setFillStyle(0x31124a); settingsButtonTxt.setFill('#ffd54f'); });
+        settingsButtonBg.on('pointerdown', () => this.openSettings());
+
+        this.createSettingsPanel();
+        this.settingsOpen = false;
+        this.pendingControl = null;
+
+        this.input.keyboard.on('keydown', (event) => {
+            if (DevConsole.isOpen()) return;
+            if (this.settingsOpen && this.pendingControl) { this.captureControlKey(event); return; }
+            if (this.settingsOpen) return;
+            if (event.code === 'Enter' || event.code === 'Space') {
+                event.preventDefault();
+                this.startGame();
+                return;
+            }
+            if (!this.konamiUnlocked) {
+                const expected = this.konamiSequence[this.konamiIndex];
+                if (event.code === expected) {
+                    this.konamiIndex++;
+                    if (this.konamiIndex >= this.konamiSequence.length) {
+                        this.konamiUnlocked = true;
+                        this.showKonamiUnlocked();
+                        Sound.konami();
+                        this.konamiIndex = 0;
+                    }
+                } else if (event.code === 'ArrowUp') {
+                    this.konamiIndex = 1;
+                } else {
+                    this.konamiIndex = 0;
+                }
+            }
+        });
+    }
+
+    startGame() {
+        if (this.settingsOpen || this.startingGame) return;
+        this.startingGame = true;
+        Sound.menuSelect();
+
+        // Garante que a cutscene use EXATAMENTE as mesmas texturas
+        // que aparecem durante o gameplay. As texturas são compartilhadas
+        // pelo Texture Manager do Phaser entre as cenas.
+        const gameScene = this.scene.get('GameScene');
+        if (gameScene && typeof gameScene.generatePixelArtTextures === 'function' && !this.textures.exists('gator_idle')) {
+            gameScene.generatePixelArtTextures();
+        }
+
+        const immortal = !!this.konamiUnlocked;
+        let introSeen = false;
+        try { introSeen = sessionStorage.getItem('captusIntroSeen') === '1'; } catch (err) {}
+        if (introSeen) {
+            this.scene.start('GameScene', { konamiImmortal: immortal, fromIntro: false });
+        } else {
+            this.scene.start('IntroCutsceneScene', { konamiImmortal: immortal });
+        }
+    }
+
+    showKonamiUnlocked() {
+        const banner = this.add.container(400, 305).setDepth(200);
+        const bg = this.add.rectangle(0, 0, 610, 90, 0x071b16, 0.97).setStrokeStyle(3, 0x00e676);
+        const title = this.add.text(0, -15, '★ CÓDIGO SECRETO ATIVADO ★', {
+            fontFamily: '"Press Start 2P"', fontSize: '14px', fill: '#00e676',
+            stroke: '#000000', strokeThickness: 4
+        }).setOrigin(0.5);
+        const sub = this.add.text(0, 16, 'CAPTUS GATOR FICARÁ IMORTAL NESTA PARTIDA', {
+            fontFamily: '"Press Start 2P"', fontSize: '8px', fill: '#ffd54f'
+        }).setOrigin(0.5);
+        banner.add([bg, title, sub]);
+        this.tweens.add({ targets: banner, scaleX: 1.04, scaleY: 1.04, alpha: 0, duration: 2200, ease: 'Sine.easeOut', onComplete: () => banner.destroy() });
+    }
+
+    updateMenuControlTexts() {
+        if (!this.menuControlTexts || !this.menuControlConfig) return;
+        const jumpText = `• PULO DUPLO: [${controlLabelForMenu(this.menuControlConfig, 'jump')}] 2x no Ar`;
+        const dashText = `• DASH VELOZ: [${controlLabelForMenu(this.menuControlConfig, 'dash')}] (Invulnerável)`;
+        const parryText = `• SUPER PARRY: [${controlLabelForMenu(this.menuControlConfig, 'parry')}]`;
+        const shootText = `• ARMA: Atirar Cartas [${controlLabelForMenu(this.menuControlConfig, 'shoot')}]`;
+        const texts = { jump: jumpText, dash: dashText, parry: parryText, shoot: shootText };
+        this.menuControlTexts.forEach(({ action, txt }) => txt.setText(texts[action]));
+    }
+
+    createSettingsPanel() {
+        this.settingsLayer = this.add.container(0, 0).setDepth(300).setVisible(false);
+        const dim = this.add.rectangle(400, 300, 800, 600, 0x05020a, 0.82);
+        const panel = this.add.rectangle(400, 300, 720, 550, 0x13071f, 0.98).setStrokeStyle(3, 0xffca28);
+        this.settingsLayer.add([dim, panel]);
+
+        const title = this.add.text(400, 70, 'CONFIGURAÇÕES DE CONTROLES', {
+            fontFamily: '"Press Start 2P"', fontSize: '18px', fill: '#ffd54f', stroke: '#000000', strokeThickness: 4
+        }).setOrigin(0.5);
+        this.settingsLayer.add(title);
+
+        const hint = this.add.text(400, 97, 'Clique em ALTERAR e pressione a tecla desejada.', {
+            fontFamily: '"Press Start 2P"', fontSize: '8px', fill: '#ffffff'
+        }).setOrigin(0.5);
+        this.settingsLayer.add(hint);
+
+        this.settingsRows = {};
+        const keys = Object.keys(CONTROL_LABELS);
+        keys.forEach((key, index) => {
+            const y = 130 + index * 45;
+            const row = this.add.rectangle(400, y, 620, 38, index % 2 === 0 ? 0x21102f : 0x1a0c26, 0.95).setStrokeStyle(1, 0x5e3a73);
+            const actionText = this.add.text(205, y, CONTROL_LABELS[key], {
+                fontFamily: '"Press Start 2P"', fontSize: '8px', fill: '#ffffff'
+            }).setOrigin(0, 0.5);
+            const keyText = this.add.text(500, y, '', {
+                fontFamily: '"Press Start 2P"', fontSize: '9px', fill: '#00e5ff'
+            }).setOrigin(0.5);
+            const button = this.add.rectangle(655, y, 105, 28, 0x4a1761).setStrokeStyle(1, 0xffca28).setInteractive({ useHandCursor: true });
+            const buttonText = this.add.text(655, y, 'ALTERAR', {
+                fontFamily: '"Press Start 2P"', fontSize: '7px', fill: '#ffd54f'
+            }).setOrigin(0.5);
+            button.on('pointerover', () => button.setFillStyle(0x672383));
+            button.on('pointerout', () => button.setFillStyle(0x4a1761));
+            button.on('pointerdown', () => { this.startControlCapture(key); Sound.menuSelect(); });
+            this.settingsLayer.add([row, actionText, keyText, button, buttonText]);
+            this.settingsRows[key] = { keyText, buttonText, button };
+        });
+
+        this.settingsStatus = this.add.text(400, 500, 'As alterações são salvas automaticamente.', {
+            fontFamily: '"Press Start 2P"', fontSize: '8px', fill: '#ab47bc'
+        }).setOrigin(0.5);
+        this.settingsLayer.add(this.settingsStatus);
+
+        const resetBg = this.add.rectangle(250, 545, 190, 34, 0x5b1520).setStrokeStyle(2, 0xff6b81).setInteractive({ useHandCursor: true });
+        const resetTxt = this.add.text(250, 545, 'RESTAURAR PADRÃO', {
+            fontFamily: '"Press Start 2P"', fontSize: '7px', fill: '#ff9aaa'
+        }).setOrigin(0.5);
+        resetBg.on('pointerdown', () => { this.resetControls(); Sound.menuSelect(); });
+
+        const backBg = this.add.rectangle(550, 545, 150, 34, 0x173d2b).setStrokeStyle(2, 0x00e676).setInteractive({ useHandCursor: true });
+        const backTxt = this.add.text(550, 545, 'VOLTAR', {
+            fontFamily: '"Press Start 2P"', fontSize: '8px', fill: '#00e676'
+        }).setOrigin(0.5);
+        backBg.on('pointerdown', () => { this.closeSettings(); Sound.menuSelect(); });
+
+        this.settingsLayer.add([resetBg, resetTxt, backBg, backTxt]);
+        this.refreshSettingsRows();
+    }
+
+    openSettings() { this.settingsOpen = true; this.pendingControl = null; this.menuControlConfig = getControlConfig(); this.refreshSettingsRows(); this.settingsStatus.setText('Escolha uma ação para alterar.'); this.settingsLayer.setVisible(true); }
+    closeSettings() { this.settingsOpen = false; this.pendingControl = null; this.menuControlConfig = getControlConfig(); this.updateMenuControlTexts(); this.settingsLayer.setVisible(false); }
+    startControlCapture(control) {
+        if (!this.settingsOpen) return;
+        this.pendingControl = control;
+        this.settingsStatus.setText(`Pressione uma tecla para: ${CONTROL_LABELS[control]}  •  ESC cancela`);
+        this.settingsRows[control].buttonText.setText('PRESSIONE...');
+    }
+    captureControlKey(event) {
+        if (!this.pendingControl) return;
+        if (event.code === 'Escape' || event.keyCode === 27) {
+            this.settingsStatus.setText('Alteração cancelada.');
+            this.settingsRows[this.pendingControl].buttonText.setText('ALTERAR');
+            this.pendingControl = null;
+            return;
+        }
+        const binding = keyboardEventToBinding(event);
+        if (!binding) return;
+        const duplicate = Object.keys(this.menuControlConfig).find((key) =>
+            key !== this.pendingControl && this.menuControlConfig[key].code === binding.code
+        );
+        if (duplicate) { this.settingsStatus.setText(`Essa tecla já está em: ${CONTROL_LABELS[duplicate]}.`); return; }
+        this.menuControlConfig[this.pendingControl] = binding;
+        saveControlConfig(this.menuControlConfig);
+        const changed = this.pendingControl;
+        this.pendingControl = null;
+        this.settingsRows[changed].buttonText.setText('ALTERAR');
+        this.settingsStatus.setText(`${CONTROL_LABELS[changed]} = ${binding.label}`);
+        this.refreshSettingsRows();
+        this.updateMenuControlTexts();
+        event.preventDefault();
+    }
+    refreshSettingsRows() {
+        if (!this.settingsRows) return;
+        const config = this.menuControlConfig || getControlConfig();
+        Object.keys(this.settingsRows).forEach((key) => {
+            this.settingsRows[key].keyText.setText(`[ ${controlLabelForMenu(config, key)} ]`);
+            if (this.pendingControl !== key) this.settingsRows[key].buttonText.setText('ALTERAR');
+        });
+    }
+    resetControls() {
+        this.menuControlConfig = cloneControlDefaults();
+        saveControlConfig(this.menuControlConfig);
+        this.pendingControl = null;
+        this.refreshSettingsRows();
+        this.updateMenuControlTexts();
+        this.settingsStatus.setText('Controles restaurados para o padrão.');
+    }
+}
+
+// ==========================================
+// SCENE: CUTSCENE DE ABERTURA
+// ==========================================
+class IntroCutsceneScene extends Phaser.Scene {
+    constructor() { super({ key: 'IntroCutsceneScene' }); }
+
+    init(data) {
+        this.konamiImmortal = !!(data && data.konamiImmortal);
+        this.currentLine = -1;
+        this.ending = false;
+    }
+
+    create() {
+        const W = 800, H = 600;
+
+        // Fundo cinematográfico.
+        this.add.rectangle(400, 300, W, H, 0x08030c);
+        this.add.rectangle(400, 210, 800, 420, 0x1b0928, 0.94);
+        this.add.rectangle(400, 420, 800, 180, 0x09050f, 0.72);
+
+        // Cortina de teatro nas laterais.
+        this.add.rectangle(26, 300, 52, 600, 0x7d163f, 0.9);
+        this.add.rectangle(774, 300, 52, 600, 0x7d163f, 0.9);
+        for (let y = 40; y < 600; y += 46) {
+            this.add.rectangle(34, y, 28, 22, 0xb71c1c, 0.32);
+            this.add.rectangle(766, y, 28, 22, 0xb71c1c, 0.32);
+        }
+
+        // Holofotes.
+        const leftLight = this.add.circle(205, 235, 90, 0xffd54f, 0.06);
+        const rightLight = this.add.circle(595, 235, 90, 0xff4081, 0.06);
+        this.tweens.add({ targets: leftLight, alpha: 0.11, scale: 1.12, duration: 900, yoyo: true, repeat: -1 });
+        this.tweens.add({ targets: rightLight, alpha: 0.11, scale: 1.12, duration: 1100, yoyo: true, repeat: -1 });
+
+        this.add.text(400, 42, 'PRÓLOGO', {
+            fontFamily: '"Press Start 2P"', fontSize: '14px', fill: '#ffd54f',
+            stroke: '#000000', strokeThickness: 4
+        }).setOrigin(0.5);
+
+        // ==========================================
+        // GATOR — personagem à esquerda
+        // ==========================================
+        this.gatorCut = this.createCutsceneGator(172, 300);
+        this.gatorCut.setDepth(20);
+        this.gatorBaseY = 300;
+        this.tweens.add({ targets: this.gatorCut, y: 294, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+
+        // ==========================================
+        // FUINHA — personagem à direita
+        // ==========================================
+        this.weaselCut = this.createCutsceneWeasel(628, 290);
+        this.weaselCut.setDepth(20);
+        this.weaselBaseY = 290;
+        this.tweens.add({ targets: this.weaselCut, y: 284, duration: 850, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+
+        // Linha de diálogo.
+        this.dialogPanel = this.add.rectangle(400, 476, 710, 178, 0x09050f, 0.97)
+            .setStrokeStyle(3, 0xffca28)
+            .setDepth(100);
+        this.speakerText = this.add.text(75, 405, '', {
+            fontFamily: '"Press Start 2P"', fontSize: '12px', fill: '#ffd54f',
+            stroke: '#000000', strokeThickness: 3
+        }).setDepth(101);
+        this.dialogText = this.add.text(75, 442, '', {
+            fontFamily: '"Press Start 2P"', fontSize: '12px', fill: '#ffffff',
+            wordWrap: { width: 650 }, lineSpacing: 8,
+            stroke: '#000000', strokeThickness: 2
+        }).setDepth(101);
+        this.redChanceText = this.add.text(75, 505, '', {
+            fontFamily: '"Press Start 2P"', fontSize: '15px', fill: '#ff1744',
+            stroke: '#000000', strokeThickness: 3
+        }).setDepth(102);
+        this.dialogHint = this.add.text(400, 568, 'ENTER / ESPAÇO  •  CONTINUAR    |    ESC  •  PULAR', {
+            fontFamily: '"Press Start 2P"', fontSize: '7px', fill: '#ab47bc'
+        }).setOrigin(0.5).setDepth(101);
+
+        this.lines = [
+            { speaker: 'GATOR', color: '#00e676', text: 'Droga, eu preciso conseguir sair da aqui!' },
+            { speaker: 'FUINHA', color: '#ff4081', text: 'Aonde o senhor pensa que vai?' },
+            { speaker: 'GATOR', color: '#00e676', text: 'Vou fugir da Aqui, tá surdo?' },
+            { speaker: 'FUINHA', color: '#ff4081', text: 'Seus truques baratos não vão funcionar comigo, VOCÊ SELOU O CONTRATADO ESTA PRESO AQUI!' },
+            { speaker: 'GATOR', color: '#00e676', text: 'AH, DROGA EU SÓ TENHO', red: 'UMA CHANCE', afterRed: ' DE DERROTAR ELE' }
+        ];
+
+        this.showLine(0);
+
+        this.input.keyboard.on('keydown', (event) => {
+            if (event.code === 'Escape') {
+                event.preventDefault();
+                this.finishCutscene();
+                return;
+            }
+            if (event.code === 'Enter' || event.code === 'Space') {
+                event.preventDefault();
+                this.nextLine();
+            }
+        });
+    }
+
+    createCutsceneGator(x, y) {
+        // Usa diretamente o MESMO sprite do gameplay, incluindo a cartola integrada.
+        const c = this.add.container(x, y);
+        const shadow = this.add.ellipse(0, 74, 108, 18, 0x000000, 0.45).setDepth(0);
+        const sprite = this.add.image(0, 0, 'gator_idle').setScale(3.15).setDepth(2);
+        const glow = this.add.circle(38, -52, 16, 0x00e5ff, 0.08).setDepth(1);
+        c.add([shadow, glow, sprite]);
+        c.sprite = sprite;
+        this.tweens.add({ targets: glow, scale: 1.25, alpha: 0.16, duration: 420, yoyo: true, repeat: -1 });
+        return c;
+    }
+
+    createCutsceneWeasel(x, y) {
+        // Usa diretamente o MESMO sprite do boss no gameplay, incluindo roupa, patas e cauda.
+        const c = this.add.container(x, y);
+        const shadow = this.add.ellipse(0, 112, 118, 20, 0x000000, 0.45).setDepth(0);
+        const sprite = this.add.image(0, 0, 'boss').setScale(3.1).setDepth(2);
+        const glow = this.add.circle(-88, -12, 22, 0x00e5ff, 0.08).setDepth(1);
+        c.add([shadow, glow, sprite]);
+        c.sprite = sprite;
+        this.tweens.add({ targets: glow, scale: 1.3, alpha: 0.16, duration: 500, yoyo: true, repeat: -1 });
+        return c;
+    }
+
+    showLine(index) {
+        if (this.ending) return;
+        this.currentLine = index;
+        const line = this.lines[index];
+        this.speakerText.setText(line.speaker + ' —').setFill(line.color);
+        this.dialogText.setText(line.text);
+        this.redChanceText.setText('');
+
+        if (line.red) {
+            this.dialogText.setText(line.text);
+            this.redChanceText.setText(line.red);
+            const redWidth = this.redChanceText.width;
+            this.redChanceText.x = 75 + this.dialogText.width + 6;
+            this.redChanceText.y = 442;
+            const after = line.afterRed || '';
+            this.afterRedText?.destroy();
+            this.afterRedText = this.add.text(this.redChanceText.x + redWidth + 8, 442, after, {
+                fontFamily: '"Press Start 2P"', fontSize: '12px', fill: '#ffffff',
+                stroke: '#000000', strokeThickness: 2
+            }).setDepth(101);
+        } else {
+            this.afterRedText?.destroy();
+            this.afterRedText = null;
+        }
+
+        // Pequeno feedback de entrada de fala.
+        this.speakerText.setScale(0.92).setAlpha(0);
+        this.dialogText.setScale(0.96).setAlpha(0);
+        this.tweens.add({ targets: [this.speakerText, this.dialogText], alpha: 1, scaleX: 1, scaleY: 1, duration: 180, ease: 'Back.Out' });
+        Sound.menuSelect();
+    }
+
+    nextLine() {
+        if (this.ending) return;
+        if (this.currentLine >= this.lines.length - 1) {
+            this.finishCutscene();
+        } else {
+            this.showLine(this.currentLine + 1);
+        }
+    }
+
+    finishCutscene() {
+        if (this.ending) return;
+        this.ending = true;
+        Sound.menuSelect();
+        this.tweens.add({
+            targets: [this.dialogPanel, this.speakerText, this.dialogText, this.redChanceText, this.afterRedText, this.dialogHint, this.gatorCut, this.weaselCut],
+            alpha: 0,
+            duration: 350,
+            ease: 'Sine.easeIn',
+            onComplete: () => {
+                try { sessionStorage.setItem('captusIntroSeen', '1'); } catch (err) {}
+                this.scene.start('GameScene', { konamiImmortal: this.konamiImmortal, fromIntro: true });
+            }
+        });
+    }
+}
+
+// ==========================================
+// SCENE: GAMEPLAY
+// ==========================================
+class GameScene extends Phaser.Scene {
+    constructor() { super({ key: 'GameScene' }); }
+
+    preload() {
+        // O Menu já pode ter gerado as texturas para a cutscene.
+        // Só gera novamente quando ainda não existirem.
+        if (!this.textures.exists('gator_idle') || !this.textures.exists('boss')) {
+            this.generatePixelArtTextures();
+        }
+    }
+
+    // ==========================================
+    // PIXEL ART MELHORADA — GATOR
+    // ==========================================
+    drawGatorFrame(g, type) {
+        // Sombra base do corpo
+        g.fillStyle(0x002a12, 1);
+        g.fillRect(6, 14, 30, 30);
+
+        // Corpo principal com gradiente (3 tons de verde)
+        g.fillStyle(0x004f24, 1);
+        g.fillRect(7, 13, 28, 29);
+        g.fillStyle(0x008a36, 1);
+        g.fillRect(7, 12, 27, 28);
+        g.fillStyle(0x00b34a, 1);
+        g.fillRect(9, 11, 24, 26);
+        g.fillStyle(0x00c853, 1);
+        g.fillRect(11, 10, 22, 24);
+
+        // Barriga mais clara
+        g.fillStyle(0x00e676, 1);
+        g.fillRect(14, 18, 16, 14);
+        g.fillStyle(0x66ff9a, 0.8);
+        g.fillRect(16, 20, 12, 4);
+
+        // Highlight superior
+        g.fillStyle(0x9bffc2, 0.55);
+        g.fillRect(13, 12, 8, 4);
+
+        // Escamas visíveis (pontinhos mais escuros)
+        g.fillStyle(0x006b2a, 1);
+        for (let sy = 14; sy < 36; sy += 4) {
+            for (let sx = 10; sx < 30; sx += 5) {
+                if ((sx + sy) % 3 !== 0) g.fillRect(sx, sy, 2, 2);
+            }
+        }
+
+        // Cauda saindo atrás
+        g.fillStyle(0x00a842, 1);
+        g.fillTriangle(2, 32, 10, 28, 10, 38);
+        g.fillStyle(0x00c853, 1);
+        g.fillTriangle(3, 33, 9, 30, 9, 36);
+
+        // Braço/varinha com brilho
+        g.fillStyle(0x5d4037, 1);
+        g.fillRect(28, 23, 16, 5);
+        g.fillStyle(0x8d6e63, 1);
+        g.fillRect(28, 23, 16, 3);
+        // Varinha dourada
+        g.fillStyle(0xb8860b, 1);
+        g.fillRect(42, 20, 4, 12);
+        g.fillStyle(0xffd700, 1);
+        g.fillRect(40, 18, 8, 14);
+        g.fillStyle(0xffea00, 1);
+        g.fillRect(41, 19, 6, 10);
+        // Estrela na ponta
+        g.fillStyle(0xffffff, 1);
+        g.fillRect(43, 20, 3, 3);
+        g.fillRect(42, 21, 5, 1);
+        g.fillRect(44, 19, 1, 5);
+        // Brilho mágico
+        g.fillStyle(0x00e5ff, 0.9);
+        g.fillCircle(44, 21, 3);
+        g.fillStyle(0xffffff, 1);
+        g.fillCircle(43, 20, 1);
+
+        // Olhos grandes expressivos
+        g.fillStyle(0xffffff, 1);
+        g.fillRect(22, 14, 9, 9);
+        g.fillRect(32, 14, 9, 9);
+        // Pupilas
+        g.fillStyle(0x000000, 1);
+        g.fillRect(25, 17, 4, 5);
+        g.fillRect(35, 17, 4, 5);
+        // Brilho nos olhos
+        g.fillStyle(0xffffff, 1);
+        g.fillRect(25, 16, 2, 2);
+        g.fillRect(35, 16, 2, 2);
+
+        // Focinho vermelho
+        g.fillStyle(0xb71c1c, 1);
+        g.fillRect(10, 24, 16, 12);
+        g.fillStyle(0xd50000, 1);
+        g.fillRect(10, 24, 16, 10);
+        g.fillStyle(0xff1744, 1);
+        g.fillRect(11, 25, 14, 8);
+        // Dentinhos
+        g.fillStyle(0xfffde7, 1);
+        g.fillRect(13, 32, 2, 3);
+        g.fillRect(17, 32, 2, 3);
+        g.fillRect(21, 32, 2, 3);
+        // Bochecha
+        g.fillStyle(0xffd54f, 0.6);
+        g.fillCircle(14, 30, 3);
+
+        // Pernas
+        g.fillStyle(0x007a31, 1);
+        let legPos;
+        if (type === 'run1' || type === 'runshoot1') legPos = [[8, 38], [24, 38]];
+        else if (type === 'run2' || type === 'runshoot2') legPos = [[14, 38], [20, 38]];
+        else legPos = [[12, 38], [22, 38]];
+        legPos.forEach(([lx, ly]) => {
+            g.fillStyle(0x006b2a, 1);
+            g.fillRect(lx, ly, 9, 10);
+            g.fillStyle(0x008a36, 1);
+            g.fillRect(lx, ly, 8, 9);
+            g.fillStyle(0x00a842, 1);
+            g.fillRect(lx + 1, ly, 6, 4);
+        });
+
+        // Cartola melhorada com brilho
+        g.fillStyle(0x000000, 1);
+        g.fillRect(13, 0, 20, 7);
+        g.fillStyle(0x1a1a1a, 1);
+        g.fillRect(13, 0, 19, 6);
+        g.fillStyle(0x2a2a2a, 1);
+        g.fillRect(14, 1, 17, 4);
+        // Faixa vermelha
+        g.fillStyle(0xb71c1c, 1);
+        g.fillRect(13, 4, 19, 2);
+        g.fillStyle(0xff1744, 1);
+        g.fillRect(14, 4, 17, 1);
+        // Aba da cartola
+        g.fillStyle(0x080808, 1);
+        g.fillRect(11, 6, 24, 3);
+        g.fillStyle(0x1a1a1a, 1);
+        g.fillRect(12, 6, 22, 2);
+        // Highlight
+        g.fillStyle(0x5e5e5e, 0.8);
+        g.fillRect(16, 1, 3, 4);
+        g.fillStyle(0xffffff, 0.4);
+        g.fillRect(17, 1, 1, 3);
+    }
+
+    generatePixelArtTextures() {
+        // GATOR — 6 frames
+        ['idle', 'run1', 'run2', 'shoot', 'runshoot1', 'runshoot2'].forEach((key, i) => {
+            const g = this.make.graphics({x: 0, y: 0, add: false});
+            this.drawGatorFrame(g, key);
+            g.generateTexture('gator_' + key, i < 3 ? 48 : 52, 48);
+        });
+
+        // CARTA normal
+        let cd = this.make.graphics({x: 0, y: 0, add: false});
+        cd.fillStyle(0x000000, 0.4); cd.fillRoundedRect(1, 1, 16, 22, 2);
+        cd.fillStyle(0xf9f7ef); cd.fillRoundedRect(0, 0, 16, 22, 2);
+        cd.lineStyle(1, 0x000000); cd.strokeRoundedRect(0, 0, 16, 22, 2);
+        cd.fillStyle(0xffffff, 0.9); cd.fillRect(2, 2, 3, 7);
+        cd.fillStyle(0xd50000);
+        cd.fillTriangle(8, 5, 4, 11, 12, 11);
+        cd.fillTriangle(8, 17, 4, 11, 12, 11);
+        cd.fillStyle(0xffd54f);
+        cd.fillRect(7, 10, 2, 2);
+        cd.generateTexture('card_bullet', 16, 22);
+
+        // CARTA GIGANTE (especial)
+        let gc = this.make.graphics({x: 0, y: 0, add: false});
+        gc.fillStyle(0x111111, 0.8); gc.fillRoundedRect(2, 2, 76, 108, 7);
+        gc.fillStyle(0xffffff, 1); gc.fillRoundedRect(6, 6, 68, 100, 6);
+        gc.fillStyle(0xfff9e0, 1); gc.fillRoundedRect(9, 9, 62, 94, 5);
+        // Corações
+        gc.fillStyle(0xff1744, 1); gc.fillCircle(40, 43, 16);
+        gc.fillCircle(26, 65, 8); gc.fillCircle(54, 65, 8);
+        gc.fillStyle(0xff5a7a, 0.8); gc.fillCircle(36, 39, 5);
+        // Estrela (desenhada com triângulos)
+        gc.fillStyle(0xffd54f, 1);
+        gc.fillTriangle(40, 70, 35, 82, 45, 82);
+        gc.fillTriangle(40, 94, 35, 82, 45, 82);
+        gc.fillTriangle(28, 80, 40, 76, 40, 86);
+        gc.fillTriangle(52, 80, 40, 76, 40, 86);
+        gc.fillStyle(0xfff176, 1); gc.fillCircle(40, 82, 3);
+        // Cantos pretos
+        gc.fillStyle(0x111111, 1); gc.fillRect(11, 13, 10, 5); gc.fillRect(59, 13, 10, 5);
+        gc.fillRect(11, 96, 10, 5); gc.fillRect(59, 96, 10, 5);
+        // Borda
+        gc.lineStyle(2, 0xffd54f, 1); gc.strokeRoundedRect(6, 6, 68, 100, 6);
+        gc.lineStyle(1, 0x8b6914, 1); gc.strokeRoundedRect(8, 8, 64, 96, 5);
+        gc.generateTexture('giant_card', 80, 112);
+
+        // BOSS — WIZARD WEASEL melhorado
+        let bw = this.make.graphics({x: 0, y: 0, add: false});
+
+        // Cauda listrada
+        bw.fillStyle(0x1f120f, 1); bw.fillEllipse(49, 50, 26, 16);
+        bw.fillStyle(0x6d4638, 1); bw.fillEllipse(51, 48, 16, 9);
+        bw.fillStyle(0x9b6a55, 0.75); bw.fillEllipse(55, 45, 7, 4);
+        // Listras escuras na cauda
+        bw.fillStyle(0x2b1b16, 1);
+        bw.fillRect(44, 44, 3, 8);
+        bw.fillRect(50, 43, 3, 8);
+
+        // Perninhas
+        bw.fillStyle(0x5d4037, 1);
+        bw.fillRect(14, 51, 8, 12);
+        bw.fillRect(34, 51, 8, 12);
+        bw.fillStyle(0x8d6e63, 0.5);
+        bw.fillRect(15, 51, 3, 12);
+        bw.fillRect(35, 51, 3, 12);
+
+        // Pezinhos
+        bw.fillStyle(0x2c1c17, 1);
+        bw.fillRoundedRect(10, 59, 15, 11, 3);
+        bw.fillRoundedRect(31, 59, 15, 11, 3);
+        bw.fillStyle(0x7a523f, 1);
+        bw.fillRect(12, 60, 11, 6);
+        bw.fillRect(33, 60, 11, 6);
+        bw.fillStyle(0xffc107, 1);
+        bw.fillRect(12, 66, 3, 3); bw.fillRect(18, 66, 3, 3);
+        bw.fillRect(33, 66, 3, 3); bw.fillRect(39, 66, 3, 3);
+
+        // Chapéu mágico com estrelinhas
+        bw.fillStyle(0x1a0033, 1); bw.fillTriangle(28, -2, 6, 31, 50, 31);
+        bw.fillStyle(0x350078); bw.fillTriangle(28, 0, 8, 30, 48, 30);
+        bw.fillStyle(0x8e24aa, 1); bw.fillTriangle(28, 5, 17, 26, 39, 26);
+        bw.fillStyle(0xce93d8, 0.6); bw.fillTriangle(28, 8, 22, 22, 34, 22);
+        // Estrelas no chapéu
+        bw.fillStyle(0xffd600, 1);
+        bw.fillRect(20, 15, 2, 2); bw.fillRect(36, 18, 2, 2); bw.fillRect(28, 12, 2, 2);
+        // Borda dourada
+        bw.fillStyle(0xffd600); bw.fillRect(12, 26, 32, 5);
+        bw.fillStyle(0xfff176); bw.fillRect(15, 27, 12, 2);
+        bw.fillStyle(0xfff9c4, 0.7); bw.fillRect(16, 27, 6, 1);
+
+        // Corpo / manto com padrão
+        bw.fillStyle(0x1a0836, 1); bw.fillRect(8, 31, 40, 42);
+        bw.fillStyle(0x32104f); bw.fillRect(9, 31, 38, 40);
+        bw.fillStyle(0x4a148c); bw.fillRect(11, 31, 35, 39);
+        bw.fillStyle(0x6a1b9a); bw.fillRect(14, 34, 29, 35);
+        // Padrão estelar no manto
+        bw.fillStyle(0x9c27b0, 1);
+        bw.fillRect(17, 40, 2, 2); bw.fillRect(30, 42, 2, 2);
+        bw.fillRect(22, 50, 2, 2); bw.fillRect(35, 55, 2, 2);
+        bw.fillRect(19, 60, 2, 2);
+        bw.fillStyle(0xce93d8, 0.7);
+        bw.fillRect(28, 45, 1, 1); bw.fillRect(24, 57, 1, 1);
+
+        // Peito / camisa
+        bw.fillStyle(0x8d6e63); bw.fillRect(16, 28, 24, 18);
+        bw.fillStyle(0xbca6a2); bw.fillRect(19, 31, 18, 12);
+        bw.fillStyle(0xd7ccc8, 0.6); bw.fillRect(21, 32, 8, 4);
+
+        // Braços/patinhas
+        bw.fillStyle(0x5d4037, 1);
+        bw.fillEllipse(8, 45, 11, 15);
+        bw.fillEllipse(48, 45, 11, 15);
+        bw.fillStyle(0x8d6e63, 1);
+        bw.fillEllipse(8, 44, 10, 13);
+        bw.fillEllipse(48, 44, 10, 13);
+        bw.fillStyle(0xa98272, 1);
+        bw.fillCircle(6, 52, 4);
+        bw.fillCircle(50, 52, 4);
+        bw.fillStyle(0x4e332a, 1);
+        bw.fillRect(3, 50, 3, 2); bw.fillRect(5, 53, 3, 2);
+        bw.fillRect(50, 50, 3, 2); bw.fillRect(48, 53, 3, 2);
+
+        // Rosto
+        bw.fillStyle(0x6d4c41); bw.fillEllipse(28, 38, 27, 21);
+        bw.fillStyle(0x8d6e63); bw.fillEllipse(28, 38, 25, 19);
+        bw.fillStyle(0xbca6a2); bw.fillEllipse(28, 40, 20, 13);
+
+        // Olhos com brilho mágico
+        bw.fillStyle(0x1a1a1a); bw.fillRect(16, 35, 12, 11); bw.fillRect(28, 35, 12, 11);
+        bw.fillStyle(0xffffff); bw.fillRect(17, 36, 10, 9); bw.fillRect(29, 36, 10, 9);
+        bw.fillStyle(0x000000); bw.fillRect(22, 38, 4, 6); bw.fillRect(30, 38, 4, 6);
+        bw.fillStyle(0xffffff); bw.fillRect(22, 37, 2, 2); bw.fillRect(30, 37, 2, 2);
+        // Íris brilhante
+        bw.fillStyle(0xffea00, 1);
+        bw.fillRect(18, 32, 8, 5); bw.fillRect(30, 32, 8, 5);
+        bw.fillStyle(0xfff59d, 1);
+        bw.fillRect(19, 33, 4, 2); bw.fillRect(31, 33, 4, 2);
+
+        // Nariz e bigodes
+        bw.fillStyle(0x2a1713); bw.fillTriangle(28, 44, 25, 47, 31, 47);
+        bw.fillStyle(0x1a0a08, 0.9); bw.fillCircle(28, 45, 2);
+        bw.lineStyle(1, 0xd7b7ac, 0.85);
+        bw.lineBetween(24, 46, 15, 44); bw.lineBetween(24, 48, 14, 49);
+        bw.lineBetween(32, 46, 41, 44); bw.lineBetween(32, 48, 42, 49);
+
+        // Varinha lateral com brilho
+        bw.fillStyle(0x5d4037); bw.fillRect(2, 20, 7, 35);
+        bw.fillStyle(0x8b5a2b); bw.fillRect(3, 20, 5, 35);
+        bw.fillStyle(0xffab00); bw.fillRect(2, 20, 7, 5);
+        bw.fillStyle(0xffd54f); bw.fillRect(3, 21, 5, 3);
+        // Orbe mágico
+        bw.fillStyle(0x00b8d4); bw.fillCircle(5, 18, 9);
+        bw.fillStyle(0x00e5ff); bw.fillCircle(5, 18, 7);
+        bw.fillStyle(0x84ffff); bw.fillCircle(5, 18, 4);
+        bw.fillStyle(0xffffff); bw.fillCircle(3, 16, 2);
+
+        // Detalhes dourados do manto
+        bw.fillStyle(0xffd54f);
+        bw.fillCircle(22, 56, 2); bw.fillCircle(34, 56, 2);
+        bw.fillRect(27, 49, 2, 15);
+
+        bw.generateTexture('boss', 56, 72);
+
+        // MINI-BOSS — Coelho com mais textura
+        let rb = this.make.graphics({x: 0, y: 0, add: false});
+        // Orelhas com sombra
+        rb.fillStyle(0xa0a0a8); rb.fillRoundedRect(22, 2, 28, 68, 10); rb.fillRoundedRect(62, 2, 28, 68, 10);
+        rb.fillStyle(0xb0b0b8); rb.fillRoundedRect(22, 0, 28, 68, 10); rb.fillRoundedRect(62, 0, 28, 68, 10);
+        rb.fillStyle(0xf8f8ff); rb.fillRoundedRect(27, 2, 18, 60, 8); rb.fillRoundedRect(67, 2, 18, 60, 8);
+        rb.fillStyle(0xff8fb4); rb.fillRoundedRect(31, 10, 10, 48, 6); rb.fillRoundedRect(71, 10, 10, 48, 6);
+        rb.fillStyle(0xffb9ce); rb.fillRect(32, 12, 3, 28); rb.fillRect(72, 12, 3, 28);
+        // Textura de pelo (pontinhos)
+        rb.fillStyle(0xe8e8ef, 0.8);
+        for (let i = 0; i < 30; i++) {
+            const hx = 22 + (i * 47) % 68;
+            const hy = 5 + (i * 31) % 60;
+            rb.fillRect(hx, hy, 2, 2);
+        }
+        // Cabeça com sombra
+        rb.fillStyle(0xa0a0a8); rb.fillCircle(56, 92, 52);
+        rb.fillStyle(0xc4c4cc); rb.fillCircle(56, 91, 52);
+        rb.fillStyle(0xf7f7fb); rb.fillCircle(56, 88, 47);
+        rb.fillStyle(0xffffff, 0.6); rb.fillCircle(45, 75, 15);
+        // Bochechas com blush
+        rb.fillStyle(0xffc4d4); rb.fillCircle(34, 94, 15); rb.fillCircle(78, 94, 15);
+        rb.fillStyle(0xffe3ec, 0.85); rb.fillCircle(34, 94, 14); rb.fillCircle(78, 94, 14);
+        // Olhos grandes com brilho profundo
+        rb.fillStyle(0x1a1a2a); rb.fillEllipse(39, 76, 18, 23); rb.fillEllipse(73, 76, 18, 23);
+        rb.fillStyle(0x252533); rb.fillEllipse(39, 76, 17, 22); rb.fillEllipse(73, 76, 17, 22);
+        rb.fillStyle(0xff4f73); rb.fillCircle(39, 79, 6); rb.fillCircle(73, 79, 6);
+        rb.fillStyle(0xff8fa8); rb.fillCircle(38, 77, 3); rb.fillCircle(72, 77, 3);
+        rb.fillStyle(0xffffff); rb.fillCircle(37, 73, 3); rb.fillCircle(71, 73, 3);
+        rb.fillStyle(0xffffff, 0.8); rb.fillCircle(41, 82, 1); rb.fillCircle(75, 82, 1);
+        // Sobrancelhas
+        rb.lineStyle(3, 0x6f6672, 0.9); rb.lineBetween(31, 66, 46, 63); rb.lineBetween(66, 63, 81, 66);
+        // Focinho
+        rb.fillStyle(0xff7fa8); rb.fillTriangle(56, 96, 49, 91, 63, 91);
+        rb.fillStyle(0xff5a85); rb.fillTriangle(56, 97, 53, 93, 59, 93);
+        rb.fillStyle(0xffb2c5); rb.fillEllipse(56, 103, 16, 9);
+        // Boca e dentes de coelho
+        rb.lineStyle(2, 0x8a6370, 0.95);
+        rb.lineBetween(56, 103, 56, 111);
+        rb.lineBetween(56, 110, 50, 113);
+        rb.lineBetween(56, 110, 62, 113);
+        rb.fillStyle(0xffffff, 1);
+        rb.fillRect(54, 108, 2, 3); rb.fillRect(57, 108, 2, 3);
+        // Bigodes
+        rb.lineStyle(1, 0x80737d, 0.7);
+        rb.lineBetween(46, 101, 27, 97); rb.lineBetween(46, 105, 25, 106);
+        rb.lineBetween(66, 101, 85, 97); rb.lineBetween(66, 105, 87, 106);
+        // Barriga
+        rb.fillStyle(0xd9d9e2); rb.fillEllipse(56, 124, 37, 32);
+        rb.fillStyle(0xe9e9f0); rb.fillEllipse(56, 123, 35, 30);
+        rb.fillStyle(0xf5f5fa, 0.7); rb.fillEllipse(56, 118, 20, 12);
+        // Braços
+        rb.fillStyle(0xa0a0a8); rb.fillEllipse(20, 120, 15, 29); rb.fillEllipse(92, 120, 15, 29);
+        rb.fillStyle(0xbabac4); rb.fillEllipse(20, 119, 14, 28); rb.fillEllipse(92, 119, 14, 28);
+        rb.fillStyle(0xd9d9e2, 0.6); rb.fillEllipse(20, 115, 8, 12); rb.fillEllipse(92, 115, 8, 12);
+        rb.fillStyle(0xf1f1f6); rb.fillCircle(18, 130, 7); rb.fillCircle(94, 130, 7);
+        // Pernas/pés
+        rb.fillStyle(0xa0a0a8); rb.fillEllipse(41, 146, 19, 13); rb.fillEllipse(71, 146, 19, 13);
+        rb.fillStyle(0xbabac4); rb.fillEllipse(41, 145, 18, 12); rb.fillEllipse(71, 145, 18, 12);
+        rb.fillStyle(0xff8fb4); rb.fillEllipse(37, 147, 17, 7); rb.fillEllipse(75, 147, 17, 7);
+        rb.fillStyle(0xffb9ce); rb.fillEllipse(37, 146, 12, 4); rb.fillEllipse(75, 146, 12, 4);
+        rb.fillStyle(0xffd5e1); rb.fillCircle(33, 146, 2); rb.fillCircle(80, 146, 2);
+        // Brilhos
+        rb.fillStyle(0xffffff, 0.6); rb.fillCircle(20, 81, 3); rb.fillCircle(91, 91, 2);
+        rb.generateTexture('giant_rabbit', 112, 150);
+
+        // CENOURA
+        let cr = this.make.graphics({x: 0, y: 0, add: false});
+        cr.fillStyle(0x00a854); cr.fillRect(9, 1, 6, 5); cr.fillRect(5, 3, 5, 4); cr.fillRect(14, 2, 5, 5);
+        cr.fillStyle(0x00e676); cr.fillRect(8, 0, 8, 6); cr.fillRect(4, 2, 6, 4);
+        cr.fillStyle(0x69f0ae); cr.fillRect(9, 0, 3, 3);
+        cr.fillStyle(0xd84315); cr.fillTriangle(12, 25, 1, 6, 23, 6);
+        cr.fillStyle(0xff6d00); cr.fillTriangle(12, 24, 2, 6, 22, 6);
+        cr.fillStyle(0xff9800); cr.fillTriangle(12, 22, 4, 8, 20, 8);
+        cr.fillStyle(0xffb74d, 0.7); cr.fillRect(10, 10, 2, 6);
+        cr.generateTexture('carrot', 24, 24);
+
+        // ORB VERMELHO
+        let rb1 = this.make.graphics({x: 0, y: 0, add: false});
+        rb1.fillStyle(0x4a0410, 1); rb1.fillCircle(9, 9, 9);
+        rb1.fillStyle(0x7a061d, 1); rb1.fillCircle(9, 9, 8);
+        rb1.fillStyle(0xd50000, 1); rb1.fillCircle(9, 9, 7);
+        rb1.fillStyle(0xff1744, 1); rb1.fillCircle(9, 8, 6);
+        rb1.fillStyle(0xff5252, 1); rb1.fillCircle(7, 6, 3);
+        rb1.fillStyle(0xffd5df, 1); rb1.fillCircle(6, 6, 2);
+        rb1.fillStyle(0xffffff, 1); rb1.fillCircle(5, 5, 1);
+        rb1.lineStyle(1, 0xff8aa0, 0.9); rb1.strokeCircle(9, 9, 8);
+        rb1.generateTexture('red_orb', 18, 18);
+
+        // ORB ROSA
+        let pb2 = this.make.graphics({x: 0, y: 0, add: false});
+        pb2.fillStyle(0x5c0a30, 1); pb2.fillCircle(12, 12, 12);
+        pb2.fillStyle(0x8e1b50, 1); pb2.fillCircle(12, 12, 11);
+        pb2.fillStyle(0xd81b60, 1); pb2.fillCircle(12, 12, 10);
+        pb2.fillStyle(0xff4081, 1); pb2.fillCircle(12, 11, 9);
+        pb2.fillStyle(0xff80ab, 1); pb2.fillCircle(10, 9, 5);
+        pb2.fillStyle(0xffc1d6, 1); pb2.fillCircle(8, 7, 3);
+        pb2.fillStyle(0xffffff, 1); pb2.fillCircle(7, 6, 2);
+        pb2.lineStyle(1, 0xffc1d6, 1); pb2.strokeCircle(12, 12, 10);
+        pb2.generateTexture('pink_orb', 24, 24);
+
+        // PLATAFORMA com luzes coloridas
+        let cp = this.make.graphics({x: 0, y: 0, add: false});
+        cp.fillStyle(0x2a0a4a, 1); cp.fillRoundedRect(0, 5, 112, 15, 4);
+        cp.fillStyle(0x4a148c, 1); cp.fillRoundedRect(0, 4, 112, 14, 4);
+        cp.fillStyle(0x6a1b9a, 1); cp.fillRoundedRect(2, 4, 108, 10, 3);
+        cp.fillStyle(0x9c27b0, 0.6); cp.fillRect(6, 5, 100, 2);
+        cp.fillStyle(0xffca28, 1); cp.fillRect(6, 3, 100, 3);
+        cp.fillStyle(0xfff176, 1); cp.fillRect(8, 3, 96, 1);
+        // Lâmpadas coloridas
+        const colors = [0xff1744, 0xffffff, 0x00e5ff, 0xffffff, 0xff1744, 0xffea00, 0x00e676];
+        for (let i = 0; i < 7; i++) {
+            cp.fillStyle(colors[i]);
+            cp.fillRect(10 + i * 14, 8, 12, 6);
+            cp.fillStyle(0xffffff, 0.6);
+            cp.fillRect(11 + i * 14, 8, 4, 2);
+        }
+        cp.fillStyle(0x1a0a2a, 1); cp.fillRect(8, 17, 96, 3);
+        cp.fillStyle(0x000000, 0.4); cp.fillRect(0, 19, 112, 2);
+        cp.generateTexture('carousel_platform', 112, 20);
+
+        // CHÃO com padrão melhorado
+        let gr = this.make.graphics({x: 0, y: 0, add: false});
+        gr.fillStyle(0x1a0a2a, 1); gr.fillRect(0, 0, 800, 50);
+        gr.fillStyle(0x211138); gr.fillRect(0, 0, 800, 48);
+        gr.fillStyle(0xffca28); gr.fillRect(0, 0, 800, 6);
+        gr.fillStyle(0xfff176); gr.fillRect(0, 1, 800, 2);
+        // Padrão xadrez
+        for (let i = 0; i < 20; i++) {
+            gr.fillStyle(i % 2 === 0 ? 0xd50000 : 0xffffff);
+            gr.fillRect(i * 40, 6, 40, 10);
+            // Sombra interna
+            gr.fillStyle(0x000000, 0.15);
+            gr.fillRect(i * 40, 12, 40, 4);
+            gr.fillStyle(0xffca28, 0.4); gr.fillRect(i * 40 + 3, 18, 34, 3);
+        }
+        gr.fillStyle(0x0a0312); gr.fillRect(0, 24, 800, 26);
+        gr.fillStyle(0x140b20, 1); gr.fillRect(0, 24, 800, 24);
+        for (let i = 0; i < 32; i++) {
+            gr.fillStyle(i % 2 === 0 ? 0x2d1748 : 0x3b1d55);
+            gr.fillRect(i * 25, 24, 12, 26);
+            gr.fillStyle(0x000000, 0.3);
+            gr.fillRect(i * 25 + 10, 24, 2, 26);
+        }
+        gr.generateTexture('ground', 800, 50);
+
+        // Brilho radial para magia do boss
+        let glow = this.make.graphics({x: 0, y: 0, add: false});
+        for (let i = 20; i > 0; i--) {
+            glow.fillStyle(0xffffff, 0.04 * (20 - i) / 20);
+            glow.fillCircle(40, 40, i * 2);
+        }
+        glow.generateTexture('radial_glow', 80, 80);
+    }
+
+    init(data) { this.konamiImmortal = !!(data && data.konamiImmortal); }
+
+    create() {
+        this.bossHP = 3500; this.bossMaxHP = 3500;
+        this.rabbitHP = 900; this.rabbitMaxHP = 900;
+        this.bossPhase = 1;
+        this.finalPhaseState = 'dash';
+        this.isDead = false;
+        this.bossIsMoving = false;
+        this.bossMoveTimer = null;
+        this.bossMoveGeneration = 0;
+        this.jumpsLeft = 2;
+        this.canDash = true;
+        this.isDashing = false;
+        this.dashCooldown = false;
+        this.dashRecovery = false;
+        this.isParrying = false;
+        this.lastShootTime = 0;
+        this.facing = 'right';
+        this.shotCount = 0;
+        this.specialHits = 0;
+        this.specialRequired = 70;
+        this.specialReady = false;
+        this.playerDamageMultiplier = 1;
+        this.phase4RageActive = false;
+        this.phase4RedOverlay = null;
+        this.phase4RageText = null;
+        this.phase4RageAura = null;
+        this.bossHitReacting = false;
+        this.bossEntranceAnimating = false;
+
+        // Estado de pausa e sequência de início.
+        this.gamePaused = false;
+        this.pauseSelection = 0; // 0 = CONTINUAR, 1 = SAIR PARA O MENU
+        this.preBattleCountdown = true;
+        this.countdownRunning = false;
+
+        this.immortalHud = this.add.container(52, 532).setDepth(180);
+        const immortalPanel = this.add.rectangle(0, 0, 92, 38, 0x07130d, 0.88).setStrokeStyle(2, 0x35e27f, 0.9);
+        const immortalIcon = this.add.circle(-28, 0, 13, 0x0b2f1a, 1).setStrokeStyle(2, 0x35e27f, 1);
+        const immortalStar = this.add.text(-28, 0, '★', { fontFamily: '"Press Start 2P"', fontSize: '12px', fill: '#7dffad' }).setOrigin(0.5);
+        const immortalText = this.add.text(9, 0, 'IMORTAL', { fontFamily: '"Press Start 2P"', fontSize: '7px', fill: '#7dffad', stroke: '#001f0c', strokeThickness: 2 }).setOrigin(0.5);
+        this.immortalHud.add([immortalPanel, immortalIcon, immortalStar, immortalText]);
+        this.immortalHud.setVisible(!!this.konamiImmortal);
+        this.immortalHudIcon = immortalIcon;
+        this.immortalHudStar = immortalStar;
+        if (this.konamiImmortal) {
+            this.tweens.add({ targets: [this.immortalHudIcon, this.immortalHudStar], scale: 1.12, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        }
+
+        this.createCircusBackground();
+        let ground = this.physics.add.staticImage(400, 575, 'ground');
+
+        this.carouselPlatforms = this.physics.add.group();
+        this.carouselAngle = 0;
+        this.carouselSpeed = 0.48;
+        this.carouselCenterX = 400;
+        this.carouselCenterY = 360;
+        this.carouselRadiusX = 230;
+        this.carouselRadiusY = 105;
+        this.carouselPlatformCount = 4;
+        this.dropThroughPlatform = false;
+        this.dropThroughUntil = 0;
+
+        for (let i = 0; i < this.carouselPlatformCount; i++) {
+            const a = (Math.PI * 2 * i) / this.carouselPlatformCount;
+            const x = this.carouselCenterX + Math.cos(a) * this.carouselRadiusX;
+            const y = this.carouselCenterY + Math.sin(a) * this.carouselRadiusY;
+            const platform = this.carouselPlatforms.create(x, y, 'carousel_platform');
+            platform.setDepth(12);
+            platform.setImmovable(true);
+            platform.body.allowGravity = false;
+            platform.body.moves = true;
+            platform.body.setSize(104, 16, true);
+            platform.carouselIndex = i;
+        }
+
+        this.playerShadow = this.add.ellipse(0, 550, 34, 8, 0x000000, 0.5);
+        this.player = this.physics.add.sprite(120, 400, 'gator_idle').setDepth(20);
+        this.player.setCollideWorldBounds(true);
+        this.player.setGravityY(1200);
+        this.carouselCollider = this.physics.add.collider(
+            this.player, this.carouselPlatforms,
+            this.handleCarouselPlatformLanding, this.processCarouselPlatformCollision, this
+        );
+        this.playerDashMist = this.add.circle(this.player.x, this.player.y, 22, 0x4dabff, 0).setDepth(18);
+        this.playerDashMist.setStrokeStyle(2, 0x75c8ff, 0);
+        this.physics.add.collider(this.player, ground, () => { this.jumpsLeft = 2; });
+
+        this.boss = this.add.sprite(660, 320, 'boss').setDepth(22);
+        this.boss.setActive(true); this.boss.setVisible(true); this.boss.setAlpha(1);
+
+        this.bossHitbox = this.physics.add.sprite(660, 320, 'boss');
+        this.bossHitbox.setVisible(false); this.bossHitbox.setActive(true);
+        this.bossHitbox.body.allowGravity = false;
+        this.bossHitbox.body.immovable = true;
+        this.bossHitbox.body.moves = true;
+        this.bossHitbox.body.setVelocity(0, 0);
+
+        this.bossGlow = this.add.image(this.boss.x, this.boss.y, 'radial_glow').setDepth(8).setTint(0x8e24aa).setAlpha(0.4).setScale(2);
+        this.bossGlowRing = this.add.circle(this.boss.x, this.boss.y, 34, 0xffd54f, 0).setStrokeStyle(2, 0xffd54f, 0.4).setDepth(9);
+        this.bossMagicCore = this.add.circle(this.boss.x - 28, this.boss.y - 3, 5, 0x00e5ff, 0).setDepth(23);
+        this.playerMagicGlow = this.add.circle(this.player.x, this.player.y, 26, 0x00e5ff, 0.0).setStrokeStyle(2, 0x00e5ff, 0.28).setDepth(8);
+        this.bossAnimTime = 0;
+        this.bossCastPulse = 0;
+
+        this.tweens.add({ targets: this.bossGlow, scale: 2.2, alpha: 0.55, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        this.tweens.add({ targets: this.bossGlowRing, scale: 1.12, alpha: 0.65, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+
+        this.playerBullets = this.physics.add.group({ allowGravity: false });
+        this.bossOrbs = this.physics.add.group({ allowGravity: false });
+        this.carrots = this.physics.add.group({ allowGravity: false });
+
+        this.createHUD();
+
+        this.controlConfig = getControlConfig();
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.keyLeft = this.input.keyboard.addKey(this.controlConfig.left.code);
+        this.keyRight = this.input.keyboard.addKey(this.controlConfig.right.code);
+        this.keyJump = this.input.keyboard.addKey(this.controlConfig.jump.code);
+        this.keyDown = this.input.keyboard.addKey(this.controlConfig.down.code);
+        this.keyDash = this.input.keyboard.addKey(this.controlConfig.dash.code);
+        this.keyParry = this.input.keyboard.addKey(this.controlConfig.parry.code);
+        this.keyShoot = this.input.keyboard.addKey(this.controlConfig.shoot.code);
+        this.keySpecial = this.input.keyboard.addKey(this.controlConfig.special.code);
+        this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+        this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+        this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+        this.parryKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        this.dashKey1 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+        this.dashKey2 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
+        this.shootKey1 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
+        this.shootKey2 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
+        this.specialKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.V);
+
+        // Pause: ESC ou P. No menu de pausa, ENTER confirma a opção selecionada.
+        this.pauseKeyEsc = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+        this.pauseKeyP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
+        this.pauseConfirmKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+        this.pauseUpKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+        this.pauseDownKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN);
+
+        this.createPauseMenu();
+
+        this.parryHitbox = this.physics.add.sprite(this.player.x, this.player.y, 'card_bullet');
+        this.parryHitbox.setVisible(false);
+        this.parryHitbox.setActive(false);
+        this.parryHitbox.body.allowGravity = false;
+        this.parryHitbox.body.moves = false;
+        this.parryHitbox.body.immovable = true;
+        this.parryHitbox.body.setSize(150, 150, true);
+
+        this.physics.add.overlap(this.player, this.bossOrbs, this.handlePlayerOrbCollision, null, this);
+        this.physics.add.overlap(this.parryHitbox, this.bossOrbs, this.handleParryOrbCollision, null, this);
+        this.physics.add.overlap(this.player, this.carrots, this.handlePlayerCarrotCollision, null, this);
+
+        this.createBattleCountdown();
+        this.setupPhase1Timers();
+        if (this.bossShootTimer) this.bossShootTimer.paused = true;
+        this.showPhaseBanner("FASE 1: TIROS MÁGICOS!");
+        this.startBattleCountdown();
+    }
+
+    createPauseMenu() {
+        this.pauseLayer = this.add.container(0, 0).setDepth(500).setVisible(false);
+        const dim = this.add.rectangle(400, 300, 800, 600, 0x05020a, 0.78);
+        const panel = this.add.rectangle(400, 300, 520, 300, 0x10061a, 0.98).setStrokeStyle(3, 0xffca28);
+        const title = this.add.text(400, 215, 'JOGO PAUSADO', {
+            fontFamily: '"Press Start 2P"', fontSize: '22px', fill: '#ffd54f',
+            stroke: '#000000', strokeThickness: 5
+        }).setOrigin(0.5);
+        const hint = this.add.text(400, 260, '↑ / ↓  ESCOLHER     ENTER  CONFIRMAR', {
+            fontFamily: '"Press Start 2P"', fontSize: '7px', fill: '#ab47bc'
+        }).setOrigin(0.5);
+        this.pauseContinueText = this.add.text(400, 315, 'CONTINUAR', {
+            fontFamily: '"Press Start 2P"', fontSize: '13px', fill: '#ffffff', stroke: '#000000', strokeThickness: 3
+        }).setOrigin(0.5);
+        this.pauseMenuText = this.add.text(400, 365, 'SAIR PARA O MENU', {
+            fontFamily: '"Press Start 2P"', fontSize: '13px', fill: '#888888', stroke: '#000000', strokeThickness: 3
+        }).setOrigin(0.5);
+        const footer = this.add.text(400, 415, 'ESC / P  •  VOLTAR AO JOGO', {
+            fontFamily: '"Press Start 2P"', fontSize: '7px', fill: '#666666'
+        }).setOrigin(0.5);
+        this.pauseLayer.add([dim, panel, title, hint, this.pauseContinueText, this.pauseMenuText, footer]);
+        this.updatePauseSelection();
+    }
+
+    updatePauseSelection() {
+        if (!this.pauseContinueText || !this.pauseMenuText) return;
+        const selected = this.pauseSelection === 0;
+        this.pauseContinueText.setFill(selected ? '#00e676' : '#777777').setScale(selected ? 1.08 : 1);
+        this.pauseMenuText.setFill(selected ? '#777777' : '#ff4081').setScale(selected ? 1 : 1.08);
+    }
+
+    openPauseMenu() {
+        if (this.gamePaused || this.isDead || this.preBattleCountdown) return;
+        this.gamePaused = true;
+        this.pauseSelection = 0;
+        this.updatePauseSelection();
+        this.pauseLayer.setVisible(true);
+        this.physics.pause();
+        this.time.paused = true;
+        Sound.menuSelect();
+    }
+
+    closePauseMenu() {
+        if (!this.gamePaused) return;
+        this.gamePaused = false;
+        this.pauseLayer.setVisible(false);
+        this.time.paused = false;
+        this.physics.resume();
+        Sound.menuSelect();
+    }
+
+    handlePauseInput() {
+        if (Phaser.Input.Keyboard.JustDown(this.pauseKeyEsc) || Phaser.Input.Keyboard.JustDown(this.pauseKeyP)) {
+            this.closePauseMenu();
+            return;
+        }
+        if (Phaser.Input.Keyboard.JustDown(this.pauseUpKey) || Phaser.Input.Keyboard.JustDown(this.keyJump) || Phaser.Input.Keyboard.JustDown(this.keyW)) {
+            this.pauseSelection = (this.pauseSelection + 1) % 2;
+            this.updatePauseSelection();
+            Sound.menuSelect();
+        }
+        if (Phaser.Input.Keyboard.JustDown(this.pauseDownKey) || Phaser.Input.Keyboard.JustDown(this.keyDown) || Phaser.Input.Keyboard.JustDown(this.keyS)) {
+            this.pauseSelection = (this.pauseSelection + 1) % 2;
+            this.updatePauseSelection();
+            Sound.menuSelect();
+        }
+        if (Phaser.Input.Keyboard.JustDown(this.pauseConfirmKey) || Phaser.Input.Keyboard.JustDown(this.parryKey)) {
+            if (this.pauseSelection === 0) {
+                this.closePauseMenu();
+            } else {
+                try { sessionStorage.removeItem('captusIntroSeen'); } catch (err) {}
+                this.scene.start('MenuScene');
+            }
+        }
+    }
+
+    createBattleCountdown() {
+        this.countdownLayer = this.add.container(400, 300).setDepth(450).setVisible(false);
+        this.countdownText = this.add.text(0, 0, '', {
+            fontFamily: '"Press Start 2P"', fontSize: '76px', fill: '#ffd54f',
+            stroke: '#17051f', strokeThickness: 12
+        }).setOrigin(0.5);
+        this.countdownGlow = this.add.circle(0, 0, 80, 0x00e5ff, 0.12);
+        this.countdownLayer.add([this.countdownGlow, this.countdownText]);
+    }
+
+    startBattleCountdown() {
+        if (!this.preBattleCountdown || this.countdownRunning) return;
+        this.countdownRunning = true;
+        this.countdownLayer.setVisible(true);
+        const steps = ['3', '2', '1', 'MÁGICA'];
+        let index = 0;
+        const showStep = () => {
+            if (index >= steps.length) {
+                this.countdownLayer.setVisible(false);
+                this.preBattleCountdown = false;
+                this.countdownRunning = false;
+                if (this.bossShootTimer) this.bossShootTimer.paused = false;
+                this.physics.resume();
+                if (this.bossPhase === 1 && !this.isDead) this.startBossDynamicMovement(1);
+                Sound.phaseChange();
+                return;
+            }
+            const word = steps[index];
+            this.countdownText.setText(word).setFill(word === 'MÁGICA' ? '#00e5ff' : '#ffd54f');
+            this.countdownText.setScale(0.45).setAlpha(1).setAngle(index % 2 === 0 ? -2 : 2);
+            this.countdownGlow.setScale(0.45).setAlpha(0.2);
+            const burst = this.add.particles(this.countdownLayer.x, this.countdownLayer.y, 'red_orb', {
+                speed: { min: 80, max: 230 }, scale: { start: 0.55, end: 0 }, lifespan: 420, quantity: index === 3 ? 26 : 14,
+                tint: index === 3 ? [0x00e5ff, 0xffffff, 0xffd54f] : [0xffd54f, 0xff1744, 0xffffff], emitting: false
+            }).setDepth(451);
+            burst.explode();
+            this.tweens.add({
+                targets: [this.countdownText, this.countdownGlow],
+                scale: index === 3 ? 1.18 : 1.0, duration: 240, ease: 'Back.Out',
+                onComplete: () => {
+                    this.tweens.add({
+                        targets: [this.countdownText, this.countdownGlow],
+                        alpha: 0, scale: index === 3 ? 1.3 : 1.12, duration: 380,
+                        onComplete: () => {
+                            burst.destroy();
+                            index++;
+                            showStep();
+                        }
+                    });
+                }
+            });
+            if (index === 3) Sound.specialCast(); else Sound.menuSelect();
+        };
+        this.physics.pause();
+        showStep();
+    }
+
+    createCircusBackground() {
+        this.bgContainer = this.add.container(0, 0);
+        this.circusBgRect = this.add.rectangle(400, 300, 800, 600, 0x3d0c1e).setOrigin(0.5);
+        this.bgContainer.add(this.circusBgRect);
+        this.tentStripes = [];
+        for (let i = 0; i < 16; i++) {
+            let color = i % 2 === 0 ? 0xb71c1c : 0xffc107;
+            let stripe = this.add.triangle(i * 50 + 25, 0, i * 50, 0, i * 50 + 50, 0, i * 50 + 25, 220, color).setAlpha(0.75);
+            this.bgContainer.add(stripe);
+            // Listra de sombra
+            let shadow = this.add.triangle(i * 50 + 25, 0, i * 50, 0, i * 50 + 50, 0, i * 50 + 25, 220, 0x000000, 0.15);
+            this.bgContainer.add(shadow);
+            this.tentStripes.push(stripe);
+        }
+        let leftCurtain = this.add.rectangle(20, 250, 60, 500, 0x880e4f).setOrigin(0.5);
+        let rightCurtain = this.add.rectangle(780, 250, 60, 500, 0x880e4f).setOrigin(0.5);
+        this.bgContainer.add(leftCurtain);
+        this.bgContainer.add(rightCurtain);
+        // Listras nas cortinas
+        for (let i = 0; i < 5; i++) {
+            const cl = this.add.rectangle(20, 50 + i * 100, 58, 8, 0x4a0a2a, 0.4).setOrigin(0.5);
+            const cr = this.add.rectangle(780, 50 + i * 100, 58, 8, 0x4a0a2a, 0.4).setOrigin(0.5);
+            this.bgContainer.add(cl); this.bgContainer.add(cr);
+        }
+        this.circusLights = [];
+        for (let i = 0; i < 16; i++) {
+            let light = this.add.circle(i * 50 + 25, 215, 6, 0xffffff);
+            this.bgContainer.add(light);
+            this.circusLights.push(light);
+        }
+        this.add.rectangle(400, 532, 680, 76, 0x13081f, 0.88).setDepth(1);
+        this.add.rectangle(400, 520, 680, 5, 0xffca28, 0.35).setDepth(2);
+        for (let i = 0; i < 18; i++) {
+            const seat = this.add.rectangle(80 + i * 36, 545, 24, 10, i % 2 === 0 ? 0x5c1d45 : 0x2f5a70, 0.75).setDepth(2);
+            this.tweens.add({ targets: seat, y: '+=2', duration: 700 + i * 12, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        }
+        this.time.addEvent({ delay: 300, callback: () => {
+            this.circusLights.forEach((l, idx) => {
+                l.setFillStyle((Math.floor(Date.now() / 300) + idx) % 2 === 0 ? 0xffea00 : 0xff1744);
+            });
+        }, loop: true });
+    }
+
+    updateCircusThemeForPhase(phase) {
+        let targetBgColor, stripeColors;
+        if (phase === 1) { targetBgColor = 0x3d0c1e; stripeColors = [0xb71c1c, 0xffc107]; }
+        else if (phase === 2) { targetBgColor = 0x1a0033; stripeColors = [0x4a148c, 0xff4081]; }
+        else if (phase === 3) { targetBgColor = 0x331400; stripeColors = [0xe65100, 0xffab00]; }
+        else if (phase === 4) { targetBgColor = 0x002b36; stripeColors = [0x00e5ff, 0xff1744]; }
+        this.tweens.addCounter({ from: 0, to: 100, duration: 1000, onUpdate: () => {
+            this.circusBgRect.setFillStyle(targetBgColor);
+            this.tentStripes.forEach((stripe, idx) => stripe.setFillStyle(stripeColors[idx % 2]));
+        }});
+        this.cameras.main.shake(400, 0.015);
+    }
+
+    createHUD() {
+        this.hudTitle = this.add.text(400, 20, 'WIZARD WEASEL — FASE 1', {
+            fontFamily: '"Press Start 2P"', fontSize: '11px', fill: '#ff1744', stroke: '#000', strokeThickness: 3
+        }).setOrigin(0.5);
+        this.add.rectangle(400, 44, 604, 18, 0x000000).setStrokeStyle(2, 0xffffff);
+        this.hpBar = this.add.rectangle(98, 44, 600, 12, 0xff1744).setOrigin(0, 0.5);
+
+        this.specialHud = this.add.container(650, 543).setDepth(180);
+        this.specialPanel = this.add.rectangle(0, 0, 292, 50, 0x05050a, 0.86).setStrokeStyle(2, 0xffd54f, 0.9);
+        this.specialFrame = this.add.rectangle(0, 9, 264, 14, 0x020208, 0.95).setStrokeStyle(1, 0xffd54f);
+        this.specialBar = this.add.rectangle(-132, 9, 0, 8, 0xffd54f).setOrigin(0, 0.5);
+        this.specialLabel = this.add.text(0, -11, 'ESPECIAL [V] — 0/70', {
+            fontFamily: '"Press Start 2P"', fontSize: '7px', fill: '#ffd54f', stroke: '#000000', strokeThickness: 2
+        }).setOrigin(0.5).setDepth(181);
+        this.specialHud.add([this.specialPanel, this.specialFrame, this.specialBar, this.specialLabel]);
+
+        this.add.text(400, 585, 'Move: [SETAS]/[WASD] | Pulo: [CIMA] 2x | Dash: [SHIFT] | Parry: [ESPAÇO] | Especial: [V]', {
+            fontFamily: '"Press Start 2P"', fontSize: '7px', fill: '#ffd700'
+        }).setOrigin(0.5);
+        this.updateSpecialMeter();
+    }
+
+    updateHpBar(current, max, color = 0xff1744) {
+        let percent = Math.max(0, current / max);
+        this.hpBar.setFillStyle(color);
+        this.tweens.add({ targets: this.hpBar, width: 600 * percent, duration: 100, ease: 'Linear' });
+    }
+
+    updateSpecialMeter() {
+        if (!this.specialBar || !this.specialLabel) return;
+        const percent = Math.max(0, Math.min(1, this.specialHits / this.specialRequired));
+        this.tweens.add({ targets: this.specialBar, width: 264 * percent, duration: 100, ease: 'Linear' });
+        const wasReady = this.__lastSpecialReady;
+        if (this.specialReady && !wasReady) Sound.specialReady();
+        this.__lastSpecialReady = this.specialReady;
+        if (this.specialReady) {
+            this.specialLabel.setText('ESPECIAL [V] — PRONTO!');
+            this.specialLabel.setFill('#fff176');
+            this.specialLabel.setScale(1.08);
+        } else {
+            this.specialLabel.setText(`ESPECIAL [V] — ${this.specialHits}/${this.specialRequired}`);
+            this.specialLabel.setFill('#ffd54f');
+            this.specialLabel.setScale(1);
+        }
+    }
+
+    showPhaseBanner(text) {
+        let banner = this.add.text(400, 240, text, {
+            fontFamily: '"Press Start 2P"', fontSize: '22px', fill: '#ffd700', stroke: '#000000', strokeThickness: 8
+        }).setOrigin(0.5).setDepth(150);
+        this.tweens.add({ targets: banner, scale: 1.25, alpha: 0, duration: 1800, ease: 'Sine.easeOut', onComplete: () => banner.destroy() });
+    }
+
+    setupPhase1Timers() {
+        // O boss fica completamente parado durante o contador 3-2-1-MÁGICA.
+        this.bossShootTimer = this.time.addEvent({ delay: 1400, callback: this.fireBossOrb, callbackScope: this, loop: true });
+    }
+
+    stopBossDynamicMovement() {
+        this.bossMoveGeneration++;
+        if (this.bossMoveTimer) { this.bossMoveTimer.remove(); this.bossMoveTimer = null; }
+        if (this.boss) this.tweens.killTweensOf(this.boss);
+        this.bossIsMoving = false;
+    }
+
+    startBossDynamicMovement(phase) {
+        if (this.isDead || !this.boss || !this.boss.active) return;
+        this.bossMoveGeneration++;
+        const generation = this.bossMoveGeneration;
+        if (this.bossMoveTimer) { this.bossMoveTimer.remove(); this.bossMoveTimer = null; }
+        this.tweens.killTweensOf(this.boss);
+        this.bossIsMoving = false;
+        const moveAgain = () => {
+            if (this.isDead || !this.boss || !this.boss.active) return;
+            if (this.bossMoveGeneration !== generation || this.bossPhase !== phase) return;
+            const minX = 125, maxX = 690;
+            const minY = phase === 1 ? 170 : 130;
+            const maxY = phase === 1 ? 405 : 440;
+            let targetX = Phaser.Math.Between(minX, maxX);
+            let targetY = Phaser.Math.Between(minY, maxY);
+            let tries = 0;
+            while (Phaser.Math.Distance.Between(this.boss.x, this.boss.y, targetX, targetY) < 150 && tries < 8) {
+                targetX = Phaser.Math.Between(minX, maxX);
+                targetY = Phaser.Math.Between(minY, maxY);
+                tries++;
+            }
+            this.bossIsMoving = true;
+            const duration = phase === 1 ? Phaser.Math.Between(850, 1450) : Phaser.Math.Between(600, 1050);
+            this.tweens.add({ targets: this.boss, x: targetX, y: targetY, duration,
+                ease: phase === 1 ? 'Sine.easeInOut' : 'Cubic.easeInOut',
+                onComplete: () => {
+                    if (this.bossMoveGeneration !== generation || this.bossPhase !== phase || this.isDead) return;
+                    this.bossIsMoving = false;
+                    this.bossMoveTimer = this.time.delayedCall(Phaser.Math.Between(180, phase === 1 ? 550 : 320), moveAgain, [], this);
+                }
+            });
+        };
+        moveAgain();
+    }
+
+    executeBossGlide() {
+        if (this.isDead || this.bossIsMoving || (this.bossPhase !== 4 || this.finalPhaseState !== 'dash')) return;
+        this.bossIsMoving = true;
+        this.tweens.killTweensOf(this.boss);
+        let targetX = this.boss.x > 400 ? 150 : 650;
+        let targetY = Phaser.Math.Between(200, 400);
+        this.boss.setTint(0xff1744);
+        this.time.delayedCall(300, () => {
+            if (this.isDead || !this.boss.active) return;
+            this.boss.clearTint();
+            this.tweens.add({ targets: this.boss, x: targetX, y: targetY, duration: 1200, ease: 'Sine.easeInOut',
+                onComplete: () => {
+                    this.bossIsMoving = false;
+                    if (this.bossPhase === 4 && this.finalPhaseState === 'dash' && !this.isDead) {
+                        this.time.delayedCall(800, () => { if (!this.bossIsMoving) this.executeBossGlide(); });
+                    }
+                }});
+        });
+    }
+
+    fireBossOrb() {
+        if (this.isDead || !this.boss.active || this.bossPhase === 3) return;
+        this.shotCount++;
+        let isPink = this.bossPhase === 4
+            ? (this.shotCount % 2 === 0)
+            : (this.bossPhase === 2 ? (this.shotCount % 2 === 0) : (this.shotCount % 3 === 0));
+        this.playBossMagicCast(isPink);
+        Sound.bossShoot();
+        this.bossCastPulse = 0.32;
+        let texture = isPink ? 'pink_orb' : 'red_orb';
+        let orb = this.bossOrbs.create(this.boss.x - 20, this.boss.y, texture);
+        orb.isPink = isPink;
+        orb.setCircle(isPink ? 12 : 9);
+        let particles = this.add.particles(0, 0, texture, { speed: 25, scale: { start: 0.5, end: 0 }, lifespan: 200, blendMode: 'ADD' });
+        particles.startFollow(orb);
+        orb.particles = particles;
+        const orbSpeed = this.bossPhase === 4 ? (isPink ? 470 : 540) : (isPink ? 310 : 370);
+        this.physics.moveToObject(orb, this.player, orbSpeed);
+    }
+
+    playBossMagicCast(isPink) {
+        if (!this.boss || !this.boss.active || this.isDead) return;
+        const magicColor = isPink ? 0xff4081 : 0xff1744;
+        const coreX = this.boss.x - 28, coreY = this.boss.y - 3;
+        if (this.bossMagicCore) {
+            this.bossMagicCore.setPosition(coreX, coreY);
+            this.bossMagicCore.setFillStyle(magicColor, 0.95);
+            this.bossMagicCore.setScale(0.7);
+            this.bossMagicCore.setAlpha(0.95);
+            this.tweens.add({ targets: this.bossMagicCore, scale: 1.8, alpha: 0, duration: 260, ease: 'Quad.easeOut' });
+        }
+        const circle = this.add.circle(coreX, coreY, 10, magicColor, 0.12).setDepth(21);
+        circle.setStrokeStyle(2, magicColor, 0.8);
+        this.tweens.add({ targets: circle, scale: 2.5, alpha: 0, rotation: Math.PI * 0.7, duration: 320, ease: 'Cubic.easeOut', onComplete: () => circle.destroy() });
+        for (let i = 0; i < 7; i++) {
+            const a = (Math.PI * 2 * i) / 7;
+            const spark = this.add.rectangle(coreX, coreY, 4, 10, magicColor, 0.9).setDepth(22);
+            spark.setRotation(a);
+            this.tweens.add({ targets: spark,
+                x: coreX + Math.cos(a) * Phaser.Math.Between(22, 38),
+                y: coreY + Math.sin(a) * Phaser.Math.Between(22, 38),
+                alpha: 0, scale: 0.4, duration: 260, ease: 'Quad.easeOut',
+                onComplete: () => spark.destroy() });
+        }
+        this.boss.setTint(magicColor);
+        this.time.delayedCall(90, () => { if (this.boss && this.boss.active) this.boss.clearTint(); });
+    }
+
+    removeCarouselPlatforms() {
+        this.dropThroughPlatform = false;
+        this.dropThroughUntil = 0;
+        if (!this.carouselPlatforms) return;
+        this.carouselPlatforms.clear(true, true);
+        this.carouselPlatforms = null;
+    }
+
+    transitionToPhase2() {
+        if (this.bossPhase !== 1 || this.isDead) return;
+        this.bossPhase = 2;
+        this.bossIsMoving = false;
+        this.removeCarouselPlatforms();
+        this.stopBossDynamicMovement();
+        this.updateCircusThemeForPhase(2);
+        this.hudTitle.setText('WIZARD WEASEL — FASE 2');
+        this.hudTitle.setFill('#ff4081');
+        this.showPhaseBanner("FASE 2: MAGIA FLUTUANTE!");
+        Sound.phaseChange();
+        this.boss.setActive(true); this.boss.setVisible(true); this.boss.setAlpha(1);
+        this.boss.setPosition(Phaser.Math.Clamp(this.boss.x, 100, 700), Phaser.Math.Clamp(this.boss.y, 100, 450));
+        if (this.bossHitbox && this.bossHitbox.active) this.bossHitbox.setPosition(this.boss.x, this.boss.y);
+        this.startBossDynamicMovement(2);
+    }
+
+    transitionToPhase3() {
+        if (this.bossPhase !== 2) return;
+        this.bossPhase = 3;
+        this.bossIsMoving = false;
+        this.stopBossDynamicMovement();
+        this.updateCircusThemeForPhase(3);
+        this.hudTitle.setText('MINI-BOSS: COELHO GIGANTE!');
+        this.hudTitle.setFill('#ffab00');
+        this.showPhaseBanner("ALERTA: COELHO GIGANTE!");
+        Sound.phaseChange();
+        this.tweens.add({ targets: this.boss, y: -150, duration: 800 });
+        this.time.delayedCall(900, () => {
+            // COELHO: sprite visual separado da hitbox física.
+            // Isso impede que um impacto em física/overlap faça o desenho desaparecer.
+            this.rabbit = this.add.image(835, 365, 'giant_rabbit').setDepth(24);
+            this.rabbit.setActive(true);
+            this.rabbit.setVisible(true);
+
+            this.rabbitHitbox = this.physics.add.sprite(835, 365, 'giant_rabbit');
+            this.rabbitHitbox.setVisible(false);
+            this.rabbitHitbox.setActive(true);
+            this.rabbitHitbox.body.allowGravity = false;
+            this.rabbitHitbox.setImmovable(true);
+            this.rabbitHitbox.body.moves = false;
+            this.rabbitHitbox.body.enable = false;
+            this.rabbitHitbox.body.setSize(86, 128, true);
+
+            this.updateHpBar(this.rabbitHP, this.rabbitMaxHP, 0xffab00);
+
+            // Movimento manual em formato de quique, como uma bola.
+            // O sprite e a hitbox usam a mesma posição em cada frame.
+            this.rabbitVX = -245;
+            this.rabbitVY = -330;
+            this.rabbitGravity = 720;
+            this.rabbitBounce = 0.92;
+            this.rabbitFloorY = 445;
+            this.rabbitCeilingY = 135;
+            this.rabbitLeftX = 105;
+            this.rabbitRightX = 785;
+            this.rabbitBobbingTime = 0;
+            this.rabbit.setFlipX(true);
+            this.rabbitHitbox.setPosition(this.rabbit.x, this.rabbit.y);
+
+            this.rabbitShootTimer = this.time.addEvent({ delay: 2200, callback: this.shootRabbitCarrot, callbackScope: this, loop: true });
+        });
+    }
+
+    shootRabbitCarrot() {
+        if (this.bossPhase !== 3 || !this.rabbit || !this.rabbit.active || !this.player || !this.player.active || this.isDead) return;
+        let carrot = this.carrots.create(this.rabbit.x - 42, this.rabbit.y - 8, 'carrot');
+        carrot.setAngularVelocity(360);
+        this.physics.moveToObject(carrot, this.player, 355);
+        carrot.setData('spawnTime', this.time.now);
+        Sound.bossShoot();
+    }
+
+    transitionToPhase4() {
+        if (this.bossPhase !== 3 || this.isDead) return;
+
+        this.bossPhase = 4;
+        this.bossIsMoving = false;
+        this.stopBossDynamicMovement();
+        this.updateCircusThemeForPhase(4);
+
+        if (this.rabbitShootTimer) {
+            this.rabbitShootTimer.remove();
+            this.rabbitShootTimer = null;
+        }
+        if (this.rabbitHitbox) {
+            this.rabbitHitbox.setActive(false);
+            this.rabbitHitbox.destroy();
+            this.rabbitHitbox = null;
+        }
+        // Durante a explosão o boss não pode receber tiros acidentais fora da tela.
+        if (this.bossHitbox) {
+            this.bossHitbox.setActive(false);
+            this.bossHitbox.body.enable = false;
+        }
+
+        const rx = this.rabbit ? this.rabbit.x : 400;
+        const ry = this.rabbit ? this.rabbit.y : 330;
+
+        // O coelho explode antes da entrada triunfal do Fuinha.
+        Sound.specialExplode();
+        this.cameras.main.shake(420, 0.028);
+        this.cameras.main.flash(180, 255, 210, 210);
+
+        const core = this.add.circle(rx, ry, 26, 0xffffff, 0.95).setDepth(170);
+        const shock = this.add.circle(rx, ry, 30, 0xffab00, 0).setStrokeStyle(7, 0xffab00, 0.95).setDepth(169);
+        const shock2 = this.add.circle(rx, ry, 20, 0xff1744, 0).setStrokeStyle(4, 0xff1744, 0.9).setDepth(168);
+        const burst = this.add.particles(rx, ry, 'carrot', {
+            speed: { min: 120, max: 520 },
+            angle: { min: 0, max: 360 },
+            scale: { start: 1.15, end: 0 },
+            rotate: { min: -180, max: 180 },
+            lifespan: 750,
+            quantity: 32,
+            emitting: false
+        }).setDepth(171);
+        burst.explode();
+
+        const cardBurst = this.add.particles(rx, ry, 'card_bullet', {
+            speed: { min: 160, max: 450 },
+            angle: { min: 0, max: 360 },
+            scale: { start: 0.9, end: 0 },
+            lifespan: 620,
+            quantity: 20,
+            emitting: false,
+            tint: [0xff1744, 0xffd54f, 0xffffff]
+        }).setDepth(172);
+        cardBurst.explode();
+
+        this.tweens.add({ targets: core, scale: 4.8, alpha: 0, duration: 280, onComplete: () => core.destroy() });
+        this.tweens.add({ targets: shock, scale: 3.9, alpha: 0, duration: 560, ease: 'Cubic.easeOut', onComplete: () => shock.destroy() });
+        this.tweens.add({ targets: shock2, scale: 5.2, alpha: 0, duration: 680, ease: 'Cubic.easeOut', onComplete: () => shock2.destroy() });
+
+        if (this.rabbit && this.rabbit.active) {
+            this.tweens.killTweensOf(this.rabbit);
+            this.tweens.add({
+                targets: this.rabbit,
+                scaleX: 1.35,
+                scaleY: 1.35,
+                alpha: 0.9,
+                duration: 90,
+                yoyo: true,
+                ease: 'Back.easeOut'
+            });
+            this.tweens.add({
+                targets: this.rabbit,
+                scaleX: 0.18,
+                scaleY: 0.18,
+                alpha: 0,
+                angle: 24,
+                duration: 430,
+                delay: 80,
+                ease: 'Cubic.easeIn',
+                onComplete: () => {
+                    if (this.rabbit && this.rabbit.active) this.rabbit.destroy();
+                    this.rabbit = null;
+                }
+            });
+        }
+
+        this.hudTitle.setText('WIZARD WEASEL — FASE FINAL!');
+        this.hudTitle.setFill('#ff1744');
+        this.updateHpBar(this.bossHP, this.bossMaxHP, 0xff1744);
+
+        // Boost permanente: todos os danos do Gator contra o boss passam a valer 2x.
+        this.playerDamageMultiplier = 2;
+        this.phase4RageActive = true;
+
+        // Filtro vermelho sutil da fase final.
+        if (!this.phase4RedOverlay) {
+            this.phase4RedOverlay = this.add.rectangle(400, 300, 800, 600, 0xd50000, 0)
+                .setDepth(130)
+                .setScrollFactor(0);
+        }
+        this.tweens.add({
+            targets: this.phase4RedOverlay,
+            alpha: 0.115,
+            duration: 900,
+            ease: 'Sine.easeOut'
+        });
+        this.tweens.add({
+            targets: this.phase4RedOverlay,
+            alpha: 0.135,
+            duration: 1100,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        // A mensagem fica acima do Gator e pulsa junto com a entrada da fase final.
+        Sound.rageGrow();
+        const rageText = this.add.text(this.player.x, this.player.y - 76, 'sua raiva cresce!', {
+            fontFamily: '"Press Start 2P"',
+            fontSize: '15px',
+            fill: '#ff5252',
+            stroke: '#250000',
+            strokeThickness: 5
+        }).setOrigin(0.5).setDepth(176).setScale(0.65).setAlpha(0);
+        this.phase4RageText = rageText;
+        this.tweens.add({
+            targets: rageText,
+            alpha: 1,
+            scale: 1.08,
+            y: this.player.y - 92,
+            duration: 320,
+            ease: 'Back.easeOut'
+        });
+        this.tweens.add({
+            targets: rageText,
+            y: this.player.y - 125,
+            alpha: 0,
+            scale: 1.18,
+            duration: 1200,
+            delay: 900,
+            ease: 'Cubic.easeIn',
+            onComplete: () => {
+                if (rageText && rageText.active) rageText.destroy();
+                if (this.phase4RageText === rageText) this.phase4RageText = null;
+            }
+        });
+
+        const aura = this.add.circle(this.player.x, this.player.y, 34, 0xff1744, 0)
+            .setStrokeStyle(3, 0xff4040, 0.9)
+            .setDepth(19);
+        this.phase4RageAura = aura;
+        this.tweens.add({
+            targets: aura,
+            scale: 1.65,
+            alpha: 0,
+            duration: 1300,
+            ease: 'Cubic.easeOut',
+            onComplete: () => {
+                if (aura && aura.active) aura.destroy();
+                if (this.phase4RageAura === aura) this.phase4RageAura = null;
+            }
+        });
+
+        // Pequena espera para a explosão terminar antes do retorno do boss.
+        this.time.delayedCall(620, () => {
+            if (this.isDead || this.bossPhase !== 4 || !this.boss) return;
+
+            this.boss.setActive(true);
+            this.boss.setVisible(true);
+            this.bossEntranceAnimating = true;
+            this.boss.setAlpha(0);
+            this.boss.clearTint();
+            this.boss.setScale(0.78);
+            this.boss.setPosition(760, -120);
+            if (this.bossHitbox) {
+                this.bossHitbox.setActive(true);
+                this.bossHitbox.body.enable = true;
+                this.bossHitbox.setPosition(this.boss.x, this.boss.y);
+            }
+
+            const entranceFlash = this.add.circle(620, 100, 32, 0xff1744, 0.18).setDepth(160);
+            this.tweens.add({ targets: entranceFlash, scale: 3.8, alpha: 0, duration: 700, onComplete: () => entranceFlash.destroy() });
+            Sound.phaseChange();
+            this.cameras.main.shake(180, 0.012);
+
+            // O novo padrão mistura os deslocamentos suaves das Fases 1 e 2, acelerados.
+            this.tweens.add({
+                targets: this.boss,
+                x: 620,
+                y: 245,
+                alpha: 1,
+                scale: 1,
+                duration: 720,
+                ease: 'Back.easeOut',
+                onComplete: () => {
+                    this.bossEntranceAnimating = false;
+                    this.startFinalBossMovement();
+                }
+            });
+
+            if (this.bossShootTimer) this.bossShootTimer.remove();
+            this.shotCount = 0;
+            this.bossShootTimer = this.time.addEvent({ delay: 650, callback: this.fireBossOrb, callbackScope: this, loop: true });
+        });
+    }
+
+    startFinalBossMovement() {
+        if (this.isDead || this.bossPhase !== 4 || !this.boss || !this.boss.active) return;
+        this.bossMoveGeneration++;
+        const generation = this.bossMoveGeneration;
+        if (this.bossMoveTimer) { this.bossMoveTimer.remove(); this.bossMoveTimer = null; }
+        this.tweens.killTweensOf(this.boss);
+        this.bossIsMoving = false;
+
+        const moveAgain = () => {
+            if (this.isDead || this.bossPhase !== 4 || !this.boss || !this.boss.active) return;
+            if (this.bossMoveGeneration !== generation) return;
+
+            const style = this.shotCount % 2 === 0 ? 1 : 2;
+            const minX = 115, maxX = 700;
+            const minY = style === 1 ? 155 : 125;
+            const maxY = style === 1 ? 410 : 440;
+            let targetX = Phaser.Math.Between(minX, maxX);
+            let targetY = Phaser.Math.Between(minY, maxY);
+            let tries = 0;
+            while (Phaser.Math.Distance.Between(this.boss.x, this.boss.y, targetX, targetY) < 120 && tries < 8) {
+                targetX = Phaser.Math.Between(minX, maxX);
+                targetY = Phaser.Math.Between(minY, maxY);
+                tries++;
+            }
+
+            this.bossIsMoving = true;
+            const duration = style === 1
+                ? Phaser.Math.Between(360, 560)   // padrão da Fase 1, acelerado
+                : Phaser.Math.Between(270, 450);  // padrão da Fase 2, ainda mais rápido
+            const ease = style === 1 ? 'Sine.easeInOut' : 'Cubic.easeInOut';
+
+            this.tweens.add({
+                targets: this.boss,
+                x: targetX,
+                y: targetY,
+                duration,
+                ease,
+                onComplete: () => {
+                    if (this.bossMoveGeneration !== generation || this.bossPhase !== 4 || this.isDead) return;
+                    this.bossIsMoving = false;
+                    this.bossMoveTimer = this.time.delayedCall(70 + Phaser.Math.Between(0, 120), moveAgain, [], this);
+                }
+            });
+        };
+        moveAgain();
+    }
+
+    handleCarouselPlatformLanding(player, platform) {
+        if (!player || !platform || this.dropThroughPlatform) return;
+        if (player.body && player.body.velocity.y >= 0) this.jumpsLeft = 2;
+    }
+
+    processCarouselPlatformCollision(player, platform) {
+        if (!player || !player.body || !platform || !platform.body) return false;
+        if (this.dropThroughPlatform && this.time.now < this.dropThroughUntil) return false;
+        const falling = player.body.velocity.y >= 0;
+        if (!falling) return false;
+        return player.body.bottom <= platform.body.top + 10;
+    }
+
+    tryDropThroughCarouselPlatform() {
+        if (this.bossPhase !== 1 || !this.player || !this.player.body) return false;
+        if (this.dropThroughPlatform) return false;
+        const pb = this.player.body;
+        const playerBottom = pb.bottom, playerLeft = pb.left, playerRight = pb.right;
+        let standingOnPlatform = false;
+        if (this.carouselPlatforms) {
+            this.carouselPlatforms.getChildren().some((platform) => {
+                if (!platform || !platform.active || !platform.body) return false;
+                const body = platform.body;
+                const horizontalOverlap = playerRight > body.left + 4 && playerLeft < body.right - 4;
+                const onTop = Math.abs(playerBottom - body.top) <= 8;
+                if (horizontalOverlap && onTop) { standingOnPlatform = true; return true; }
+                return false;
+            });
+        }
+        if (!standingOnPlatform) return false;
+        this.dropThroughPlatform = true;
+        this.dropThroughUntil = this.time.now + 260;
+        if (this.carouselCollider) this.carouselCollider.active = false;
+        this.player.y += 7;
+        this.player.setVelocityY(90);
+        this.jumpsLeft = Math.max(0, this.jumpsLeft - 1);
+        this.time.delayedCall(270, () => {
+            this.dropThroughPlatform = false;
+            if (this.bossPhase === 1 && this.carouselCollider) this.carouselCollider.active = true;
+        });
+        return true;
+    }
+
+    update(time) {
+        if (this.isDead) return;
+
+        // Pause fica totalmente fora da lógica de combate.
+        if (!this.gamePaused && !this.preBattleCountdown &&
+            (Phaser.Input.Keyboard.JustDown(this.pauseKeyEsc) || Phaser.Input.Keyboard.JustDown(this.pauseKeyP))) {
+            this.openPauseMenu();
+            return;
+        }
+        if (this.gamePaused) {
+            this.handlePauseInput();
+            return;
+        }
+        if (this.preBattleCountdown) return;
+        if (this.boss && this.bossHitbox && this.boss.active && this.bossHitbox.active) {
+            this.bossHitbox.setPosition(this.boss.x, this.boss.y);
+        }
+        if (this.boss && this.boss.active) {
+            const dtBoss = Math.min((this.game.loop.delta || 16.67) / 1000, 0.05);
+            this.bossAnimTime = (this.bossAnimTime || 0) + dtBoss;
+            this.bossCastPulse = Math.max(0, (this.bossCastPulse || 0) - dtBoss);
+            const idleWave = Math.sin(this.bossAnimTime * 5.0);
+            const castBoost = this.bossCastPulse > 0 ? (this.bossCastPulse / 0.32) : 0;
+            if (!this.bossHitReacting && !this.bossEntranceAnimating) {
+                this.boss.setScale(1 + idleWave * 0.018 + castBoost * 0.075, 1 - idleWave * 0.018 - castBoost * 0.055);
+            }
+            this.boss.setAngle(idleWave * 1.6 + castBoost * 4.0);
+        }
+        if (this.rabbit && this.rabbit.active && this.bossPhase === 3) {
+            const dtRabbit = Math.min((this.game.loop.delta || 16.67) / 1000, 0.033);
+            this.rabbitBobbingTime = (this.rabbitBobbingTime || 0) + dtRabbit;
+
+            this.rabbitVY += this.rabbitGravity * dtRabbit;
+            this.rabbit.x += this.rabbitVX * dtRabbit;
+            this.rabbit.y += this.rabbitVY * dtRabbit;
+
+            if (this.rabbit.x <= this.rabbitLeftX) {
+                this.rabbit.x = this.rabbitLeftX;
+                this.rabbitVX = Math.abs(this.rabbitVX);
+                this.rabbit.setFlipX(false);
+            } else if (this.rabbit.x >= this.rabbitRightX) {
+                this.rabbit.x = this.rabbitRightX;
+                this.rabbitVX = -Math.abs(this.rabbitVX);
+                this.rabbit.setFlipX(true);
+            }
+
+            if (this.rabbit.y >= this.rabbitFloorY) {
+                this.rabbit.y = this.rabbitFloorY;
+                this.rabbitVY = -Math.abs(this.rabbitVY) * this.rabbitBounce;
+            } else if (this.rabbit.y <= this.rabbitCeilingY) {
+                this.rabbit.y = this.rabbitCeilingY;
+                this.rabbitVY = Math.abs(this.rabbitVY) * 0.78;
+            }
+
+            const rw = Math.sin(this.rabbitBobbingTime * 7.0);
+            const squash = Math.min(1, Math.abs(this.rabbitVY) / 700);
+            this.rabbit.setScale(1 + rw * 0.012 + squash * 0.025, 1 - rw * 0.018 - squash * 0.02);
+            this.rabbit.setAngle(rw * 1.4);
+
+            if (this.rabbitHitbox && this.rabbitHitbox.active) {
+                this.rabbitHitbox.setPosition(this.rabbit.x, this.rabbit.y);
+                this.rabbitHitbox.setFlipX(this.rabbit.flipX);
+            }
+        }
+        if (this.bossPhase === 1 && this.carouselPlatforms && this.carouselPlatforms.getChildren().length > 0) {
+            const dt = Math.min((this.game.loop.delta || 16.67) / 1000, 0.05);
+            this.carouselAngle += this.carouselSpeed * dt;
+            this.carouselPlatforms.getChildren().forEach((platform) => {
+                if (!platform || !platform.active || !platform.body) return;
+                const a = this.carouselAngle + (platform.carouselIndex * (Math.PI * 2 / this.carouselPlatformCount));
+                platform.setVelocity(
+                    -Math.sin(a) * this.carouselRadiusX * this.carouselSpeed,
+                     Math.cos(a) * this.carouselRadiusY * this.carouselSpeed
+                );
+            });
+        }
+        if (this.player && this.parryHitbox && this.parryHitbox.active) this.parryHitbox.setPosition(this.player.x, this.player.y);
+        if (this.phase4RageText && this.phase4RageText.active && this.phase4RageText.alpha > 0.02) {
+            this.phase4RageText.x = this.player.x;
+        }
+        if (this.phase4RageAura && this.phase4RageAura.active) {
+            this.phase4RageAura.setPosition(this.player.x, this.player.y);
+        }
+        this.playerShadow.x = this.player.x;
+        if (this.player) {
+            if (this.isParrying) this.player.setTint(0xff4081);
+            else if (this.isDashing) this.player.setTint(0x63c7ff);
+            else if (this.dashRecovery) this.player.setTint(0x72aee8);
+            else if (!this.konamiImmortal && !this.__rainbow) this.player.clearTint();
+            else if (this.konamiImmortal && !this.__rainbow) this.player.setTint(0x79ffb0);
+        }
+        if (this.konamiImmortal && this.immortalHud) {
+            this.immortalHud.setAlpha(0.92 + Math.sin(time * 0.008) * 0.08);
+        }
+        if (this.boss && this.bossGlow) {
+            this.bossGlow.setPosition(this.boss.x, this.boss.y);
+            this.bossGlowRing.setPosition(this.boss.x, this.boss.y);
+            if (this.bossMagicCore) this.bossMagicCore.setPosition(this.boss.x - 28, this.boss.y - 3);
+            const phaseGlow = this.bossPhase === 1 ? 0x8e24aa : this.bossPhase === 2 ? 0xff4081 : this.bossPhase === 3 ? 0xffab00 : 0x00e5ff;
+            this.bossGlow.setTint(phaseGlow);
+            this.bossGlowRing.setStrokeStyle(2, phaseGlow, 0.35);
+        }
+        if (this.playerDashMist) {
+            this.playerDashMist.setPosition(this.player.x, this.player.y);
+            if (!this.dashRecovery && !this.isDashing) this.playerDashMist.setAlpha(0);
+        }
+        if (this.playerMagicGlow) {
+            this.playerMagicGlow.setPosition(this.player.x, this.player.y);
+            this.playerMagicGlow.setAlpha(this.isDashing ? 0.85 : this.isParrying ? 0.65 : 0.18);
+            this.playerMagicGlow.setStrokeStyle(2, this.isParrying ? 0xff4081 : 0x00e5ff, this.isParrying ? 0.7 : 0.28);
+        }
+        let pHeight = 550 - this.player.y;
+        this.playerShadow.scaleX = Math.max(0.3, 1 - (pHeight / 400));
+        let moveLeft = this.cursors.left.isDown || this.keyLeft.isDown || this.keyA.isDown;
+        let moveRight = this.cursors.right.isDown || this.keyRight.isDown || this.keyD.isDown;
+        let isMoving = false;
+        if (this.isDashing) {
+            let dashSpeed = this.facing === 'right' ? 850 : -850;
+            this.player.setVelocityX(dashSpeed);
+            this.player.setVelocityY(0);
+            let shadow = this.add.sprite(this.player.x, this.player.y, 'gator_idle').setTint(0x00e5ff).setAlpha(0.5).setFlipX(this.facing === 'left');
+            this.tweens.add({ targets: shadow, alpha: 0, duration: 200, onComplete: () => shadow.destroy() });
+            return;
+        }
+        const moveSpeed = this.dashRecovery ? 115 : 290;
+        if (moveLeft) { this.player.setVelocityX(-moveSpeed); this.facing = 'left'; this.player.setFlipX(true); isMoving = true; }
+        else if (moveRight) { this.player.setVelocityX(moveSpeed); this.facing = 'right'; this.player.setFlipX(false); isMoving = true; }
+        else this.player.setVelocityX(0);
+        if (this.bossPhase === 1 && !this.dropThroughPlatform && this.carouselPlatforms && this.player && this.player.body && this.player.body.velocity.y >= 0) {
+            const pb = this.player.body;
+            for (const platform of this.carouselPlatforms.getChildren()) {
+                if (!platform || !platform.active || !platform.body) continue;
+                const b = platform.body;
+                const overlapX = pb.right > b.left + 5 && pb.left < b.right - 5;
+                const nearTop = Math.abs(pb.bottom - b.top) <= 9;
+                if (overlapX && nearTop) { this.jumpsLeft = 2; break; }
+            }
+        }
+        let jumpPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.keyJump) || Phaser.Input.Keyboard.JustDown(this.keyW);
+        if (jumpPressed && this.jumpsLeft > 0) {
+            this.player.setVelocityY(-500);
+            this.jumpsLeft--;
+            if (this.jumpsLeft === 1) Sound.jump();
+            else Sound.doubleJump();
+            this.tweens.killTweensOf(this.player);
+            this.player.setScale(1.08, 0.90);
+            this.tweens.add({ targets: this.player, scaleX: 0.98, scaleY: 1.03, duration: 120, ease: 'Back.easeOut' });
+            this.cameras.main.shake(55, 0.0018);
+            if (this.jumpsLeft === 0) {
+                let pRing = this.add.circle(this.player.x, this.player.y + 15, 20, 0x00e5ff, 0.6);
+                this.tweens.add({ targets: pRing, scale: 2, alpha: 0, duration: 250, onComplete: () => pRing.destroy() });
+            }
+        }
+        const downPressed = Phaser.Input.Keyboard.JustDown(this.cursors.down) || Phaser.Input.Keyboard.JustDown(this.keyDown) || Phaser.Input.Keyboard.JustDown(this.keyS);
+        if (downPressed) this.tryDropThroughCarouselPlatform();
+        let dashPressed = Phaser.Input.Keyboard.JustDown(this.keyDash) || Phaser.Input.Keyboard.JustDown(this.dashKey1) || Phaser.Input.Keyboard.JustDown(this.dashKey2);
+        if (dashPressed && !this.dashCooldown) this.executeDash();
+        let isShooting = this.keyShoot.isDown || this.shootKey1.isDown || this.shootKey2.isDown;
+        const onGround = !!(this.player.body && this.player.body.touching.down);
+        const animTick = Math.floor(time / 100) % 2;
+        if (isShooting) {
+            if (isMoving && onGround) this.player.setTexture(animTick === 0 ? 'gator_runshoot1' : 'gator_runshoot2');
+            else this.player.setTexture('gator_shoot');
+            if (time > this.lastShootTime) { this.shootCardWand(); this.lastShootTime = time + 110; }
+        } else if (isMoving && onGround) {
+            this.player.setTexture(animTick === 0 ? 'gator_run1' : 'gator_run2');
+        } else this.player.setTexture('gator_idle');
+        if ((Phaser.Input.Keyboard.JustDown(this.keyParry) || Phaser.Input.Keyboard.JustDown(this.parryKey)) && !this.isParrying) {
+            this.executeParryAttempt();
+        }
+        if (Phaser.Input.Keyboard.JustDown(this.keySpecial) || Phaser.Input.Keyboard.JustDown(this.specialKey)) {
+            this.useSpecial();
+        }
+        if (this.boss && this.boss.active && !this.isDead && (this.bossPhase === 1 || this.bossPhase === 2 || this.bossPhase === 4)) {
+            this.playerBullets.children.iterate((b) => {
+                if (!b || !b.active) return;
+                if (Phaser.Math.Distance.Between(b.x, b.y, this.boss.x, this.boss.y) <= 48) this.hitBossWithBullet(b, this.bossHitbox);
+            });
+        }
+        // Hit detection manual do coelho: não depende do Arcade overlap.
+        if (this.bossPhase === 3 && this.rabbit && this.rabbit.active && !this.isDead) {
+            this.playerBullets.children.iterate((b) => {
+                if (!b || !b.active) return;
+                const dx = Math.abs(b.x - this.rabbit.x);
+                const dy = Math.abs(b.y - this.rabbit.y);
+                if (dx <= 64 && dy <= 86) this.hitRabbitWithBullet(b, this.rabbitHitbox);
+            });
+        }
+
+        this.playerBullets.children.iterate((b) => { if (b && (b.x > 840 || b.x < -40)) b.destroy(); });
+        this.carrots.children.iterate((c) => {
+            if (c && (c.x < -40 || c.x > 840 || c.y < -40 || c.y > 640)) c.destroy();
+        });
+        this.bossOrbs.children.iterate((orb) => {
+            if (orb && (orb.x < -40 || orb.x > 840 || orb.y < -40 || orb.y > 640)) {
+                if (orb.particles) orb.particles.destroy();
+                orb.destroy();
+            }
+        });
+    }
+
+    executeDash() {
+        this.isDashing = true;
+        this.dashCooldown = true;
+        this.dashRecovery = false;
+        Sound.dash();
+        this.cameras.main.shake(100, 0.005);
+        this.time.delayedCall(240, () => {
+            this.isDashing = false;
+            this.dashRecovery = true;
+            if (this.playerDashMist) {
+                this.playerDashMist.setPosition(this.player.x, this.player.y);
+                this.playerDashMist.setFillStyle(0x4dabff, 0.16);
+                this.playerDashMist.setStrokeStyle(2, 0x75c8ff, 0.45);
+                this.tweens.add({ targets: this.playerDashMist, scale: 1.35, alpha: 0, duration: 500, ease: 'Sine.easeOut',
+                    onComplete: () => { this.playerDashMist.setAlpha(0); this.playerDashMist.setScale(1); } });
+            }
+            this.time.delayedCall(500, () => { this.dashRecovery = false; });
+        });
+        this.time.delayedCall(600, () => { this.dashCooldown = false; });
+    }
+
+    shootCardWand() {
+        let spawnX = this.facing === 'right' ? this.player.x + 28 : this.player.x - 28;
+        let spawnY = this.player.y - 2;
+        let card = this.playerBullets.create(spawnX, spawnY, 'card_bullet');
+        card.setVelocityX(this.facing === 'right' ? 750 : -750);
+        card.setAngularVelocity(this.facing === 'right' ? 600 : -600);
+        let spark = this.add.circle(spawnX, spawnY, 6, 0xffd700, 0.9);
+        this.tweens.add({ targets: spark, scale: 2.2, alpha: 0, duration: 120, onComplete: () => spark.destroy() });
+        Sound.shoot();
+        this.cameras.main.shake(28, 0.0012);
+    }
+
+    executeParryAttempt() {
+        const parryWindow = 1000;
+        this.isParrying = true;
+        this.player.setTint(0xff4081);
+        if (this.parryHitbox) {
+            this.parryHitbox.setPosition(this.player.x, this.player.y);
+            this.parryHitbox.setActive(true);
+            this.parryHitbox.body.enable = true;
+            this.parryHitbox.body.setSize(150, 150, true);
+        }
+        let aura = this.add.circle(this.player.x, this.player.y, 35, 0xff4081, 0.5);
+        this.tweens.add({ targets: aura, scale: 1.5, alpha: 0, duration: parryWindow, onComplete: () => aura.destroy() });
+        this.time.delayedCall(parryWindow, () => {
+            this.isParrying = false;
+            if (this.parryHitbox) { this.parryHitbox.setActive(false); this.parryHitbox.body.enable = false; }
+            if (this.player.active && !this.isDashing) {
+                if (this.dashRecovery) this.player.setTint(0x72aee8);
+                else this.player.clearTint();
+            }
+        });
+    }
+
+    applyBossDamage(amount) {
+        if (!this.boss || !this.boss.active || this.isDead || this.bossHP <= 0) return;
+        if (this.playerDamageMultiplier && this.playerDamageMultiplier !== 1) {
+            amount *= this.playerDamageMultiplier;
+        }
+        if (this.__godboss) { if (this.bossHP <= 1) return; amount = Math.min(amount, Math.max(0, this.bossHP - 1)); }
+        this.bossHP -= amount;
+        if (this.bossHP < 0) this.bossHP = 0;
+        this.updateHpBar(this.bossHP, this.bossMaxHP);
+        if (this.bossPhase === 1 && this.bossHP <= 2450) this.transitionToPhase2();
+        else if (this.bossPhase === 2 && this.bossHP <= 1400) this.transitionToPhase3();
+        else if (this.bossHP <= 0) this.defeatBoss();
+    }
+
+    hitBossWithBullet(bullet, bossHitbox) {
+        if (!bullet || !bullet.active || !bossHitbox || !bossHitbox.active || !this.boss || !this.boss.active) return;
+        bullet.destroy();
+        if (!this.specialReady) {
+            this.specialHits = Math.min(this.specialRequired, this.specialHits + 1);
+            if (this.specialHits >= this.specialRequired) this.specialReady = true;
+            this.updateSpecialMeter();
+        }
+        this.applyBossDamage(15);
+        Sound.hitBoss();
+        this.boss.setTint(0xff8888);
+        this.cameras.main.shake(45, 0.0022);
+        this.bossHitReacting = true;
+        this.boss.setScale(1.10, 0.92);
+        this.tweens.add({ targets: this.boss, scaleX: 0.98, scaleY: 1.03, duration: 90, ease: 'Back.easeOut' });
+        this.time.delayedCall(100, () => {
+            this.bossHitReacting = false;
+            if (this.boss && this.boss.active) this.boss.clearTint();
+        });
+    }
+
+    useSpecial() {
+        if (!this.specialReady || this.isDead || !this.boss || !this.boss.active) return;
+        if (this.bossPhase === 3) return;
+        this.specialReady = false;
+        this.specialHits = 0;
+        this.updateSpecialMeter();
+        Sound.specialCast();
+        const x = this.boss.x, targetY = this.boss.y;
+        const card = this.add.image(x, targetY - 190, 'giant_card').setDepth(160).setScale(0.42);
+        card.setAngle(-8);
+        const trail = this.add.circle(x, targetY - 145, 22, 0xffd54f, 0.18).setDepth(155);
+        this.tweens.add({ targets: trail, scale: 2.8, alpha: 0, duration: 520, ease: 'Cubic.easeOut', onComplete: () => trail.destroy() });
+        this.cameras.main.shake(120, 0.004);
+        this.tweens.add({ targets: card, y: targetY - 58, scale: 1.05, angle: 0, duration: 520, ease: 'Cubic.easeIn',
+            onComplete: () => {
+                if (!card.active) return;
+                Sound.specialExplode();
+                const flash = this.add.circle(x, targetY, 30, 0xffffff, 0.95).setDepth(165);
+                const ring = this.add.circle(x, targetY, 20, 0xffd54f, 0).setStrokeStyle(5, 0xffd54f, 1).setDepth(164);
+                const burst = this.add.particles(x, targetY, 'card_bullet', {
+                    speed: { min: 140, max: 430 }, scale: { start: 1.2, end: 0 }, lifespan: 550, quantity: 22,
+                    tint: [0xffd54f, 0xff1744, 0xffffff], emitting: false }).setDepth(166);
+                burst.explode();
+                this.tweens.add({ targets: flash, scale: 4.2, alpha: 0, duration: 260, onComplete: () => flash.destroy() });
+                this.tweens.add({ targets: ring, scale: 3.4, alpha: 0, duration: 380, onComplete: () => ring.destroy() });
+                this.cameras.main.shake(260, 0.014);
+                const specialDamage = 100 * (this.playerDamageMultiplier || 1);
+                const txt = this.add.text(x, targetY - 55, `★ ESPECIAL! -${specialDamage} ★`, {
+                    fontFamily: '"Press Start 2P"', fontSize: '14px', fill: '#ffd54f', stroke: '#000000', strokeThickness: 4
+                }).setOrigin(0.5).setDepth(170);
+                this.tweens.add({ targets: txt, y: targetY - 100, alpha: 0, duration: 700, onComplete: () => txt.destroy() });
+                this.applyBossDamage(100);
+                card.destroy();
+            }});
+    }
+
+    hitRabbitWithBullet(bullet, rabbitHitbox) {
+        if (!bullet || !bullet.active || !this.rabbit || !this.rabbit.active || this.bossPhase !== 3) return;
+        bullet.destroy();
+
+        this.rabbitHP -= 16;
+        if (this.rabbitHP < 0) this.rabbitHP = 0;
+        this.updateHpBar(this.rabbitHP, this.rabbitMaxHP, 0xffab00);
+        Sound.hitRabbit();
+
+        // Feedback visual curto de dano, sem alterar active/visible.
+        this.rabbit.setTint(0xff8888);
+        this.cameras.main.shake(70, 0.004);
+        this.tweens.add({
+            targets: this.rabbit,
+            scaleX: '+=0.06',
+            scaleY: '-=0.04',
+            duration: 55,
+            yoyo: true,
+            ease: 'Sine.easeOut'
+        });
+        this.time.delayedCall(70, () => {
+            if (this.rabbit && this.rabbit.active) {
+                this.rabbit.clearTint();
+                this.rabbit.setVisible(true);
+                this.rabbit.setAlpha(1);
+            }
+        });
+
+        if (this.rabbitHP <= 0) {
+            this.transitionToPhase4();
+        }
+    }
+
+    handleParryOrbCollision(parryHitbox, orb) {
+        if (!orb || !orb.active || !this.isParrying) return;
+        if (!orb.isPink) return;
+        if (orb.particles) orb.particles.destroy();
+        orb.destroy();
+        Sound.parry();
+        this.player.setVelocityY(-550);
+        this.jumpsLeft = 1;
+        this.cameras.main.shake(200, 0.015);
+        let txt = this.add.text(this.player.x, this.player.y - 35, '★ PARRY! ★', {
+            fontFamily: '"Press Start 2P"', fontSize: '16px', fill: '#ff4081', stroke: '#ffffff', strokeThickness: 4
+        }).setOrigin(0.5);
+        this.tweens.add({ targets: txt, y: '-=45', alpha: 0, duration: 550, onComplete: () => txt.destroy() });
+        if (this.bossPhase !== 3) {
+            this.applyBossDamage(180);
+        }
+    }
+
+    handlePlayerOrbCollision(player, orb) {
+        if (!orb.active) return;
+        if (this.isParrying) return;
+        if (this.isDashing) return;
+        if (this.__noclip) return;
+        this.playerDeath();
+    }
+
+    handlePlayerCarrotCollision(player, carrot) {
+        if (!carrot.active || this.isDashing) return;
+        if (this.__noclip) return;
+        carrot.destroy();
+        this.playerDeath();
+    }
+
+    playerDeath() {
+        if (this.konamiImmortal || this.__noclip) {
+            this.player.setTint(0x79ffb0);
+            this.cameras.main.flash(120, 0, 255, 160);
+            this.time.delayedCall(140, () => {
+                if (this.player && this.player.active && !this.isDashing) this.player.clearTint();
+            });
+            return;
+        }
+        if (this.isDead) return;
+        this.isDead = true;
+        this.stopBossDynamicMovement();
+        if (this.bossShootTimer) { this.bossShootTimer.remove(); this.bossShootTimer = null; }
+        if (this.rabbitShootTimer) { this.rabbitShootTimer.remove(); this.rabbitShootTimer = null; }
+        this.isDashing = false;
+        this.dashRecovery = false;
+        this.isParrying = false;
+        if (this.parryHitbox) { this.parryHitbox.setActive(false); this.parryHitbox.body.enable = false; }
+        Sound.playerDeath();
+        this.cameras.main.shake(400, 0.03);
+        this.player.setTint(0xff1744);
+        this.physics.pause();
+        this.player.body.allowGravity = true;
+        this.player.setVelocity(0, -480);
+        this.time.delayedCall(1500, () => { this.scene.start('GameOverScene', { won: false, introAlreadySeen: true }); });
+    }
+
+    defeatBoss() {
+        this.isDead = true;
+        this.stopBossDynamicMovement();
+        if (this.bossShootTimer) { this.bossShootTimer.remove(); this.bossShootTimer = null; }
+        if (this.bossHitbox) this.bossHitbox.setActive(false);
+        if (this.parryHitbox) { this.parryHitbox.setActive(false); this.parryHitbox.body.enable = false; }
+        this.physics.pause();
+        Sound.bossDefeat();
+        this.cameras.main.shake(600, 0.03);
+        this.boss.setTint(0x333333);
+        let emitter = this.add.particles(this.boss.x, this.boss.y, 'card_bullet', {
+            speed: { min: 100, max: 400 }, scale: { start: 1, end: 0 }, lifespan: 800, quantity: 50 });
+        emitter.explode();
+        this.time.delayedCall(1500, () => { this.scene.start('GameOverScene', { won: true }); });
+    }
+}
+
+// ==========================================
+// SCENE: GAME OVER / VITÓRIA
+// ==========================================
+class GameOverScene extends Phaser.Scene {
+    constructor() { super({ key: 'GameOverScene' }); }
+    init(data) { this.won = data.won || false; }
+    create() {
+        this.add.rectangle(400, 300, 800, 600, this.won ? 0x021a0d : 0x1a0508);
+        let titleTxt = this.won ? 'KNOCKOUT!' : 'YOU DIED';
+        let color = this.won ? '#00e676' : '#ff1744';
+        let title = this.add.text(400, 220, titleTxt, {
+            fontFamily: '"Press Start 2P"', fontSize: '42px', fill: color, stroke: '#000000', strokeThickness: 8
+        }).setOrigin(0.5);
+        this.tweens.add({ targets: title, scale: 1.08, duration: 600, yoyo: true, loop: -1 });
+        this.add.text(400, 320, this.won ? 'O Circo é seu! Mestre Absoluto!' : 'Use o Dash [SHIFT] e Pulo Duplo para escapar!', {
+            fontFamily: '"Press Start 2P"', fontSize: '10px', fill: '#ffffff'
+        }).setOrigin(0.5);
+        let rest = this.add.text(400, 440, 'PRESSIONE ESPAÇO PARA REINICIAR', {
+            fontFamily: '"Press Start 2P"', fontSize: '12px', fill: '#ffd700'
+        }).setOrigin(0.5);
+        this.tweens.add({ targets: rest, alpha: 0.2, duration: 500, yoyo: true, loop: -1 });
+        const restart = () => {
+            Sound.menuSelect();
+            this.scene.start('GameScene', { konamiImmortal: false, fromIntro: false, restartAfterDeath: true });
+        };
+        this.input.keyboard.once('keydown-SPACE', restart);
+        this.input.keyboard.once('keydown-ENTER', restart);
+    }
+}
+
+// ==========================================
+// CONFIGURAÇÃO PHASER 3
+// ==========================================
+const config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    parent: 'game-container',
+    pixelArt: true,
+    physics: {
+        default: 'arcade',
+        arcade: { gravity: { y: 0 }, debug: false }
+    },
+    scene: [MenuScene, IntroCutsceneScene, GameScene, GameOverScene]
+};
+
+const PhaserGame = new Phaser.Game(config);
+</script>
+
+</body>
+</html>
