@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Neon Velocity: Dual Circuit - Poster Oficial</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #020208;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Montserrat', 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+        .banner {
+            width: 1000px;
+            height: 562px; /* Proporção 16:9 ideal para WhatsApp/Apresentação */
+            background: radial-gradient(circle at 50% 30%, #1a0933 0%, #050512 100%);
+            border: 3px solid #ff007f;
+            box-shadow: 0 0 60px rgba(255, 0, 127, 0.4), inset 0 0 80px rgba(0, 240, 255, 0.2);
+            border-radius: 16px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 40px;
+            overflow: hidden;
+        }
+        /* Grade 3D Synthwave */
+        .grid-floor {
+            position: absolute;
+            bottom: -50px;
+            width: 200%;
+            height: 60%;
+            background: 
+                linear-gradient(0deg, rgba(255, 0, 127, 0.4) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.4) 2px, transparent 2px);
+            background-size: 50px 50px;
+            transform: perspective(400px) rotateX(75deg);
+        }
+        /* Sol Neon de Fundo */
+        .sun {
+            position: absolute;
+            top: 80px;
+            width: 220px;
+            height: 220px;
+            background: linear-gradient(180deg, #ffe600 0%, #ff007f 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 50px #ff007f;
+            z-index: 1;
+        }
+        .header {
+            z-index: 10;
+            text-align: center;
+        }
+        .title {
+            font-size: 64px;
+            font-weight: 900;
+            font-style: italic;
+            color: #ffffff;
+            text-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff, 0 0 40px #ff007f;
+            letter-spacing: 4px;
+        }
+        .subtitle {
+            font-size: 22px;
+            font-weight: 800;
+            color: #ffe600;
+            letter-spacing: 10px;
+            text-shadow: 0 0 15px #ffe600;
+            margin-top: -5px;
+        }
+        .cars-container {
+            display: flex;
+            gap: 160px;
+            z-index: 10;
+            margin-bottom: 20px;
+        }
+        .car-card {
+            width: 180px;
+            height: 90px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 18px;
+            position: relative;
+        }
+        .p1-car {
+            background: rgba(0, 240, 255, 0.15);
+            border: 2px solid #00f0ff;
+            box-shadow: 0 0 30px #00f0ff, inset 0 0 15px #00f0ff;
+            color: #00f0ff;
+            transform: rotate(-8deg);
+        }
+        .p2-car {
+            background: rgba(255, 0, 127, 0.15);
+            border: 2px solid #ff007f;
+            box-shadow: 0 0 30px #ff007f, inset 0 0 15px #ff007f;
+            color: #ff007f;
+            transform: rotate(8deg);
+        }
+        .footer {
+            z-index: 10;
+            background: rgba(5, 5, 18, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-size: 14px;
+            color: #ffffff;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="banner">
+    <div class="sun"></div>
+    <div class="grid-floor"></div>
+
+    <div class="header">
+        <div class="title">NEON VELOCITY</div>
+        <div class="subtitle">DUAL CIRCUIT</div>
+    </div>
+
+    <div class="cars-container">
+        <div class="car-card p1-car">
+            🎮 JOGADOR 1
+            <small style="font-size:11px; opacity:0.8;">CONTROLE PS4 #1</small>
+        </div>
+        <div class="car-card p2-car">
+            🎮 JOGADOR 2
+            <small style="font-size:11px; opacity:0.8;">CONTROLE PS4 #2</small>
+        </div>
+    </div>
+
+    <div class="footer">
+        🏆 JOGO OFICIAL PARA O CONCURSO DE PROGRAMAÇÃO
+    </div>
+</div>
+
+</body>
+</html>

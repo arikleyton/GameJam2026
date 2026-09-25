@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>O Culpado Está Entre Nós</title>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}body{display:flex;align-items:center;justify-content:center;font-family:"Courier New",monospace}#stage{position:relative;width:100vw;height:56.25vw;max-width:177.7778vh;max-height:100vh;overflow:hidden;background:#000}
+#menuVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;background:#000}
+.bg{position:absolute;inset:0;width:100%;height:100%;display:none;opacity:0;z-index:0;object-fit:fill;image-rendering:pixelated;transition:opacity .65s ease,filter .5s ease,transform .5s ease}.cover{object-fit:cover}.dialogue-blur{filter:blur(5px) brightness(.42) saturate(.75);transform:scale(1.025)}
+.portrait{position:absolute;bottom:0;height:91%;width:auto;display:none;z-index:1;object-fit:contain;image-rendering:pixelated;pointer-events:none;opacity:0}.leftPortrait{left:3%;transform:translateX(-40px)}.rightPortrait{right:3%;transform:translateX(40px)}
+#suspectKevin,#suspectLorena,#suspectJulian{position:absolute;top:50%;left:110%;transform:translateY(-50%);width:auto;display:none;z-index:1;object-fit:contain;image-rendering:pixelated;transition:left 1.2s cubic-bezier(.22,1,.36,1)}#suspectKevin{height:85%}#suspectLorena,#suspectJulian{height:88%}
+#emyIntro{position:absolute;left:50%;top:135%;transform:translateX(-50%);height:62%;display:none;z-index:1;object-fit:contain;image-rendering:pixelated;transition:top 1.2s cubic-bezier(.22,1,.36,1)}
+#juanNpc{position:absolute;left:50%;top:51%;width:8.5%;transform:translate(-50%,-100%);display:none;z-index:1;object-fit:contain;image-rendering:pixelated;pointer-events:none;clip-path:inset(0 0 34% 0)}
+#leneNpc,#lorenaNpc{position:absolute;transform:translate(-50%,-100%);display:none;z-index:1;object-fit:contain;image-rendering:pixelated;pointer-events:none}
+#leneNpc{left:67%;top:79%;width:10.8%}
+#lorenaNpc{left:80%;top:79%;width:10.4%}
+#emyPlayer{position:absolute;left:50%;top:88%;width:8%;transform:translate(-50%,-100%);transform-origin:center bottom;display:none;z-index:1;pointer-events:none}#emyPlayer img{position:absolute;left:50%;bottom:0;width:100%;height:auto;transform:translateX(-50%);transform-origin:center bottom;image-rendering:pixelated;pointer-events:none;user-select:none}#emyFront{display:block}#emySide{display:none;--dir:1}#emySide.walking{animation:walk .2s steps(2,end) infinite alternate}@keyframes walk{0%{transform:translateX(-50%) scaleX(var(--dir)) translateY(0) rotate(-2deg)}50%{transform:translateX(-50%) scaleX(var(--dir)) translateY(-3px) rotate(2deg)}100%{transform:translateX(-50%) scaleX(var(--dir)) translateY(0) rotate(-2deg)}}
+#game-container{position:absolute;inset:0;width:100%;height:100%;z-index:2}#game-container canvas{display:block;width:100%!important;height:100%!important}
+#menuButtons{position:absolute;left:50%;top:69%;transform:translateX(-50%);z-index:1000000;width:100%;display:flex;flex-direction:column;align-items:center;gap:22px;pointer-events:none}.menuButton{pointer-events:auto;min-width:330px;padding:15px 24px;border:3px solid #8b0000;background:rgba(0,0,0,.9);color:#fff;font:700 18px "Courier New",monospace;cursor:pointer}.menuButton:hover:not(:disabled){color:#ff4444;border-color:#ff2222;transform:scale(1.03)}.menuButton:disabled{opacity:.45;cursor:not-allowed;color:#888;border-color:#444}
+#registroOverlay,#letterOverlay,#phoneOverlay,#chapter2Overlay{position:absolute;inset:0;display:none;z-index:3000000;background:rgba(0,0,0,.88);flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
+#registroOverlay img,#letterOverlay img{max-width:88%;max-height:68%;object-fit:contain;border:4px solid #8b0000;background:#111}
+#phoneOverlay img{max-width:82%;max-height:86%;object-fit:contain;border:4px solid #8b0000;background:#111}
+#phoneText{display:none}
+#registroText,#letterText,#phoneText{width:min(1040px,90%);background:rgba(0,0,0,.97);color:#fff;border:4px solid #8b0000;border-radius:10px;padding:16px 20px;font:700 16px "Courier New",monospace;line-height:1.55}
+#btnBackConversation,#btnCloseLetter,#btnClosePhone,#btnCloseChapter,#btnContinueChapter{position:absolute;top:20px;padding:11px 18px;border:3px solid #8b0000;background:#000;color:#fff;font:700 14px "Courier New",monospace;cursor:pointer}
+#btnCloseChapter{left:24px;right:auto}#btnContinueChapter{right:24px}
+#btnBackConversation,#btnCloseLetter,#btnClosePhone{right:24px}
+#btnBackConversation:hover,#btnCloseLetter:hover,#btnClosePhone:hover,#btnCloseChapter:hover,#btnContinueChapter:hover{color:#ff4444;border-color:#ff4444}
+#chapterBoard{width:min(1100px,92%);min-height:72%;background:rgba(10,10,14,.98);border:5px solid #8b0000;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:18px;color:#fff;box-shadow:0 0 0 6px rgba(0,0,0,.45) inset}#chapterBoard h1{margin:0;color:#ff5555;font-size:34px}#chapterBoard h2{margin:0;color:#fff;font-size:21px}#chapterBoard p{margin:0;line-height:1.5}#chapterClues{margin:0;padding-left:24px;display:flex;flex-direction:column;gap:10px;font-size:18px;line-height:1.5}#chapterButtons{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px}.chapterBtn{padding:12px 18px;border:3px solid #8b0000;background:#000;color:#fff;font:700 14px "Courier New",monospace;cursor:pointer}.chapterBtn:hover{color:#ff5555;border-color:#ff5555}
+#registroOverlay img,#letterOverlay img,#phoneOverlay img{animation:evidenceZoom .28s ease-out}
+#chapterBoard{animation:chapterZoom .38s cubic-bezier(.2,.9,.2,1)}
+@keyframes evidenceZoom{from{transform:scale(.72);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes chapterZoom{from{transform:scale(.78);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* ===== CENA DE ESCOLHA DO CULPADO / DESCOBERTA FINAL ===== */
+#culpritOverlay,#revealOverlay,#prisonOverlay{position:absolute;inset:0;display:none;z-index:3000001;overflow:hidden}
+#culpritOverlay{background:rgba(0,0,0,.32);pointer-events:none}
+#culpritEmy{position:absolute;left:2.5%;bottom:0;height:73%;width:auto;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 8px 16px rgba(0,0,0,.8));transition:opacity .35s ease,transform .35s ease}
+#culpritChoices{position:absolute;left:29%;right:3.5%;top:16%;height:40%;display:flex;align-items:center;justify-content:space-around;gap:28px}
+.culpritChoice{position:relative;width:27%;max-width:235px;aspect-ratio:1/1;cursor:pointer;pointer-events:auto;transform:translateY(480px);opacity:0;transition:transform .22s ease,filter .22s ease}
+.culpritChoice img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;display:block}
+.culpritChoice.rise{animation:choiceRise .72s cubic-bezier(.18,.9,.24,1) forwards}
+.culpritChoice.selected{transform:translateY(0) scale(1.10)!important;filter:drop-shadow(0 0 16px #ff334d)}
+.culpritChoice.wrong::before,.culpritChoice.wrong::after{content:"";position:absolute;left:-4%;top:46%;width:108%;height:18px;border:4px solid #5b0000;background:#ff162e;z-index:8;box-shadow:0 0 10px rgba(255,0,30,.65)}
+.culpritChoice.wrong::before{transform:rotate(45deg)}.culpritChoice.wrong::after{transform:rotate(-45deg)}
+#culpritTextBox{position:absolute;left:5%;right:5%;bottom:4%;min-height:150px;background:rgba(0,0,0,.95);border:4px solid #8b0000;border-radius:12px;padding:24px 30px;color:#fff;box-shadow:0 0 25px rgba(0,0,0,.7)}
+#culpritSpeaker{font:bold 18px "Courier New",monospace;color:#c88cff;margin-bottom:12px;display:none}
+#culpritText{font:bold 21px "Courier New",monospace;line-height:1.5;text-shadow:2px 2px #000}
+#culpritHint{position:absolute;right:28px;bottom:20px;color:#ff4444;font:bold 13px "Courier New",monospace}
+@keyframes choiceRise{0%{transform:translateY(480px) scale(.88);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+#revealOverlay{background:#000;pointer-events:none}
+#revealBg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated;opacity:1;transition:opacity .28s ease}
+#revealTextBox{position:absolute;left:4%;right:4%;bottom:4%;min-height:150px;background:rgba(0,0,0,.94);border:4px solid #8b0000;border-radius:12px;padding:24px 30px;color:#fff;font:bold 20px "Courier New",monospace;line-height:1.55;text-shadow:2px 2px #000}
+#revealHint{position:absolute;right:28px;bottom:18px;color:#ff4444;font:bold 13px "Courier New",monospace}
+#prisonOverlay{background:#000;align-items:center;justify-content:center;flex-direction:column;gap:18px}
+#prisonImage{max-width:92%;max-height:88%;object-fit:contain;image-rendering:pixelated}
+#prisonFallback{display:none;color:#fff;font:bold 30px "Courier New",monospace;text-align:center}
+#prisonCaption{color:#fff;font:bold 26px "Courier New",monospace;text-align:center;margin-top:4px}
+#deductionLetterFlash{position:absolute;inset:0;display:none;z-index:3000004;align-items:center;justify-content:center;background:rgba(0,0,0,.90);pointer-events:none}
+#deductionLetterFlash img{max-width:86%;max-height:86%;object-fit:contain;border:4px solid #8b0000;background:#111;animation:evidenceZoom .26s ease-out}
+
+</style>
+</head>
+<body>
+<div id="stage">
+<!-- Salve os anexos novos com estes nomes na mesma pasta do HTML:
+lorena_rua.png, casa_lorena.png, lene_npc.png, lorena_npc.png,
+lene_dialogo.png, emy_lorena_dialogo.png, lorena_dialogo.png,
+quarto_lory.png, mensagem_lory.png, carta_lory.png -->
+<video id="menuVideo" autoplay muted loop playsinline preload="auto"><source src="./glitch_corpo_inteiro_phaser.mp4" type="video/mp4"></video>
+<audio id="music" loop preload="auto"><source src="./WhatsApp-Audio-2026-09-22-at-19.13.38.mp3" type="audio/mpeg"></audio>
+<audio id="musicGameIntro" loop preload="auto"><source src="./fundo do jogo.mpeg" type="audio/mpeg"></audio>
+<audio id="musicLoryDeath" loop preload="auto"><source src="./morte lory.mpeg" type="audio/mpeg"></audio>
+<audio id="musicSuspects" loop preload="auto"><source src="./música suspeita.mp3" type="audio/mpeg"></audio>
+<audio id="musicEmyAppearance" loop preload="auto"><source src="./aparecimento emy.mp3" type="audio/mpeg"></audio>
+<audio id="musicNight" loop preload="auto"><source src="./noite.mp3" type="audio/mpeg"></audio>
+<audio id="musicJuanDiscovery" loop preload="auto"><source src="./descoberta Juan.mp3" type="audio/mpeg"><source src="./Descoberta Juan.mp3" type="audio/mpeg"><source src="./música suspeita.mp3" type="audio/mpeg"></audio>
+<audio id="musicFinal" loop preload="auto"><source src="./Final.mp3" type="audio/mpeg"><source src="./final.mp3" type="audio/mpeg"><source src="./Fim de jogo.mp3" type="audio/mpeg"></audio>
+<audio id="musicEnd" loop preload="auto"><source src="./Fim de jogo.mp3" type="audio/mpeg"></audio>
+<img id="introBg" class="bg cover" src="./fundo_dialogos_25_outubro.jpg" alt=""><img id="photoBg" class="bg cover" src="./cena_lory.png" alt=""><img id="officeBg" class="bg cover" src="./imagem_2026-09-23_101945476.png" alt=""><img id="emyStoryBg" class="bg cover" src="./fundo_emy.png" onerror="this.onerror=null;this.src='./imagem_2026-09-23_101945476.png'" alt=""><img id="officeGameBg" class="bg" src="./sala_gameplay.png" alt=""><img id="streetBg" class="bg" src="./rua_cafeteria.png" alt=""><img id="cafeBg" class="bg" src="./cafeteria_kevin.png" alt=""><img id="kevinBg" class="bg cover" src="./kevin_meeting_bg_novo.png" alt=""><img id="julianStreetBg" class="bg" src="./background_julien.png" alt=""><img id="julianStoreBg" class="bg" src="./julien_loja(1).png" alt=""><img id="libraryStreetBg" class="bg" src="./rua_biblioteca.png" alt=""><img id="libraryBg" class="bg" src="./biblioteca_nova.png" alt=""><img id="lorenaStreetBg" class="bg" src="./lorena_rua.png" alt=""><img id="lorenaHouseBg" class="bg" src="./casa_lorena.png" alt=""><img id="loryBedroomBg" class="bg" src="./quarto_lory.png" alt="">
+<img id="suspectKevin" src="./kevin.png" alt="Kevin"><img id="suspectLorena" src="./lorena.png" alt="Lorena"><img id="suspectJulian" src="./julian.png" alt="Julian"><img id="emyIntro" src="./Emy.png" alt="Emy">
+<img id="emyDialogue" class="portrait leftPortrait" src="./emy_dialogo.png" alt="Emy"><img id="kevinDialogue" class="portrait rightPortrait" src="./kevin_dialogo.png" alt="Kevin"><img id="julianDialogue" class="portrait rightPortrait" src="./julian_dialogo.png" alt="Julian"><img id="emyLibraryDialogue" class="portrait leftPortrait" src="./emy_biblioteca_dialogo.png" alt="Emy"><img id="juanDialogue" class="portrait rightPortrait" src="./juan_dialogo.png" alt="Juan"><img id="emyLorenaDialogue" class="portrait leftPortrait" src="./emy_lorena_dialogo.png" alt="Emy"><img id="leneDialogue" class="portrait rightPortrait" src="./lena_dialogo.png" onerror="this.onerror=null;this.src='./lene_dialogo.png'" alt="Lene"><img id="lorenaDialogue" class="portrait rightPortrait" src="./lorena_dialogo.png" alt="Lorena"><img id="juanNpc" src="./juan_bibliotecario.png" alt="Juan"><img id="leneNpc" src="./lene_npc.png" alt="Lene"><img id="lorenaNpc" src="./lorena_npc.png" alt="Lorena">
+<div id="emyPlayer"><img id="emyFront" src="./Emy de frente.png" alt="Emy"><img id="emySide" src="./Emy de lado.png" alt="Emy"></div>
+<div id="game-container"></div>
+<div id="menuButtons"><button id="btnStart" class="menuButton">Clique para começar</button><button id="btnContinue" class="menuButton">Continuar seu progresso</button></div>
+<div id="registroOverlay"><button id="btnBackConversation">Voltar à conversa</button><img src="./registro_livros.png" alt="Registro de livros emprestados"><div id="registroText">Emy: Parece que a Lory não foi à biblioteca neste dia, apenas o Julian que pegou o livro do pequeno príncipe.</div></div>
+<div id="letterOverlay"><button id="btnCloseLetter">Continuar</button><img src="./carta_lory.png" alt="Carta"><div id="letterText">Carta encontrada no quarto de Lory.</div></div>
+<div id="phoneOverlay"><button id="btnClosePhone">Continuar</button><img src="./mensagem_lory.png" alt="Mensagens do celular de Lory"><div id="phoneText">Mensagem encontrada no celular de Lory.</div></div>
+<div id="chapter2Overlay"><button id="btnCloseChapter">Voltar ao menu</button><button id="btnContinueChapter">Continuar investigação</button><div id="chapterBoard"><h1>Capítulo 2</h1><h2>Investigar as pistas</h2><p>Emy reuniu todas as informações coletadas até agora. Analise as pistas abaixo:</p><ul id="chapterClues"></ul><div id="chapterButtons"><button id="chapterOpenRegistro" class="chapterBtn">Abrir registro de livros emprestados</button><button id="chapterOpenLetter" class="chapterBtn">Abrir carta</button><button id="chapterOpenPhone" class="chapterBtn">Abrir mensagem do celular</button></div></div></div>
+<div id="culpritOverlay">
+  <img id="culpritEmy" src="./emy_pensativa.png" alt="Emy pensativa">
+  <div id="culpritChoices">
+    <div class="culpritChoice" data-index="0" data-person="kevin"><img id="choiceKevin" src="./circulo_kevin.png" alt="Kevin"></div>
+    <div class="culpritChoice" data-index="1" data-person="julian"><img id="choiceJulian" src="./circulo_julian.png" alt="Julian"></div>
+    <div class="culpritChoice" data-index="2" data-person="lorena"><img id="choiceLorena" src="./circulo_lorena.png" alt="Lorena"></div>
+  </div>
+  <div id="culpritTextBox"><div id="culpritSpeaker">EMY</div><div id="culpritText">O culpado pela morte de Lory é...</div><div id="culpritHint">← → para escolher • ENTER para confirmar</div></div>
+</div>
+<div id="revealOverlay"><img id="revealBg" src="./foto 1.jpg" alt="Reconstrução da investigação"><div id="revealTextBox"><span id="revealText"></span><span id="revealHint">[ENTER ↵]</span></div></div>
+<div id="deductionLetterFlash"><img src="./carta_lory.png" alt="Carta de Lory"></div>
+<div id="prisonOverlay"><img id="prisonImage" src="./Prisão Juan.png" alt="Juan preso"><div id="prisonCaption">Juan foi preso.</div><div id="prisonFallback">Juan foi preso.</div></div>
+</div>
+<script>
+(()=>{"use strict";
+const $=id=>document.getElementById(id);
+const menuVideo=$("menuVideo"),music=$("music"),musicGameIntro=$("musicGameIntro"),musicLoryDeath=$("musicLoryDeath"),musicSuspects=$("musicSuspects"),musicEmyAppearance=$("musicEmyAppearance"),musicNight=$("musicNight"),menuButtons=$("menuButtons"),btnStart=$("btnStart"),btnContinue=$("btnContinue");
+const emyPlayer=$("emyPlayer"),emyFront=$("emyFront"),emySide=$("emySide"),emyIntro=$("emyIntro"),juanNpc=$("juanNpc"),leneNpc=$("leneNpc"),lorenaNpc=$("lorenaNpc");
+const registroOverlay=$("registroOverlay"),btnBackConversation=$("btnBackConversation"),letterOverlay=$("letterOverlay"),btnCloseLetter=$("btnCloseLetter"),phoneOverlay=$("phoneOverlay"),btnClosePhone=$("btnClosePhone"),chapter2Overlay=$("chapter2Overlay"),btnCloseChapter=$("btnCloseChapter"),btnContinueChapter=$("btnContinueChapter"),chapterClues=$("chapterClues"),chapterOpenRegistro=$("chapterOpenRegistro"),chapterOpenLetter=$("chapterOpenLetter"),chapterOpenPhone=$("chapterOpenPhone");
+const culpritOverlay=$("culpritOverlay"),culpritEmy=$("culpritEmy"),culpritChoices=$("culpritChoices"),culpritTextBox=$("culpritTextBox"),culpritSpeaker=$("culpritSpeaker"),culpritText=$("culpritText"),culpritHint=$("culpritHint"),culpritChoiceEls=[...document.querySelectorAll('.culpritChoice')],choiceKevin=$("choiceKevin"),choiceJulian=$("choiceJulian"),choiceLorena=$("choiceLorena");
+const revealOverlay=$("revealOverlay"),revealBg=$("revealBg"),revealText=$("revealText"),prisonOverlay=$("prisonOverlay"),prisonImage=$("prisonImage"),prisonCaption=$("prisonCaption"),prisonFallback=$("prisonFallback"),deductionLetterFlash=$("deductionLetterFlash");
+const musicJuanDiscovery=$("musicJuanDiscovery"),musicFinal=$("musicFinal"),musicEnd=$("musicEnd");
+const backgrounds=['introBg','photoBg','officeBg','emyStoryBg','officeGameBg','streetBg','cafeBg','kevinBg','julianStreetBg','julianStoreBg','libraryStreetBg','libraryBg','lorenaStreetBg','lorenaHouseBg','loryBedroomBg'].map($);
+const portraits={emy:$('emyDialogue'),kevin:$('kevinDialogue'),julian:$('julianDialogue'),emyLibrary:$('emyLibraryDialogue'),juan:$('juanDialogue'),emyLorena:$('emyLorenaDialogue'),lene:$('leneDialogue'),lorena:$('lorenaDialogue')};
+const suspects={Kevin:$('suspectKevin'),Lorena:$('suspectLorena'),Julian:$('suspectJulian')};
+const SAVE_KEY='culpado_entre_nos_save_v10';
+let memorySave=null,restoreSave=null,game=null,currentLibraryDialogue=null,registroCloseHandler=null,letterCloseHandler=null,phoneCloseHandler=null;
+let state={pistaKevin1920:false,registroObtido:false,lorenaDress:false,sameBook:false,letterJ:false,letterClue:false,phoneMessage:false};
+const OBJECTIVES={office:'Você marcou de se encontrar com cada um dos suspeitos. Vá para a cafeteria se encontrar com Kevin.',cafe:'Encontre Kevin. Aproxime-se da mesa com a xícara de café.',leaveCafe:'Saia da cafeteria para se encontrar com Julian.',julian:'Encontre-se com Julian dentro da loja de conveniência, indo em direção à rua à esquerda.',leaveStore:'Saia da loja de conveniência e vá para a biblioteca',toLibrary:'Siga em frente para chegar a biblioteca',talkJuan:'Fale com o bibliotecário',leaveLibrary:'Saia da biblioteca e vá encontrar Lorena',toLorena:'Siga pela rua de cima para encontrar a casa de Lorena.',talkLorena:'Fale com Lorena',enterLoryRoom:'Entre no quarto de Lory',readLetter:'Veja o que está escrito na carta.',inspectPhone:'Examine o celular da Lory.'};
+function saveProgress(sceneKey,extras={}){const data={sceneKey,...state,...extras,savedAt:Date.now()};memorySave=data;const raw=JSON.stringify(data);try{localStorage.setItem(SAVE_KEY,raw);}catch(e){}try{sessionStorage.setItem(SAVE_KEY,raw);}catch(e){}updateContinue();}
+function loadProgress(){let raw=null;try{raw=localStorage.getItem(SAVE_KEY);}catch(e){}if(!raw){try{raw=sessionStorage.getItem(SAVE_KEY);}catch(e){}}if(raw){try{memorySave=JSON.parse(raw);Object.assign(state,memorySave);}catch(e){}}return memorySave;}
+function consumeSave(key){if(restoreSave&&restoreSave.sceneKey===key){const s=restoreSave;restoreSave=null;return s;}return null;}
+function updateContinue(){btnContinue.disabled=!loadProgress();}
+const MUSIC_TRACKS={menu:music,intro:musicGameIntro,loryDeath:musicLoryDeath,suspects:musicSuspects,emyAppearance:musicEmyAppearance,night:musicNight,juanDiscovery:musicJuanDiscovery,final:musicFinal,end:musicEnd};
+let activeMusicKey=null;
+function stopAllMusic(){Object.values(MUSIC_TRACKS).forEach(track=>{try{track.pause();}catch(e){} });activeMusicKey=null;}
+function stopMusicTrack(key){const track=MUSIC_TRACKS[key];if(!track)return;try{track.pause();track.currentTime=0;}catch(e){}if(activeMusicKey===key)activeMusicKey=null;}
+function playMusicTrack(key,restart=false){const track=MUSIC_TRACKS[key];if(!track)return;if(activeMusicKey===key&&!track.paused&&!restart)return;Object.entries(MUSIC_TRACKS).forEach(([otherKey,otherTrack])=>{if(otherKey!==key){try{otherTrack.pause();otherTrack.currentTime=0;}catch(e){}}});if(restart){try{track.currentTime=0;}catch(e){}}const volumes={menu:.58,intro:.50,loryDeath:.52,suspects:.48,emyAppearance:.50,night:.42,juanDiscovery:.52,final:.52,end:.48};track.volume=volumes[key]??.48;track.loop=true;activeMusicKey=key;const p=track.play();if(p&&p.catch)p.catch(()=>{});}
+function musicKeyForScene(sceneKey){if(sceneKey==='MenuScene')return'menu';if(sceneKey==='IntroScene')return'intro';if(sceneKey==='PhotoScene')return'loryDeath';if(['KevinSuspectScene','LorenaSuspectScene','JulianSuspectScene','CulpritChoiceScene','JuanDeductionScene'].includes(sceneKey))return'suspects';if(['OfficeIntroScene','EmyIntroScene'].includes(sceneKey))return'emyAppearance';if(['EvidenceSequenceScene','JuanFoundScene'].includes(sceneKey))return'juanDiscovery';if(sceneKey==='JuanPrisonScene')return'final';if(sceneKey==='GameOverScene')return'end';return'night';}
+function syncMusicForScene(sceneKey){playMusicTrack(musicKeyForScene(sceneKey));}
+function tryPlayMusic(){playMusicTrack('menu');}
+function stopMenuVideoOnly(){try{menuVideo.pause()}catch(e){}menuVideo.style.display='none';menuButtons.style.display='none';}
+function hideAllBackgrounds(){backgrounds.forEach(el=>{el.style.display='none';el.style.opacity='0';el.style.filter='';el.style.transform='';el.classList.remove('dialogue-blur');});}
+function hidePortraits(){Object.values(portraits).forEach((el,i)=>{el.style.display='none';el.style.opacity='0';el.style.transform=(i===0||i===3||i===5)?'translateX(-40px)':'translateX(40px)';});}
+function hideSuspects(){Object.values(suspects).forEach(el=>{el.style.display='none';el.style.left='110%';});}
+function hidePlayer(){emyPlayer.style.display='none';stopWalk();}
+function hideAllVisuals(){hideAllBackgrounds();hidePortraits();hideSuspects();hidePlayer();emyIntro.style.display='none';juanNpc.style.display='none';leneNpc.style.display='none';lorenaNpc.style.display='none';registroOverlay.style.display='none';letterOverlay.style.display='none';phoneOverlay.style.display='none';chapter2Overlay.style.display='none';culpritOverlay.style.display='none';revealOverlay.style.display='none';prisonOverlay.style.display='none';deductionLetterFlash.style.display='none';}
+function showMenu(){hideAllVisuals();menuVideo.style.display='block';menuButtons.style.display='flex';try{menuVideo.play().catch(()=>{})}catch(e){}syncMusicForScene('MenuScene');updateContinue();}
+function showBg(el){hideAllBackgrounds();el.style.display='block';el.style.opacity='1';}
+function showPlayer(width='8%'){emyPlayer.style.width=width;emyPlayer.style.display='block';stopWalk();}
+function setPlayerPos(x,y){emyPlayer.style.left=(x/1280*100)+'%';emyPlayer.style.top=(y/720*100)+'%';}
+function stopWalk(){emySide.classList.remove('walking');emySide.style.display='none';emyFront.style.display='block';}
+function walk(dx,lastDir){emyFront.style.display='none';emySide.style.display='block';const dir=dx<0?-1:dx>0?1:lastDir;emySide.style.setProperty('--dir',dir);emySide.classList.add('walking');}
+function showDialogue(bgEl,speaker){hideAllVisuals();bgEl.style.display='block';bgEl.style.opacity='1';bgEl.classList.add('dialogue-blur');let key=speaker;if(speaker==='emy')key='emy';if(speaker==='lene')key='lene';if(speaker==='lorena')key='lorena';const p=portraits[key];if(p){p.style.display='block';p.style.opacity='1';p.style.transform='translateX(0)';}}
+function showJuanNpc(){juanNpc.style.display='block';}function showLeneNpc(){leneNpc.style.display='block';}function showLorenaNpc(){lorenaNpc.style.display='block';}function showHouseNpcs(){showLeneNpc();showLorenaNpc();}
+function rects(a,b){return a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a.y+a.height>b.y;}function playerBox(x,y){return{x:x-20,y:y-40,width:40,height:40};}
+function defaultCanMove(scene,x,y){const h=playerBox(x,y);for(const r of scene.walls||[])if(rects(h,r))return false;for(const r of scene.obstacles||[])if(rects(h,r))return false;return true;}
+function setupControls(scene){scene.cursors=scene.input.keyboard.createCursorKeys();scene.keys=scene.input.keyboard.addKeys({up:'W',down:'S',left:'A',right:'D'});}
+function move(scene,delta,canMove){let dx=0,dy=0;if(scene.cursors.left.isDown||scene.keys.left.isDown)dx--;if(scene.cursors.right.isDown||scene.keys.right.isDown)dx++;if(scene.cursors.up.isDown||scene.keys.up.isDown)dy--;if(scene.cursors.down.isDown||scene.keys.down.isDown)dy++;if(!dx&&!dy){stopWalk();return;}if(dx&&dy){dx*=.7071;dy*=.7071;}if(dx<0)scene.lastDir=-1;else if(dx>0)scene.lastDir=1;const dt=delta/1000,nx=scene.px+dx*scene.speed*dt,ny=scene.py+dy*scene.speed*dt;if(canMove(nx,scene.py))scene.px=nx;if(canMove(scene.px,ny))scene.py=ny;walk(dx,scene.lastDir);setPlayerPos(scene.px,scene.py);}
+function addBackButton(scene,getExtras=()=>({})){const t=scene.add.text(24,24,'[ Voltar ao Menu ]',{font:'bold 14px Courier New',color:'#fff',backgroundColor:'#000',padding:{x:8,y:6}}).setDepth(50000).setInteractive({useHandCursor:true});t.on('pointerover',()=>t.setColor('#ff4444'));t.on('pointerout',()=>t.setColor('#fff'));t.on('pointerdown',()=>{const sceneKey=scene.scene.key;const extras=(getExtras&&getExtras())||{};saveProgress(sceneKey,extras);restoreSave=null;scene.scene.start('MenuScene');});}
+function addObjective(scene,text){const w=scene.scale.width,h=scene.scale.height;scene.add.rectangle(w-20,h-20,490,175,0x000000,.96).setOrigin(1,1).setStrokeStyle(5,0x8b0000).setDepth(19000);scene.add.text(w-485,h-170,'OBJETIVO ATUAL',{font:'bold 20px Courier New',color:'#ff4444',stroke:'#000',strokeThickness:3}).setDepth(19001);scene.objectiveText=scene.add.text(w-485,h-128,text,{font:'bold 16px Courier New',color:'#fff',stroke:'#000',strokeThickness:2,lineSpacing:8,wordWrap:{width:435}}).setDepth(19001);return scene.objectiveText;}
+function setObjective(scene,text){if(scene.objectiveText)scene.objectiveText.setText(text);else addObjective(scene,text);}
+function showToast(scene,title,text){const w=scene.scale.width;const box=scene.add.rectangle(w-25,92,520,118,0x000000,.96).setOrigin(1,0).setStrokeStyle(4,0xb00000).setDepth(45000);const a=scene.add.text(w-515,108,title,{font:'bold 17px Courier New',color:'#ff5555',stroke:'#000',strokeThickness:2}).setDepth(45001);const b=scene.add.text(w-515,140,text,{font:'bold 14px Courier New',color:'#fff',stroke:'#000',strokeThickness:2,wordWrap:{width:455}}).setDepth(45001);scene.time.delayedCall(3800,()=>{box.destroy();a.destroy();b.destroy();});}
+function collectClueItems(){
+const items=[];
+if(state.pistaKevin1920)items.push({text:'Kevin passou perto do local do crime às 19:20.'});
+if(state.registroObtido)items.push({text:'Registro de livros emprestados',doc:'registro'});
+if(state.lorenaDress)items.push({text:'Lorena tentou cortar o vestido da irmã.'});
+if(state.sameBook)items.push({text:'Lory recebeu o mesmo livro que Julian pegou na biblioteca.'});
+if(state.letterJ)items.push({text:'A carta é de alguém do passado com a inicial "J".'});
+if(state.letterClue)items.push({text:'Carta',doc:'carta'});
+if(state.phoneMessage)items.push({text:'Mensagem encontrada no celular de Lory',doc:'celular'});
+return items;
+}
+function collectClues(){return collectClueItems().map(i=>'- '+i.text);}
+function addClues(scene){
+const w=scene.scale.width;let open=false,itemTexts=[];
+const box=scene.add.rectangle(w-20,20,285,54,0x000000,.96).setOrigin(1,0).setStrokeStyle(4,0xb00000).setDepth(21000).setInteractive({useHandCursor:true});
+const title=scene.add.text(w-163,47,'PISTAS DO CASO',{font:'bold 17px Courier New',color:'#ff4444',stroke:'#000',strokeThickness:2}).setOrigin(.5).setDepth(21001).setInteractive({useHandCursor:true});
+const panel=scene.add.rectangle(w-20,82,520,390,0x000000,.97).setOrigin(1,0).setStrokeStyle(4,0xb00000).setDepth(20998).setVisible(false);
+function rebuild(){itemTexts.forEach(t=>t.destroy());itemTexts=[];let y=104;collectClueItems().forEach(item=>{const clickable=!!item.doc;const t=scene.add.text(w-500,y,'- '+item.text,{font:'bold 14px Courier New',color:clickable?'#ffe38a':'#fff',stroke:'#000',strokeThickness:2,wordWrap:{width:455},lineSpacing:5}).setDepth(20999).setVisible(open);if(clickable){t.setInteractive({useHandCursor:true});t.on('pointerdown',()=>{if(item.doc==='registro')openRegistroOverlay('Fechar');if(item.doc==='carta')openLetterOverlay('Fechar');if(item.doc==='celular')openPhoneOverlay('Fechar');});}itemTexts.push(t);y+=Math.max(46,t.height+18);});}
+const toggle=()=>{open=!open;panel.setVisible(open);title.setText(open?'PISTAS DO CASO ▲':'PISTAS DO CASO');rebuild();};
+box.on('pointerdown',toggle);title.on('pointerdown',toggle);scene.refreshClues=rebuild;
+}
+function drawDialogueBox(scene,name,color='#fff'){const w=scene.scale.width,h=scene.scale.height;const g=scene.add.graphics().setDepth(100);g.fillStyle(0x000000,.94).fillRoundedRect(70,h-240,w-140,190,12);g.lineStyle(4,0x8b0000,1).strokeRoundedRect(70,h-240,w-140,190,12);scene.nameBox=scene.add.rectangle(180,h-240,225,52,0x000000,.96).setStrokeStyle(4,0xb00000).setDepth(101);scene.nameText=scene.add.text(180,h-240,name,{font:'bold 22px Courier New',color,stroke:'#000',strokeThickness:2}).setOrigin(.5).setDepth(102);scene.dialogText=scene.add.text(90,h-190,'',{font:'bold 17px Courier New',color:'#fff',stroke:'#000',strokeThickness:2,lineSpacing:8,wordWrap:{width:w-180}}).setDepth(102);scene.enterPrompt=scene.add.text(w-90,h-78,'[ENTER ↵]',{font:'bold 13px Courier New',color:'#ff3333',stroke:'#000',strokeThickness:2}).setOrigin(1,.5).setDepth(103).setVisible(false);}
+function typeText(scene,text,delay=24){scene.currentText=text;scene.isTyping=true;scene.dialogText.setText('');scene.enterPrompt.setVisible(false);if(scene.typeTimer)scene.typeTimer.remove();let i=0;scene.typeTimer=scene.time.addEvent({delay,repeat:Math.max(0,text.length-1),callback:()=>{i++;scene.dialogText.setText(text.slice(0,i));if(i>=text.length){scene.isTyping=false;scene.enterPrompt.setVisible(true);}}});}
+function finishText(scene){if(scene.typeTimer)scene.typeTimer.remove();scene.isTyping=false;scene.dialogText.setText(scene.currentText);scene.enterPrompt.setVisible(true);}
+function basicMoveCreate(scene,key,bg,spawn,speed,walls,obstacles,objective,withClues=true,width='8%'){syncMusicForScene(key);const s=consumeSave(key);hideAllVisuals();showBg(bg);showPlayer(width);scene.cameras.main.resetFX();scene.cameras.main.fadeIn(600,0,0,0);scene.px=s?Number(s.playerX)||spawn.x:spawn.x;scene.py=s?Number(s.playerY)||spawn.y:spawn.y;scene.lastDir=s?Number(s.lastDirection)||1:1;scene.speed=speed;scene.walls=walls;scene.obstacles=obstacles;scene.transitioning=false;setupControls(scene);setPlayerPos(scene.px,scene.py);if(objective)addObjective(scene,objective);if(withClues)addClues(scene);addBackButton(scene,()=>({playerX:scene.px,playerY:scene.py,lastDirection:scene.lastDir}));}
+function openRegistroOverlay(label='Fechar',handler=null){registroCloseHandler=handler;btnBackConversation.textContent=label;registroOverlay.style.display='flex';}
+btnBackConversation.addEventListener('click',()=>{registroOverlay.style.display='none';const fn=registroCloseHandler;registroCloseHandler=null;btnBackConversation.textContent='Voltar à conversa';if(fn)fn();});
+function openLetterOverlay(label='Fechar',handler=null){letterCloseHandler=handler;btnCloseLetter.textContent=label;letterOverlay.style.display='flex';}
+btnCloseLetter.addEventListener('click',()=>{letterOverlay.style.display='none';const fn=letterCloseHandler;letterCloseHandler=null;if(fn)fn();});
+function openPhoneOverlay(label='Fechar',handler=null){phoneCloseHandler=handler;btnClosePhone.textContent=label;phoneOverlay.style.display='flex';}
+btnClosePhone.addEventListener('click',()=>{phoneOverlay.style.display='none';const fn=phoneCloseHandler;phoneCloseHandler=null;if(fn)fn();});
+function showChapter2Overlay(){chapter2Overlay.style.display='flex';const board=$('chapterBoard');board.style.animation='none';void board.offsetWidth;board.style.animation='chapterZoom .38s cubic-bezier(.2,.9,.2,1)';chapterClues.innerHTML='';collectClueItems().forEach(item=>{const li=document.createElement('li');li.textContent=item.text;chapterClues.appendChild(li);});chapterOpenRegistro.style.display=state.registroObtido?'inline-block':'none';chapterOpenLetter.style.display=state.letterClue?'inline-block':'none';chapterOpenPhone.style.display=state.phoneMessage?'inline-block':'none';}
+chapterOpenRegistro.addEventListener('click',()=>{chapter2Overlay.style.display='none';openRegistroOverlay('Voltar para as pistas',()=>showChapter2Overlay());});
+chapterOpenLetter.addEventListener('click',()=>{chapter2Overlay.style.display='none';openLetterOverlay('Voltar para as pistas',()=>showChapter2Overlay());});
+chapterOpenPhone.addEventListener('click',()=>{chapter2Overlay.style.display='none';openPhoneOverlay('Voltar para as pistas',()=>showChapter2Overlay());});
+btnCloseChapter.addEventListener('click',()=>{chapter2Overlay.style.display='none';saveProgress('Chapter2Scene',{phoneMessage:state.phoneMessage,letterJ:state.letterJ,letterClue:state.letterClue});if(game){const scene=game.scene.getScene('Chapter2Scene');scene.scene.start('MenuScene');}});
+btnContinueChapter.addEventListener('click',()=>{chapter2Overlay.style.display='none';saveProgress('CulpritChoiceScene',{selectedIndex:0});if(game){const scene=game.scene.getScene('Chapter2Scene');scene.scene.start('CulpritChoiceScene');}});
+class MenuScene extends Phaser.Scene{constructor(){super('MenuScene')}create(){this.cameras.main.resetFX();showMenu();}}
+function makeTextScene(key,bg,lines,next){return class extends Phaser.Scene{constructor(){super(key)}create(){syncMusicForScene(key);const s=consumeSave(key);hideAllVisuals();showBg(bg);this.cameras.main.fadeIn(600,0,0,0);this.lines=lines;this.i=s?Math.min(Number(s.dialogueIndex)||0,lines.length-1):0;drawDialogueBox(this,'');this.nameText.setVisible(false);this.nameBox.setVisible(false);this.enter=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);typeText(this,this.lines[this.i]);addBackButton(this,()=>({dialogueIndex:this.i}));}update(){if(!Phaser.Input.Keyboard.JustDown(this.enter))return;if(this.isTyping){finishText(this);return;}if(this.i<this.lines.length-1){this.i++;saveProgress(key,{dialogueIndex:this.i});typeText(this,this.lines[this.i]);return;}this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start(next));}};}
+const IntroScene=makeTextScene('IntroScene',$('introBg'),['Era 25 de outubro.','Parecia ser uma noite comum.','O céu estava repleto de estrelas, era tempo de lua cheia.','Quando o inesperado aconteceu...','Algo que ninguém imaginaria...','Ou ao menos....alguém.'],'PhotoScene');
+const PhotoScene=makeTextScene('PhotoScene',$('photoBg'),['Lory Florence, uma adolescente de 17 anos, foi encontrada em uma região de mata próxima de sua residência.','Não existia qualquer vestígio ou câmera que tivesse capturado o ocorrido.','Portanto, a investigação identificou três suspeitos.'],'KevinSuspectScene');
+function makeSuspectScene(key,name,text,next){return class extends Phaser.Scene{constructor(){super(key)}create(){syncMusicForScene(key);consumeSave(key);hideAllVisuals();const c=suspects[name];c.style.display='block';requestAnimationFrame(()=>requestAnimationFrame(()=>c.style.left='8%'));this.cameras.main.fadeIn(500,0,0,0);const w=this.scale.width,h=this.scale.height;const g=this.add.graphics();g.fillStyle(0x000000,.9).fillRoundedRect(w*.53,h*.28,w*.39,h*.34,15);g.lineStyle(4,0x8b0000).strokeRoundedRect(w*.53,h*.28,w*.39,h*.34,15);this.dialogText=this.add.text(w*.57,h*.34,'',{font:'bold 22px Courier New',color:'#fff',lineSpacing:18,wordWrap:{width:w*.30}});this.enterPrompt=this.add.text(w*.88,h*.57,'[ENTER ↵]',{font:'bold 13px Courier New',color:'#ff4444'}).setOrigin(1,.5).setVisible(false);this.enter=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);typeText(this,text,35);addBackButton(this);}update(){if(!Phaser.Input.Keyboard.JustDown(this.enter))return;if(this.isTyping){finishText(this);return;}this.cameras.main.fadeOut(500,0,0,0);this.time.delayedCall(500,()=>this.scene.start(next));}};}
+const KevinSuspectScene=makeSuspectScene('KevinSuspectScene','Kevin','Kevin\n17 anos\nNamorado da vítima.','LorenaSuspectScene');
+const LorenaSuspectScene=makeSuspectScene('LorenaSuspectScene','Lorena','Lorena\n15 anos\nIrmã da vítima.','JulianSuspectScene');
+const JulianSuspectScene=makeSuspectScene('JulianSuspectScene','Julian','Julian\n17 anos\nAmigo da vítima.','OfficeIntroScene');
+const OfficeIntroScene=makeTextScene('OfficeIntroScene',$('emyStoryBg'),['A polícia necessitava de alguém que compreendesse o caso em profundidade.'],'EmyIntroScene');
+class EmyIntroScene extends Phaser.Scene{constructor(){super('EmyIntroScene')}create(){syncMusicForScene('EmyIntroScene');consumeSave('EmyIntroScene');hideAllVisuals();showBg($('emyStoryBg'));emyIntro.style.display='block';requestAnimationFrame(()=>requestAnimationFrame(()=>emyIntro.style.top='38%'));this.cameras.main.fadeIn(500,0,0,0);drawDialogueBox(this,'');this.nameText.setVisible(false);this.nameBox.setVisible(false);this.enter=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);typeText(this,'Então, a investigadora Emy Laurent foi contratada para investigar e encontrar a solução dessa história.');addBackButton(this);}update(){if(!Phaser.Input.Keyboard.JustDown(this.enter))return;if(this.isTyping){finishText(this);return;}this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('OfficeGameplayScene'));}}
+const roomWalls=[{x:0,y:0,width:85,height:120},{x:255,y:0,width:1025,height:120},{x:55,y:65,width:32,height:145},{x:253,y:65,width:32,height:145},{x:0,y:0,width:55,height:720},{x:1225,y:0,width:55,height:720},{x:0,y:685,width:1280,height:35}],roomObs=[{x:470,y:225,width:510,height:175},{x:620,y:445,width:220,height:110},{x:88,y:430,width:135,height:125},{x:70,y:555,width:115,height:110},{x:1090,y:120,width:130,height:230},{x:1080,y:535,width:135,height:120},{x:320,y:125,width:115,height:100}];
+const streetWalls=[{x:0,y:0,width:18,height:720},{x:1262,y:0,width:18,height:720},{x:0,y:700,width:1280,height:20}],streetObs=[{x:0,y:0,width:485,height:290},{x:760,y:0,width:520,height:130},{x:760,y:130,width:120,height:110},{x:975,y:130,width:305,height:110},{x:0,y:520,width:260,height:200},{x:830,y:550,width:450,height:170}],cafeWalls=[{x:0,y:0,width:45,height:720},{x:1245,y:0,width:35,height:720},{x:0,y:0,width:135,height:75},{x:325,y:0,width:955,height:75},{x:0,y:700,width:1280,height:20}],cafeObs=[{x:665,y:120,width:590,height:230},{x:375,y:215,width:220,height:155},{x:765,y:300,width:235,height:170},{x:145,y:495,width:175,height:175},{x:495,y:500,width:190,height:180},{x:775,y:605,width:205,height:115},{x:45,y:275,width:85,height:240},{x:45,y:650,width:345,height:70},{x:110,y:105,width:80,height:125},{x:310,y:105,width:70,height:105},{x:340,y:530,width:65,height:160},{x:1120,y:520,width:105,height:170}];
+class OfficeGameplayScene extends Phaser.Scene{constructor(){super('OfficeGameplayScene')}create(){basicMoveCreate(this,'OfficeGameplayScene',$('officeGameBg'),{x:640,y:650},180,roomWalls,roomObs,OBJECTIVES.office,false,'15%');this.door={x:60,y:75,width:230,height:175};}update(t,d){if(this.transitioning)return;move(this,d,(x,y)=>defaultCanMove(this,x,y));const hit=playerBox(this.px,this.py);if(this.py<245&&(rects(hit,this.door)||Phaser.Math.Distance.Between(this.px,this.py,172,135)<120)){this.transitioning=true;saveProgress('StreetToCafeScene',{playerX:640,playerY:650,lastDirection:1});this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('StreetToCafeScene'));}}}
+class StreetToCafeScene extends Phaser.Scene{constructor(){super('StreetToCafeScene')}create(){basicMoveCreate(this,'StreetToCafeScene',$('streetBg'),{x:640,y:650},190,streetWalls,streetObs,OBJECTIVES.office,false);this.door={x:875,y:125,width:115,height:150};}can(x,y){const hit=playerBox(x,y),atDoor=rects(hit,this.door);for(const w of this.walls)if(rects(hit,w))return false;for(const o of this.obstacles)if(rects(hit,o)&&!atDoor)return false;return true;}update(t,d){if(this.transitioning)return;move(this,d,(x,y)=>this.can(x,y));if(rects(playerBox(this.px,this.py),this.door)){this.transitioning=true;saveProgress('CafeBeforeKevinScene',{playerX:220,playerY:205,lastDirection:1});this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('CafeBeforeKevinScene'));}}}
+class CafeBeforeKevinScene extends Phaser.Scene{constructor(){super('CafeBeforeKevinScene')}create(){basicMoveCreate(this,'CafeBeforeKevinScene',$('cafeBg'),{x:220,y:205},175,cafeWalls,cafeObs,OBJECTIVES.cafe,false,'8.5%');this.trigger={x:705,y:250,width:350,height:270};}update(t,d){if(this.transitioning)return;move(this,d,(x,y)=>defaultCanMove(this,x,y));if(rects(playerBox(this.px,this.py),this.trigger)||Phaser.Math.Distance.Between(this.px,this.py,885,365)<145){this.transitioning=true;this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('KevinIntroScene'));}}}
+const KevinIntroScene=makeTextScene('KevinIntroScene',$('kevinBg'),['Emy encontrou Kevin sentado em sua mesa; ele parecia exausto.'],'KevinDialogueScene');
+class KevinDialogueScene extends Phaser.Scene{constructor(){super('KevinDialogueScene')}create(){const s=consumeSave('KevinDialogueScene');this.lines=[{speaker:'emy',name:'EMY',text:'Prazer, Kevin. Sou a detetive e investigadora Emy Laurent.'},{speaker:'emy',name:'EMY',text:'Preciso te fazer umas pequenas perguntas.'},{speaker:'emy',name:'EMY',text:'Minha primeira pergunta é: como estava sua relação com a Lory?'},{speaker:'kevin',name:'KEVIN',text:'Nós brigamos.'},{speaker:'kevin',name:'KEVIN',text:'A Lory tava agindo meio estranha nesses últimos dias, não tava respondendo às minhas mensagens, na escola me via e não fazia tanta questão. Quando eu perguntava, ela dizia que era só uma fase.'},{speaker:'kevin',name:'KEVIN',text:'Foi então que ela disse que eu não a tratava mais como antes e que precisava de um tempo para refletir. Eu não entendia o porquê disso; nunca a tratei mal ou algo do tipo.'},{speaker:'kevin',name:'KEVIN',text:'De noite, eu liguei a moto e saí pro rumo da floresta.'},{speaker:'kevin',name:'KEVIN',text:'Mas eu juro que só passei ali para esfriar a cabeça, não imaginava que essa tragédia poderia acontecer.'},{speaker:'emy',name:'EMY',text:'A que horas você foi à floresta?'},{speaker:'kevin',name:'KEVIN',text:'Era mais ou menos umas 19:20; não vi ninguém por perto.'},{speaker:'emy',name:'EMY',text:'Entendi. Antes dela falecer, ela tinha alguma espécie de hobby?'},{speaker:'kevin',name:'KEVIN',text:'Ela gostava muito de ler, sempre passava na biblioteca que fica ao lado da escola.'},{speaker:'emy',name:'EMY',text:'Certo, obrigada pela conversa. Você está dispensado por enquanto.'}];this.i=s?Math.min(Number(s.dialogueIndex)||0,this.lines.length-1):0;this.cameras.main.fadeIn(600,0,0,0);drawDialogueBox(this,'');this.nameBox.setVisible(true);this.nameText.setVisible(true);this.enter=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);this.showLine();addBackButton(this,()=>({dialogueIndex:this.i}));}showLine(){const l=this.lines[this.i];showDialogue($('kevinBg'),l.speaker);this.nameText.setText(l.name).setColor(l.speaker==='emy'?'#c88cff':'#ff5555');typeText(this,l.text);}update(){if(!Phaser.Input.Keyboard.JustDown(this.enter))return;if(this.isTyping){finishText(this);return;}if(this.i<this.lines.length-1){this.i++;saveProgress('KevinDialogueScene',{dialogueIndex:this.i});this.showLine();return;}state.pistaKevin1920=true;saveProgress('CafeAfterKevinScene',{playerX:720,playerY:430,lastDirection:1,pistaKevin1920:true});this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('CafeAfterKevinScene'));}}
+class CafeAfterKevinScene extends Phaser.Scene{constructor(){super('CafeAfterKevinScene')}create(){state.pistaKevin1920=true;basicMoveCreate(this,'CafeAfterKevinScene',$('cafeBg'),{x:720,y:430},175,cafeWalls,cafeObs,OBJECTIVES.leaveCafe,true,'8.5%');this.exit={x:135,y:55,width:190,height:155};}can(x,y){const hit=playerBox(x,y),atExit=rects(hit,this.exit);for(const w of this.walls)if(rects(hit,w)&&!atExit)return false;for(const o of this.obstacles)if(rects(hit,o)&&!atExit)return false;return true;}update(t,d){if(this.transitioning)return;move(this,d,(x,y)=>this.can(x,y));if(rects(playerBox(this.px,this.py),this.exit)){this.transitioning=true;saveProgress('StreetAfterKevinScene',{playerX:930,playerY:295,lastDirection:-1});this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('StreetAfterKevinScene'));}}}
+class StreetAfterKevinScene extends Phaser.Scene{constructor(){super('StreetAfterKevinScene')}create(){basicMoveCreate(this,'StreetAfterKevinScene',$('streetBg'),{x:930,y:295},190,streetWalls,streetObs,OBJECTIVES.julian,true);this.left={x:18,y:280,width:110,height:255};}can(x,y){const hit=playerBox(x,y),leaving=rects(hit,this.left);for(const w of this.walls)if(rects(hit,w)&&!leaving)return false;for(const o of this.obstacles)if(rects(hit,o)&&!leaving)return false;return true;}update(t,d){if(this.transitioning)return;move(this,d,(x,y)=>this.can(x,y));if(rects(playerBox(this.px,this.py),this.left)){this.transitioning=true;saveProgress('JulianStreetScene',{playerX:1160,playerY:505,lastDirection:-1});this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('JulianStreetScene'));}}}
+const julianStreetObs=[{x:455,y:80,width:285,height:350},{x:900,y:80,width:245,height:350},{x:740,y:80,width:160,height:265},{x:0,y:0,width:275,height:405},{x:1160,y:0,width:120,height:440}];
+class JulianStreetScene extends Phaser.Scene{constructor(){super('JulianStreetScene')}create(){basicMoveCreate(this,'JulianStreetScene',$('julianStreetBg'),{x:1160,y:505},190,streetWalls,julianStreetObs,OBJECTIVES.julian,true);this.door={x:735,y:340,width:175,height:125};}can(x,y){const hit=playerBox(x,y),atDoor=rects(hit,this.door);for(const w of this.walls)if(rects(hit,w))return false;for(const o of this.obstacles)if(rects(hit,o)&&!atDoor)return false;return true;}update(t,d){if(this.transitioning)return;move(this,d,(x,y)=>this.can(x,y));if(rects(playerBox(this.px,this.py),this.door)){this.transitioning=true;saveProgress('JulianStoreScene',{playerX:640,playerY:660,lastDirection:1});this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('JulianStoreScene'));}}}
+const storeWalls=[{x:0,y:0,width:28,height:720},{x:1252,y:0,width:28,height:720},{x:0,y:0,width:1280,height:25},{x:0,y:548,width:520,height:172},{x:765,y:548,width:515,height:172}],storeObs=[{x:365,y:145,width:410,height:145},{x:35,y:145,width:105,height:385},{x:145,y:115,width:215,height:110},{x:365,y:45,width:505,height:105},{x:1035,y:60,width:220,height:180},{x:158,y:288,width:92,height:242},{x:315,y:286,width:95,height:244},{x:487,y:288,width:115,height:238},{x:678,y:284,width:98,height:246},{x:858,y:273,width:88,height:255},{x:995,y:270,width:118,height:245},{x:1042,y:405,width:76,height:120},{x:1105,y:185,width:175,height:300},{x:1120,y:450,width:150,height:95},{x:395,y:170,width:55,height:105},{x:655,y:145,width:110,height:120}];
+class JulianStoreScene extends Phaser.Scene{constructor(){super('JulianStoreScene')}create(){basicMoveCreate(this,'JulianStoreScene',$('julianStoreBg'),{x:640,y:660},175,storeWalls,storeObs,OBJECTIVES.julian,true);this.trigger={x:500,y:250,width:180,height:125};}update(t,d){if(this.transitioning)return;move(this,d,(x,y)=>defaultCanMove(this,x,y));if(rects(playerBox(this.px,this.py),this.trigger)){this.transitioning=true;this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('JulianIntroScene'));}}}
+const JulianIntroScene=makeTextScene('JulianIntroScene',$('julianStoreBg'),['Emy se aproximou de Julian no caixa.'],'JulianDialogueScene');
+class JulianDialogueScene extends Phaser.Scene{constructor(){super('JulianDialogueScene')}create(){const s=consumeSave('JulianDialogueScene');this.lines=[{speaker:'emy',name:'EMY',text:'Bom dia Julian, sou a investigadora Emy, estou investigando o caso da Lory. Você poderia me informar se vocês conversaram no dia que ela faleceu?'},{speaker:'julian',name:'JULIAN',text:'Bom dia investigadora. Bom, eu e a Lory éramos amigos desde o fundamental.'},{speaker:'julian',name:'JULIAN',text:'Sempre fazíamos trabalho juntos, eu almoçava na casa dela, assistíamos desenho juntos. Só que no ensino médio ela ficou diferente.'},{speaker:'julian',name:'JULIAN',text:'Ela começou a dizer que eu era estranho, não achava mais minhas piadas engraçadas, passou a se cobrar o dobro nos estudos e pra completar começou a namorar o esquisito do Kevin.'},{speaker:'julian',name:'JULIAN',text:'Nunca ri de alguma situação difícil que ela passou na vida dela, mas depois que ela conheceu o Kevin, ela não ligava mais pros meus problemas.'},{speaker:'julian',name:'JULIAN',text:'Gostava mais dela no fundamental, ela tinha um estilo próprio e dava risada de qualquer coisa, éramos ótimos amigos.'},{speaker:'emy',name:'EMY',text:'Vocês já tiveram algo além da amizade?'},{speaker:'julian',name:'JULIAN',text:'Ficamos apenas uma vez, mas ela disse para esquecermos isso.'},{speaker:'julian',name:'JULIAN',text:'No dia da tragédia, quis contar à ela sobre o quanto eu sentia falta da nossa amizade.'},{speaker:'emy',name:'EMY',text:'Que horas vocês se encontraram?'},{speaker:'julian',name:'JULIAN',text:'Foi depois da aula, na biblioteca às 13:30.'},{speaker:'julian',name:'JULIAN',text:'Contei pra ela tudo que estava entalado e que ela não era mais a mesma pessoa, mas infelizmente ela não reagiu da forma que eu esperava.'},{speaker:'emy',name:'EMY',text:'O que ela disse?'},{speaker:'julian',name:'JULIAN',text:'Ela disse que tudo foi bom enquanto durou, mas chegou a hora de cada um seguir seu caminho.'},{speaker:'emy',name:'EMY',text:'Perder uma amizade é difícil. Mas, você sabe sobre algum livro que sua amiga gostava? Isso pode me dar alguma pista.'},{speaker:'julian',name:'JULIAN',text:'Ela gostava do pequeno príncipe, era o livro dela favorito na infância.'},{speaker:'emy',name:'EMY',text:'Entendi. Obrigada pela conversa, você está liberado por enquanto.'}];this.i=s?Math.min(Number(s.dialogueIndex)||0,this.lines.length-1):0;this.cameras.main.fadeIn(600,0,0,0);drawDialogueBox(this,'');this.nameBox.setVisible(true);this.nameText.setVisible(true);this.enter=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);this.showLine();addBackButton(this,()=>({dialogueIndex:this.i}));}showLine(){const l=this.lines[this.i];showDialogue($('julianStoreBg'),l.speaker);this.nameText.setText(l.name).setColor(l.speaker==='emy'?'#c88cff':'#6fa8ff');typeText(this,l.text);}update(){if(!Phaser.Input.Keyboard.JustDown(this.enter))return;if(this.isTyping){finishText(this);return;}if(this.i<this.lines.length-1){this.i++;saveProgress('JulianDialogueScene',{dialogueIndex:this.i});this.showLine();return;}saveProgress('JulianStoreAfterScene',{playerX:640,playerY:420,lastDirection:1});this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('JulianStoreAfterScene'));}}
+class JulianStoreAfterScene extends Phaser.Scene{constructor(){super('JulianStoreAfterScene')}create(){basicMoveCreate(this,'JulianStoreAfterScene',$('julianStoreBg'),{x:640,y:420},175,storeWalls,storeObs,OBJECTIVES.leaveStore,true);this.exit={x:515,y:525,width:260,height:195};this.corridor={x:595,y:390,width:90,height:330};}can(x,y){const hit=playerBox(x,y),atExit=rects(hit,this.exit),inCorridor=rects(hit,this.corridor);for(const w of this.walls)if(rects(hit,w)&&!atExit)return false;for(const o of this.obstacles)if(rects(hit,o)&&!inCorridor)return false;return true;}update(t,d){if(this.transitioning)return;move(this,d,(x,y)=>this.can(x,y));if(rects(playerBox(this.px,this.py),this.exit)&&this.py>520){this.transitioning=true;saveProgress('JulianStreetAfterScene',{playerX:790,playerY:500,lastDirection:-1});this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('JulianStreetAfterScene'));}}}
+class JulianStreetAfterScene extends Phaser.Scene{constructor(){super('JulianStreetAfterScene')}create(){basicMoveCreate(this,'JulianStreetAfterScene',$('julianStreetBg'),{x:790,y:500},190,streetWalls,julianStreetObs,OBJECTIVES.toLibrary,true);this.end={x:0,y:405,width:110,height:295};}can(x,y){const hit=playerBox(x,y),leaving=rects(hit,this.end);for(const w of this.walls)if(rects(hit,w)&&!leaving)return false;for(const o of this.obstacles)if(rects(hit,o)&&!leaving)return false;return true;}update(t,d){if(this.transitioning)return;move(this,d,(x,y)=>this.can(x,y));if(rects(playerBox(this.px,this.py),this.end)&&this.px<75){this.transitioning=true;saveProgress('LibraryStreetScene',{playerX:650,playerY:655,lastDirection:1});this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('LibraryStreetScene'));}}}
+const libStreetObs=[{x:0,y:0,width:455,height:255},{x:0,y:265,width:135,height:175},{x:300,y:0,width:180,height:170},{x:330,y:285,width:155,height:215},{x:995,y:0,width:285,height:250},{x:1185,y:250,width:95,height:255},{x:770,y:0,width:125,height:215},{x:745,y:305,width:155,height:190}];
+class LibraryStreetScene extends Phaser.Scene{constructor(){super('LibraryStreetScene')}create(){basicMoveCreate(this,'LibraryStreetScene',$('libraryStreetBg'),{x:650,y:655},190,streetWalls,libStreetObs,OBJECTIVES.toLibrary,true);this.door={x:990,y:265,width:185,height:145};}can(x,y){const hit=playerBox(x,y),atDoor=rects(hit,this.door);for(const w of this.walls)if(rects(hit,w))return false;for(const o of this.obstacles)if(rects(hit,o)&&!atDoor)return false;return true;}update(t,d){if(this.transitioning)return;move(this,d,(x,y)=>this.can(x,y));if(rects(playerBox(this.px,this.py),this.door)){this.transitioning=true;saveProgress('LibraryInteriorScene',{playerX:640,playerY:660,lastDirection:1});this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('LibraryInteriorScene'));}}}
+const libraryWalls=[{x:0,y:0,width:22,height:720},{x:1258,y:0,width:22,height:720},{x:0,y:0,width:1280,height:20},{x:0,y:695,width:500,height:25},{x:780,y:695,width:500,height:25}],libraryObs=[{x:0,y:0,width:1280,height:218},{x:390,y:300,width:500,height:125},{x:210,y:495,width:295,height:115},{x:790,y:495,width:295,height:115},{x:0,y:575,width:150,height:115},{x:1130,y:575,width:150,height:115},{x:0,y:240,width:75,height:225},{x:1205,y:240,width:75,height:225}];
+class LibraryInteriorScene extends Phaser.Scene{constructor(){super('LibraryInteriorScene')}create(){basicMoveCreate(this,'LibraryInteriorScene',$('libraryBg'),{x:640,y:660},175,libraryWalls,libraryObs,OBJECTIVES.talkJuan,true);showJuanNpc();this.talk={x:500,y:405,width:280,height:105};}update(t,d){if(this.transitioning)return;move(this,d,(x,y)=>defaultCanMove(this,x,y));showJuanNpc();if(rects(playerBox(this.px,this.py),this.talk)){this.transitioning=true;saveProgress('LibraryDialogueScene',{dialogueIndex:0});this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('LibraryDialogueScene'));}}}
+function addLibraryClueUI(scene){const w=scene.scale.width;scene.clueReady=false;scene.clueOpen=false;const tab=scene.add.rectangle(w-20,20,285,54,0x000000,.96).setOrigin(1,0).setStrokeStyle(4,0xb00000).setDepth(22000).setInteractive({useHandCursor:true});const title=scene.add.text(w-163,47,'PISTAS DO CASO',{font:'bold 17px Courier New',color:'#ff4444',stroke:'#000',strokeThickness:2}).setOrigin(.5).setDepth(22001).setInteractive({useHandCursor:true});scene.dot=scene.add.circle(w-38,32,8,0xff3333).setDepth(22002).setVisible(false);const panel=scene.add.rectangle(w-20,82,430,165,0x000000,.96).setOrigin(1,0).setStrokeStyle(4,0xb00000).setDepth(21999).setVisible(false);const kevinClue=scene.add.text(w-420,105,'- Kevin passou perto do local do crime às 19:20.',{font:'bold 14px Courier New',color:'#fff',stroke:'#000',strokeThickness:2,wordWrap:{width:380}}).setDepth(22000).setVisible(false);scene.recordItem=scene.add.text(w-420,175,'registro de livros emprestados',{font:'bold 15px Courier New',color:'#ffe38a',stroke:'#000',strokeThickness:2}).setDepth(22000).setVisible(false).setInteractive({useHandCursor:true});const toggle=()=>{if(!scene.clueReady)return;scene.clueOpen=!scene.clueOpen;panel.setVisible(scene.clueOpen);kevinClue.setVisible(scene.clueOpen);scene.recordItem.setVisible(scene.clueOpen);if(scene.clueOpen)scene.dot.setVisible(false);};tab.on('pointerdown',toggle);title.on('pointerdown',toggle);scene.recordItem.on('pointerdown',()=>{if(!scene.clueReady)return;scene.viewingRecord=true;openRegistroOverlay('Voltar à conversa',()=>scene.resumeAfterRecord());});}
+class LibraryDialogueScene extends Phaser.Scene{constructor(){super('LibraryDialogueScene')}create(){const s=consumeSave('LibraryDialogueScene');currentLibraryDialogue=this;this.before=[{speaker:'juan',name:'???',text:'Olá bom dia, procurando algum livro específico?'},{speaker:'emy',name:'EMY',text:'Bom dia senhor, sou a investigadora Emy e estou investigando o caso da adolescente Lory. Gostaria de ver o seu registro de livros emprestados do dia 25 de outubro'},{speaker:'juan',name:'???',text:'É sobre aquela menina do jornal? Fiquei sem acreditar com aquela notícia, ela quase sempre passava por aqui.'},{speaker:'juan',name:'???',text:'Mas aqui está o registro de empréstimos do dia 25/10.'}];this.after=[{speaker:'emy',name:'EMY',text:'Vou ficar com esse registro, certo?'},{speaker:'juan',name:'???',text:'Tudo bem, tenho uma cópia deste documento.'},{speaker:'emy',name:'EMY',text:'Você sabe se a Lory agia estranho ou algo assim?'},{speaker:'juan',name:'???',text:'Não costumo prestar atenção nas pessoas que vêm aqui, mas ela era bem quieta.'},{speaker:'emy',name:'EMY',text:'Entendi, caso o senhor...?'},{speaker:'juan',name:'JUAN',text:'Juan, meu nome é Juan.'},{speaker:'emy',name:'EMY',text:'Certo, caso o senhor Juan saiba de mais alguma coisa entre em contato comigo pelo meu cartão.'},{speaker:'juan',name:'JUAN',text:'Ok, boa sorte na investigação.'}];this.phase=s&&s.libraryPhase==='after'?'after':'before';this.lines=this.phase==='after'?this.after:this.before;this.i=s?Math.min(Number(s.dialogueIndex)||0,this.lines.length-1):0;this.waitingForRecord=false;this.viewingRecord=false;this.cameras.main.fadeIn(600,0,0,0);drawDialogueBox(this,'');this.nameBox.setVisible(true);this.nameText.setVisible(true);this.enter=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);addLibraryClueUI(this);this.showLine();addBackButton(this,()=>({dialogueIndex:this.i,libraryPhase:this.phase}));}showLine(){const l=this.lines[this.i];showDialogue($('libraryBg'),l.speaker==='emy'?'emy':l.speaker);this.nameText.setText(l.name).setColor(l.speaker==='emy'?'#c88cff':'#7dc0ff');typeText(this,l.text);}resumeAfterRecord(){this.viewingRecord=false;if(this.phase==='before'){this.phase='after';this.lines=this.after;this.i=0;this.waitingForRecord=false;this.showLine();}}update(){if(this.viewingRecord)return;if(this.phase==='before'&&this.i===this.before.length-1&&!this.isTyping&&!this.waitingForRecord){this.waitingForRecord=true;this.clueReady=true;state.registroObtido=true;saveProgress('LibraryDialogueScene',{dialogueIndex:this.i,libraryPhase:'before',registroObtido:true});this.dot.setVisible(true);}if(!Phaser.Input.Keyboard.JustDown(this.enter))return;if(this.isTyping){finishText(this);return;}if(this.phase==='before'){if(this.i<this.before.length-1){this.i++;saveProgress('LibraryDialogueScene',{dialogueIndex:this.i,libraryPhase:'before'});this.showLine();}return;}if(this.i<this.after.length-1){this.i++;saveProgress('LibraryDialogueScene',{dialogueIndex:this.i,libraryPhase:'after'});this.showLine();return;}saveProgress('LibraryAfterScene',{playerX:640,playerY:620,lastDirection:1,registroObtido:true});this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('LibraryAfterScene'));}}
+class LibraryAfterScene extends Phaser.Scene{constructor(){super('LibraryAfterScene')}create(){state.registroObtido=true;basicMoveCreate(this,'LibraryAfterScene',$('libraryBg'),{x:640,y:620},175,libraryWalls,libraryObs,OBJECTIVES.leaveLibrary,true);showJuanNpc();this.exit={x:500,y:650,width:280,height:70};this.corr={x:500,y:585,width:280,height:135};}can(x,y){const hit=playerBox(x,y),atExit=rects(hit,this.exit),corridor=rects(hit,this.corr);for(const w of this.walls)if(rects(hit,w)&&!atExit)return false;for(const o of this.obstacles)if(rects(hit,o)&&!corridor)return false;return true;}update(t,d){if(this.transitioning)return;move(this,d,(x,y)=>this.can(x,y));showJuanNpc();if(rects(playerBox(this.px,this.py),this.exit)&&this.py>650){this.transitioning=true;saveProgress('LibraryStreetAfterScene',{playerX:1080,playerY:365,lastDirection:-1,registroObtido:true});this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('LibraryStreetAfterScene'));}}}
+class LibraryStreetAfterScene extends Phaser.Scene{
+constructor(){super('LibraryStreetAfterScene')}
+create(){
+state.registroObtido=true;
+basicMoveCreate(this,'LibraryStreetAfterScene',$('libraryStreetBg'),{x:1080,y:365},190,streetWalls,libStreetObs,OBJECTIVES.toLorena,true);
+this.libraryDoor={x:990,y:265,width:185,height:145};
+
+/*
+REGIÃO SENSÍVEL EXATA DO TOPO CENTRAL DA RUA,
+NA FAIXA DE ASFALTO CIRCULADA NA IMAGEM.
+Coordenadas no mundo 1280x720.
+*/
+this.nextStreetTrigger={x:485,y:0,width:305,height:155};
+}
+canMove(x,y){
+const hit=playerBox(x,y);
+
+/*
+Além da colisão do retângulo, usamos as coordenadas do centro
+da personagem para garantir que nenhum obstáculo invisível
+bloqueie a entrada no topo da rua.
+*/
+const atNextStreet=(x>=465&&x<=810&&y<=190)||rects(hit,this.nextStreetTrigger);
+const atLibraryDoor=rects(hit,this.libraryDoor);
+
+for(const wall of this.walls){
+if(rects(hit,wall)&&!atNextStreet)return false;
+}
+
+for(const obstacle of this.obstacles){
+if(rects(hit,obstacle)&&!atLibraryDoor&&!atNextStreet)return false;
+}
+
+return true;
+}
+update(t,d){
+if(this.transitioning)return;
+
+move(this,d,(x,y)=>this.canMove(x,y));
+
+/*
+Ao entrar na região circulada do topo central,
+a próxima cena é acionada imediatamente.
+*/
+if(this.px>=485&&this.px<=790&&this.py<=155){
+this.transitioning=true;
+
+saveProgress('LorenaStreetScene',{
+playerX:640,
+playerY:650,
+lastDirection:1,
+registroObtido:true
+});
+
+this.cameras.main.fadeOut(600,0,0,0);
+this.time.delayedCall(600,()=>this.scene.start('LorenaStreetScene'));
+}
+}
+}
+/* =========================================================
+   COLISÕES / "GRAVIDADE" DA RUA DA CASA DE LORENA
+   Ajustadas para o background lorena_rua.png.
+   A estrada central e o caminho de pedras até a casa ficam livres.
+========================================================= */
+const lorenaStreetObs=[
+    /* Construções e vegetação do lado esquerdo */
+    {x:0,y:0,width:350,height:720},
+
+    /* Árvores da calçada direita, sem bloquear a passagem para a casa */
+    {x:700,y:0,width:145,height:175},
+    {x:705,y:215,width:145,height:185},
+    {x:700,y:575,width:150,height:145},
+
+    /* Parte superior da propriedade / telhado e vegetação */
+    {x:840,y:0,width:440,height:270},
+
+    /* Jardim à esquerda do caminho da casa */
+    {x:835,y:300,width:80,height:245},
+
+    /* Jardim à direita do caminho da casa */
+    {x:1015,y:300,width:265,height:270},
+
+    /* Construção/vegetação inferior direita */
+    {x:835,y:590,width:445,height:130}
+];
+
+class LorenaStreetScene extends Phaser.Scene{
+
+    constructor(){
+        super('LorenaStreetScene');
+    }
+
+    create(){
+
+        basicMoveCreate(
+            this,
+            'LorenaStreetScene',
+            $('lorenaStreetBg'),
+            {x:640,y:650},
+            190,
+            streetWalls,
+            lorenaStreetObs,
+            OBJECTIVES.toLorena,
+            true
+        );
+
+        /*
+           PORTA DA CASA DE LORENA.
+           A zona é propositalmente maior que a porta visível
+           para a transição funcionar com facilidade ao subir os degraus.
+        */
+        this.houseDoor={
+            x:915,
+            y:255,
+            width:120,
+            height:145
+        };
+
+        /*
+           CORREDOR LIVRE ENTRE A RUA E A PORTA.
+           Impede que árvores, jardim ou muros criem barreiras invisíveis.
+        */
+        this.housePath={
+            x:690,
+            y:360,
+            width:345,
+            height:265
+        };
+    }
+
+    can(x,y){
+
+        const hit=playerBox(x,y);
+        const atDoor=rects(hit,this.houseDoor);
+        const onHousePath=rects(hit,this.housePath);
+
+        /* Limites externos da tela */
+        for(const wall of this.walls){
+            if(rects(hit,wall) && !atDoor){
+                return false;
+            }
+        }
+
+        /*
+           Colisões dos objetos do cenário.
+           O caminho até a casa e a própria porta sempre ficam livres.
+        */
+        for(const obstacle of this.obstacles){
+            if(
+                rects(hit,obstacle) &&
+                !atDoor &&
+                !onHousePath
+            ){
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    update(t,d){
+
+        if(this.transitioning)return;
+
+        move(this,d,(x,y)=>this.can(x,y));
+
+        const hit=playerBox(this.px,this.py);
+
+        /*
+           A porta é sensível tanto pela hitbox quanto pela distância.
+           Assim basta Emy chegar aos degraus/porta para entrar.
+        */
+        const touchingDoor=rects(hit,this.houseDoor);
+        const nearDoor=Phaser.Math.Distance.Between(
+            this.px,
+            this.py,
+            970,
+            335
+        )<85;
+
+        if(touchingDoor || nearDoor){
+
+            this.transitioning=true;
+
+            saveProgress(
+                'LorenaHouseScene',
+                {
+                    playerX:185,
+                    playerY:600,
+                    lastDirection:1
+                }
+            );
+
+            this.cameras.main.fadeOut(600,0,0,0);
+
+            this.time.delayedCall(
+                600,
+                ()=>this.scene.start('LorenaHouseScene')
+            );
+        }
+    }
+}
+const lorenaHouseWalls=[{x:0,y:0,width:1280,height:24},{x:0,y:0,width:24,height:720},{x:1256,y:0,width:24,height:720},{x:0,y:694,width:1280,height:26}];
+const lorenaHouseObs=[
+{x:35,y:42,width:255,height:95},            // prateleira/plantas do alto esquerdo
+{x:45,y:185,width:180,height:330},          // TV e móvel esquerdo
+{x:440,y:335,width:205,height:175},         // mesa de centro
+{x:735,y:235,width:175,height:335},         // sofá
+{x:910,y:455,width:105,height:145},         // mesa lateral do sofá
+{x:1160,y:170,width:96,height:330},         // estante direita
+{x:1135,y:505,width:120,height:165},         // planta do canto inferior direito
+{x:35,y:535,width:110,height:145}            // planta do canto inferior esquerdo
+];
+
+class LorenaHouseScene extends Phaser.Scene{
+constructor(){super('LorenaHouseScene')}
+create(){
+consumeSave('LorenaHouseScene');hideAllVisuals();showBg($('lorenaHouseBg'));showPlayer('8.5%');setPlayerPos(640,655);showHouseNpcs();addClues(this);addBackButton(this);this.cameras.main.fadeIn(600,0,0,0);
+this.time.delayedCall(850,()=>{saveProgress('LeneDialogueScene',{dialogueIndex:0});this.scene.start('LeneDialogueScene');});
+}
+}
+
+class LeneDialogueScene extends Phaser.Scene{
+constructor(){super('LeneDialogueScene')}
+create(){
+const s=consumeSave('LeneDialogueScene');
+this.lines=[
+{speaker:'lene',name:'???',text:'Olá, bom dia.'},
+{speaker:'emy',name:'EMY',text:'Bom dia, sou a responsável pela investigação do caso da Lory.'},
+{speaker:'lene',name:'LENE',text:'Sou a Lene Florence, mãe da Lory, por favor fique à vontade.'},
+{speaker:'emy',name:'EMY',text:'Sinto muito pela sua filha senhora, eu vim aqui nessa residência porque me relataram que é aqui que a Lorena Florence, irmã de Lory Florence mora, certo?'},
+{speaker:'lene',name:'LENE',text:'Sim, é minha filha mais nova, o que deseja com ela?'},
+{speaker:'emy',name:'EMY',text:'Bom acho que você não sabe, mas no momento sua filha é uma das suspeitas já que o culpado só poderia ser alguém muito próximo.'},
+{speaker:'lene',name:'LENE',text:'Oh céus! Tenho certeza que minha filha nunca cometeria tal barbaridade.'},
+{speaker:'emy',name:'EMY',text:'Fique tranquila senhora, não estamos acusando sua filha, só precisamos analisar todas as pessoas que eram próximas da Lory, já que ela tinha um ciclo social pequeno.'},
+{speaker:'lene',name:'LENE',text:'Tudo bem, só quero que o responsável pague por tudo isso.'}
+];
+this.i=s?Math.min(Number(s.dialogueIndex)||0,this.lines.length-1):0;this.cameras.main.fadeIn(450,0,0,0);drawDialogueBox(this,'');this.nameBox.setVisible(true);this.nameText.setVisible(true);this.enter=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);this.showLine();addBackButton(this,()=>({dialogueIndex:this.i}));
+}
+showLine(){const l=this.lines[this.i];showDialogue($('lorenaHouseBg'),l.speaker);this.nameText.setText(l.name).setColor(l.speaker==='emy'?'#c88cff':'#ffb38a');typeText(this,l.text);}
+update(){if(!Phaser.Input.Keyboard.JustDown(this.enter))return;if(this.isTyping){finishText(this);return;}if(this.i<this.lines.length-1){this.i++;saveProgress('LeneDialogueScene',{dialogueIndex:this.i});this.showLine();return;}saveProgress('LorenaHouseTalkLorenaScene',{playerX:650,playerY:610,lastDirection:1});this.cameras.main.fadeOut(450,0,0,0);this.time.delayedCall(450,()=>this.scene.start('LorenaHouseTalkLorenaScene'));}
+}
+
+class LorenaHouseTalkLorenaScene extends Phaser.Scene{
+constructor(){super('LorenaHouseTalkLorenaScene')}
+create(){basicMoveCreate(this,'LorenaHouseTalkLorenaScene',$('lorenaHouseBg'),{x:650,y:610},175,lorenaHouseWalls,lorenaHouseObs,OBJECTIVES.talkLorena,true,'8.5%');showHouseNpcs();this.talk={x:760,y:455,width:300,height:190};}
+update(t,d){if(this.transitioning)return;move(this,d,(x,y)=>defaultCanMove(this,x,y));showHouseNpcs();if(rects(playerBox(this.px,this.py),this.talk)||Phaser.Math.Distance.Between(this.px,this.py,870,545)<150){this.transitioning=true;saveProgress('LorenaDialogueScene',{dialogueIndex:0});this.cameras.main.fadeOut(450,0,0,0);this.time.delayedCall(450,()=>this.scene.start('LorenaDialogueScene'));}}
+}
+
+class LorenaDialogueScene extends Phaser.Scene{
+constructor(){super('LorenaDialogueScene')}
+create(){const s=consumeSave('LorenaDialogueScene');this.lines=[
+{speaker:'emy',name:'EMY',text:'Olá Lorena, sou a investigadora Emy, responsável pelo caso da sua irmã.'},
+{speaker:'emy',name:'EMY',text:'Gostaria de saber que tipo de coisa você e sua irmã conversaram no dia da tragédia.'},
+{speaker:'lorena',name:'LORENA',text:'Oi investigadora. Bem, mesmo que a Lory fosse minha irmã mais velha, não éramos tão próximas. Nesse dia eu não fui à escola também, então só conversamos aqui em casa.'},
+{speaker:'lorena',name:'LORENA',text:'A Lory sempre teve tudo que queria de mão beijada, era boa em muitas coisas, notas excelentes, um namorado legal, o orgulho da família.'},
+{speaker:'lorena',name:'LORENA',text:'Ela sempre dava um jeito de ser melhor do que eu, conseguiu ser boa até no projeto que eu me inscrevi na escola.'},
+{speaker:'lorena',name:'LORENA',text:'Ela só não tinha amigos assim porque ela não queria mesmo, dizia que não precisava.'},
+{speaker:'lorena',name:'LORENA',text:'No dia que ela faleceu, lembro que ela recebeu um livro do pequeno príncipe junto com uma carta.'},
+{speaker:'lorena',name:'LORENA',text:'Eu só perguntei de quem era, já que não aparentava ser do Kevin.'},
+{speaker:'lorena',name:'LORENA',text:'Ela disse que era pessoal.'},
+{speaker:'emy',name:'EMY',text:'Você conseguiu ver o que tinha nessa carta?'},
+{speaker:'lorena',name:'LORENA',text:'Não, quando tentei, a Lory tomou da minha mão e mandou eu cuidar da minha vida.'},
+{speaker:'lorena',name:'LORENA',text:'Fiquei com raiva dela, mas acho que na carta tinha algo relacionado à encontro, porque horas depois ela saiu.'},
+{speaker:'lorena',name:'LORENA',text:'Antes dela ir eu vi que ela iria sair com um vestido bonito, então peguei uma tesoura pra tentar cortar, mas não fiz isso porque ela era minha irmã.'},
+{speaker:'emy',name:'EMY',text:'Essa carta ainda está aqui?'},
+{speaker:'lorena',name:'LORENA',text:'Ninguém da família conseguiu entrar no quarto da minha irmã depois do que aconteceu, mas você pode entrar lá se quiser.'},
+{speaker:'emy',name:'EMY',text:'Tudo bem.'}
+];this.i=s?Math.min(Number(s.dialogueIndex)||0,this.lines.length-1):0;this.cameras.main.fadeIn(450,0,0,0);drawDialogueBox(this,'');this.nameBox.setVisible(true);this.nameText.setVisible(true);this.enter=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);this.showLine();addBackButton(this,()=>({dialogueIndex:this.i}));}
+showLine(){const l=this.lines[this.i];showDialogue($('lorenaHouseBg'),l.speaker);this.nameText.setText(l.name).setColor(l.speaker==='emy'?'#c88cff':'#ff6b8f');typeText(this,l.text);}
+update(){if(!Phaser.Input.Keyboard.JustDown(this.enter))return;if(this.isTyping){finishText(this);return;}if(this.i<this.lines.length-1){this.i++;saveProgress('LorenaDialogueScene',{dialogueIndex:this.i});this.showLine();return;}state.lorenaDress=true;state.sameBook=true;saveProgress('LorenaHouseAfterScene',{playerX:650,playerY:610,lastDirection:1,lorenaDress:true,sameBook:true});this.cameras.main.fadeOut(450,0,0,0);this.time.delayedCall(450,()=>this.scene.start('LorenaHouseAfterScene'));}
+}
+
+class LorenaHouseAfterScene extends Phaser.Scene{
+constructor(){super('LorenaHouseAfterScene')}
+create(){state.lorenaDress=true;state.sameBook=true;basicMoveCreate(this,'LorenaHouseAfterScene',$('lorenaHouseBg'),{x:650,y:610},175,lorenaHouseWalls,lorenaHouseObs,OBJECTIVES.enterLoryRoom,true,'8.5%');showHouseNpcs();this.roomDoor={x:990,y:65,width:215,height:175};showToast(this,'NOVAS PISTAS','Lorena tentou cortar o vestido da irmã.\nLory recebeu o mesmo livro que Julian pegou na biblioteca.');}
+can(x,y){const hit=playerBox(x,y),atDoor=rects(hit,this.roomDoor);for(const w of this.walls)if(rects(hit,w)&&!atDoor)return false;for(const o of this.obstacles)if(rects(hit,o)&&!atDoor)return false;return true;}
+update(t,d){if(this.transitioning)return;move(this,d,(x,y)=>this.can(x,y));showHouseNpcs();if(rects(playerBox(this.px,this.py),this.roomDoor)||Phaser.Math.Distance.Between(this.px,this.py,1090,150)<115){this.transitioning=true;saveProgress('LoryBedroomScene',{playerX:615,playerY:650,lastDirection:1,lorenaDress:true,sameBook:true});this.cameras.main.fadeOut(600,0,0,0);this.time.delayedCall(600,()=>this.scene.start('LoryBedroomScene'));}}
+}
+
+const bedroomWalls=[{x:0,y:0,width:1280,height:24},{x:0,y:0,width:24,height:720},{x:1256,y:0,width:24,height:720},{x:0,y:690,width:1280,height:30}],bedroomObs=[{x:0,y:0,width:1280,height:78},{x:62,y:205,width:175,height:340},{x:865,y:150,width:345,height:425},{x:1090,y:520,width:140,height:150}];
+class LoryBedroomScene extends Phaser.Scene{
+constructor(){super('LoryBedroomScene')}
+create(){
+const save=consumeSave('LoryBedroomScene');hideAllVisuals();showBg($('loryBedroomBg'));showPlayer('8%');this.cameras.main.resetFX();this.cameras.main.fadeIn(600,0,0,0);this.px=save?Number(save.playerX)||615:615;this.py=save?Number(save.playerY)||650:650;this.lastDir=save?Number(save.lastDirection)||1:1;this.speed=170;this.walls=bedroomWalls;this.obstacles=bedroomObs;this.transitioning=false;this.phase=save&&save.bedroomPhase?save.bedroomPhase:'letter';setupControls(this);setPlayerPos(this.px,this.py);addObjective(this,this.phase==='phone'?OBJECTIVES.inspectPhone:OBJECTIVES.readLetter);addClues(this);addBackButton(this,()=>({playerX:this.px,playerY:this.py,lastDirection:this.lastDir,bedroomPhase:this.phase}));
+this.letterArea={x:145,y:375,width:120,height:90};this.phoneArea={x:145,y:438,width:110,height:100};
+this.phoneHotspot=this.add.rectangle(197,488,110,100,0xff0000,.001).setDepth(18500).setInteractive({useHandCursor:true});this.phoneHotspot.on('pointerdown',()=>{if(this.phase==='phone')this.openPhone();});
+if(this.phase==='phone'){this.time.delayedCall(350,()=>showToast(this,'EMY','Esse deve ser o celular da Lory.'));}
+}
+openLetter(){if(this.transitioning)return;this.transitioning=true;openLetterOverlay('Continuar',()=>{state.letterJ=true;state.letterClue=true;this.phase='phone';this.transitioning=false;setObjective(this,OBJECTIVES.inspectPhone);if(this.refreshClues)this.refreshClues();showToast(this,'NOVA PISTA','A carta é de alguém do passado com a inicial "J".\nCarta adicionada às pistas.');this.time.delayedCall(700,()=>showToast(this,'EMY','Esse deve ser o celular da Lory.'));saveProgress('LoryBedroomScene',{playerX:this.px,playerY:this.py,lastDirection:this.lastDir,bedroomPhase:'phone',letterJ:true,letterClue:true});});}
+openPhone(){if(this.transitioning||this.phase!=='phone')return;this.transitioning=true;openPhoneOverlay('Continuar',()=>{state.phoneMessage=true;saveProgress('Chapter2Scene',{phoneMessage:true,letterJ:true,letterClue:true,lorenaDress:true,sameBook:true,registroObtido:true,pistaKevin1920:state.pistaKevin1920});this.scene.start('Chapter2Scene');});}
+update(t,d){if(this.transitioning)return;move(this,d,(x,y)=>defaultCanMove(this,x,y));const hit=playerBox(this.px,this.py);if(this.phase==='letter'&&rects(hit,this.letterArea)){this.openLetter();return;}if(this.phase==='phone'&&rects(hit,this.phoneArea)&&Phaser.Input.Keyboard.JustDown(this.cursors.space)){this.openPhone();}}
+}
+
+class Chapter2Scene extends Phaser.Scene{
+constructor(){super('Chapter2Scene')}
+create(){syncMusicForScene('Chapter2Scene');consumeSave('Chapter2Scene');hideAllVisuals();this.add.rectangle(640,360,1280,720,0x0f1016,1);this.add.text(640,85,'CAPÍTULO 2',{font:'bold 36px Courier New',color:'#ff5555'}).setOrigin(.5);this.add.text(640,130,'Investigar as pistas',{font:'bold 20px Courier New',color:'#ffffff'}).setOrigin(.5);this.cameras.main.fadeIn(400,0,0,0);showChapter2Overlay();addBackButton(this);saveProgress('Chapter2Scene',{phoneMessage:state.phoneMessage,letterJ:state.letterJ,letterClue:state.letterClue});}
+}
+
+function resetCulpritOverlay(){
+culpritOverlay.style.display='block';culpritEmy.src='./emy_pensativa.png';culpritEmy.style.display='block';culpritChoices.style.display='flex';culpritSpeaker.style.display='none';culpritText.textContent='O culpado pela morte de Lory é...';culpritHint.textContent='← → para escolher • ENTER para confirmar';
+choiceKevin.onerror=null;choiceKevin.src='./circulo_kevin.png';choiceJulian.src='./circulo_julian.png';choiceLorena.src='./circulo_lorena.png';
+culpritChoiceEls.forEach((el,i)=>{el.classList.remove('selected','wrong','rise');el.style.animationDelay=(.12+i*.16)+'s';void el.offsetWidth;el.classList.add('rise');});
+}
+function selectCulpritChoice(index){culpritChoiceEls.forEach((el,i)=>el.classList.toggle('selected',i===index));}
+
+class CulpritChoiceScene extends Phaser.Scene{
+constructor(){super('CulpritChoiceScene')}
+create(){syncMusicForScene('CulpritChoiceScene');const save=consumeSave('CulpritChoiceScene');hideAllVisuals();showBg($('loryBedroomBg'));$('loryBedroomBg').classList.add('dialogue-blur');$('loryBedroomBg').style.filter='blur(7px) brightness(.28) saturate(.7)';resetCulpritOverlay();this.selected=save&&Number.isFinite(Number(save.selectedIndex))?Number(save.selectedIndex):0;selectCulpritChoice(this.selected);this.transitioning=false;this.keys=this.input.keyboard.addKeys({left:Phaser.Input.Keyboard.KeyCodes.LEFT,right:Phaser.Input.Keyboard.KeyCodes.RIGHT,enter:Phaser.Input.Keyboard.KeyCodes.ENTER,a:Phaser.Input.Keyboard.KeyCodes.A,d:Phaser.Input.Keyboard.KeyCodes.D});culpritChoiceEls.forEach((el,i)=>{el.onclick=()=>this.choose(i);});addBackButton(this,()=>({selectedIndex:this.selected}));saveProgress('CulpritChoiceScene',{selectedIndex:this.selected});}
+choose(index){if(this.transitioning)return;this.selected=index;selectCulpritChoice(index);if(index===1){this.transitioning=true;saveProgress('JuanDeductionScene',{dialogueIndex:0});this.time.delayedCall(220,()=>this.scene.start('JuanDeductionScene'));return;}const wrap=culpritChoiceEls[index],img=wrap.querySelector('img');wrap.classList.add('wrong');culpritText.textContent='Essa escolha não combina com todas as pistas. Tente novamente.';culpritHint.textContent='Recomeçando a análise...';if(index===2){img.src='./erro_lorena.png';}else{img.onerror=()=>{img.onerror=null;img.src='./circulo_kevin.png';wrap.classList.add('wrong');};img.src='./erro_kevin.png';}this.transitioning=true;this.time.delayedCall(1150,()=>this.scene.restart());}
+update(){if(this.transitioning)return;if(Phaser.Input.Keyboard.JustDown(this.keys.left)||Phaser.Input.Keyboard.JustDown(this.keys.a)){this.selected=(this.selected+2)%3;selectCulpritChoice(this.selected);saveProgress('CulpritChoiceScene',{selectedIndex:this.selected});}if(Phaser.Input.Keyboard.JustDown(this.keys.right)||Phaser.Input.Keyboard.JustDown(this.keys.d)){this.selected=(this.selected+1)%3;selectCulpritChoice(this.selected);saveProgress('CulpritChoiceScene',{selectedIndex:this.selected});}if(Phaser.Input.Keyboard.JustDown(this.keys.enter))this.choose(this.selected);}
+}
+
+class JuanDeductionScene extends Phaser.Scene{
+constructor(){super('JuanDeductionScene')}
+create(){syncMusicForScene('JuanDeductionScene');const save=consumeSave('JuanDeductionScene');hideAllVisuals();showBg($('loryBedroomBg'));$('loryBedroomBg').classList.add('dialogue-blur');$('loryBedroomBg').style.filter='blur(7px) brightness(.25) saturate(.65)';culpritOverlay.style.display='block';culpritChoices.style.display='none';culpritEmy.style.display='block';culpritEmy.src='./emy_pensativa.png';culpritSpeaker.style.display='block';culpritSpeaker.textContent='EMY';culpritHint.textContent='[ENTER ↵]';this.lines=['É óbvio que Julian é o culpado.','Mas espera aí...','Essa letra é familiar...','Essa letra da carta é familiar, parece até a letra do...','Bibliotecário Juan?!'];this.i=save?Math.min(Number(save.dialogueIndex)||0,this.lines.length-1):0;this.flashing=false;culpritText.textContent=this.lines[this.i];this.enter=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);if(this.i>=2)playMusicTrack('juanDiscovery');if(this.i===this.lines.length-1)culpritEmy.src='./emy_assustada.png';addBackButton(this,()=>({dialogueIndex:this.i}));saveProgress('JuanDeductionScene',{dialogueIndex:this.i});}
+flashLetter(){this.flashing=true;deductionLetterFlash.style.display='flex';this.time.delayedCall(1250,()=>{deductionLetterFlash.style.display='none';this.flashing=false;});}
+update(){if(this.flashing)return;if(!Phaser.Input.Keyboard.JustDown(this.enter))return;if(this.i<this.lines.length-1){this.i++;culpritText.textContent=this.lines[this.i];saveProgress('JuanDeductionScene',{dialogueIndex:this.i});if(this.i===2){playMusicTrack('juanDiscovery',true);this.flashLetter();}if(this.i===this.lines.length-1){culpritEmy.src='./emy_assustada.png';playMusicTrack('juanDiscovery');}return;}deductionLetterFlash.style.display='flex';this.flashing=true;this.time.delayedCall(900,()=>{deductionLetterFlash.style.display='none';saveProgress('EvidenceSequenceScene',{photoIndex:0});this.scene.start('EvidenceSequenceScene');});}
+}
+
+class EvidenceSequenceScene extends Phaser.Scene{
+constructor(){super('EvidenceSequenceScene')}
+create(){playMusicTrack('juanDiscovery');const save=consumeSave('EvidenceSequenceScene');hideAllVisuals();revealOverlay.style.display='block';this.photos=['./foto 1.jpg','./foto 2.jpg','./foto 3.jpg','./foto 4.jpg'];this.captions=['Nas mensagens que li, é perceptível que Lory e Juan tinham um caso antes do ocorrido.','Lory se arrependeu do que fez e o bloqueou. Com saudade da garota, Juan enviou-lhe a carta pedindo que o encontrasse perto de sua casa.','Não satisfeito apenas com o envio da carta, utilizou um número provisório e insistiu que ela fosse encontrá-lo no local mencionado.','Num surto de ciúmes e obsessão, a matou, não aceitando que ela não o amava de forma recíproca.'];this.i=save?Math.min(Number(save.photoIndex)||0,3):0;this.enter=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);this.showPhoto();addBackButton(this,()=>({photoIndex:this.i}));saveProgress('EvidenceSequenceScene',{photoIndex:this.i});}
+showPhoto(){revealBg.style.opacity='0';this.time.delayedCall(120,()=>{revealBg.src=this.photos[this.i];revealText.textContent=this.captions[this.i];revealBg.onload=()=>{revealBg.style.opacity='1';};this.time.delayedCall(140,()=>revealBg.style.opacity='1');});}
+update(){if(!Phaser.Input.Keyboard.JustDown(this.enter))return;if(this.i<3){this.i++;saveProgress('EvidenceSequenceScene',{photoIndex:this.i});this.showPhoto();return;}saveProgress('JuanFoundScene');this.scene.start('JuanFoundScene');}
+}
+
+class JuanFoundScene extends Phaser.Scene{
+constructor(){super('JuanFoundScene')}
+create(){playMusicTrack('juanDiscovery');consumeSave('JuanFoundScene');hideAllVisuals();this.add.rectangle(640,360,1280,720,0x000000,1);this.centerText=this.add.text(640,350,'',{font:'bold 34px Courier New',color:'#ffffff',stroke:'#000',strokeThickness:3,align:'center',wordWrap:{width:1050}}).setOrigin(.5);this.enterPrompt=this.add.text(640,455,'[ENTER ↵]',{font:'bold 14px Courier New',color:'#ff4444'}).setOrigin(.5).setVisible(false);this.enter=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);this.full='Emy Laurent encontrou o culpado';this.index=0;this.timer=this.time.addEvent({delay:55,repeat:this.full.length-1,callback:()=>{this.index++;this.centerText.setText(this.full.slice(0,this.index));if(this.index>=this.full.length)this.enterPrompt.setVisible(true);}});addBackButton(this);saveProgress('JuanFoundScene');}
+update(){if(!Phaser.Input.Keyboard.JustDown(this.enter)||!this.enterPrompt.visible)return;saveProgress('JuanPrisonScene');this.scene.start('JuanPrisonScene');}
+}
+
+class JuanPrisonScene extends Phaser.Scene{
+constructor(){super('JuanPrisonScene')}
+create(){playMusicTrack('final',true);consumeSave('JuanPrisonScene');hideAllVisuals();this.add.rectangle(640,360,1280,720,0x000000,1);prisonOverlay.style.display='flex';prisonImage.style.display='block';prisonCaption.style.display='block';prisonFallback.style.display='none';let triedFallback=false;prisonImage.onerror=()=>{if(!triedFallback){triedFallback=true;prisonImage.src='./prisao_juan.png';return;}prisonImage.style.display='none';prisonFallback.style.display='block';};prisonImage.src='./Prisão Juan.png';this.enter=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);this.time.delayedCall(4200,()=>{if(this.scene.isActive())this.scene.start('GameOverScene');});addBackButton(this);saveProgress('JuanPrisonScene');}
+update(){if(Phaser.Input.Keyboard.JustDown(this.enter))this.scene.start('GameOverScene');}
+}
+
+class GameOverScene extends Phaser.Scene{
+constructor(){super('GameOverScene')}
+create(){playMusicTrack('end',true);consumeSave('GameOverScene');hideAllVisuals();this.add.rectangle(640,360,1280,720,0x000000,1);this.line1=this.add.text(640,315,'',{font:'bold 42px Courier New',color:'#fff',align:'center'}).setOrigin(.5);this.line2=this.add.text(640,405,'',{font:'bold 24px Courier New',color:'#ff5555',align:'center',wordWrap:{width:1050}}).setOrigin(.5);this.typeLine(this.line1,'Fim de jogo',70,()=>this.time.delayedCall(850,()=>this.typeLine(this.line2,'Parabéns, você solucionou o caso.',50)));addBackButton(this);saveProgress('GameOverScene');}
+typeLine(target,text,delay,onDone){let i=0;this.time.addEvent({delay,repeat:text.length-1,callback:()=>{i++;target.setText(text.slice(0,i));if(i>=text.length&&onDone)onDone();}});}
+}
+
+const scenes=[MenuScene,IntroScene,PhotoScene,KevinSuspectScene,LorenaSuspectScene,JulianSuspectScene,OfficeIntroScene,EmyIntroScene,OfficeGameplayScene,StreetToCafeScene,CafeBeforeKevinScene,KevinIntroScene,KevinDialogueScene,CafeAfterKevinScene,StreetAfterKevinScene,JulianStreetScene,JulianStoreScene,JulianIntroScene,JulianDialogueScene,JulianStoreAfterScene,JulianStreetAfterScene,LibraryStreetScene,LibraryInteriorScene,LibraryDialogueScene,LibraryAfterScene,LibraryStreetAfterScene,LorenaStreetScene,LorenaHouseScene,LeneDialogueScene,LorenaHouseTalkLorenaScene,LorenaDialogueScene,LorenaHouseAfterScene,LoryBedroomScene,Chapter2Scene,CulpritChoiceScene,JuanDeductionScene,EvidenceSequenceScene,JuanFoundScene,JuanPrisonScene,GameOverScene];
+game=new Phaser.Game({type:Phaser.CANVAS,width:1280,height:720,parent:'game-container',transparent:true,scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH,width:1280,height:720},render:{antialias:false,pixelArt:true,roundPixels:true},scene:scenes});
+const allowed=new Set(['MenuScene','IntroScene','PhotoScene','KevinSuspectScene','LorenaSuspectScene','JulianSuspectScene','OfficeIntroScene','EmyIntroScene','OfficeGameplayScene','StreetToCafeScene','CafeBeforeKevinScene','KevinIntroScene','KevinDialogueScene','CafeAfterKevinScene','StreetAfterKevinScene','JulianStreetScene','JulianStoreScene','JulianIntroScene','JulianDialogueScene','JulianStoreAfterScene','JulianStreetAfterScene','LibraryStreetScene','LibraryInteriorScene','LibraryDialogueScene','LibraryAfterScene','LibraryStreetAfterScene','LorenaStreetScene','LorenaHouseScene','LeneDialogueScene','LorenaHouseTalkLorenaScene','LorenaDialogueScene','LorenaHouseAfterScene','LoryBedroomScene','Chapter2Scene','CulpritChoiceScene','JuanDeductionScene','EvidenceSequenceScene','JuanFoundScene','JuanPrisonScene','GameOverScene']);
+function startNew(){stopMusicTrack('menu');stopMenuVideoOnly();playMusicTrack('intro',true);const menu=game.scene.getScene('MenuScene');menu.cameras.main.fadeOut(350,0,0,0);menu.time.delayedCall(350,()=>menu.scene.start('IntroScene'));}
+function continueGame(){const save=loadProgress();if(!save||!allowed.has(save.sceneKey))return;stopMusicTrack('menu');restoreSave=save;stopMenuVideoOnly();syncMusicForScene(save.sceneKey);const menu=game.scene.getScene('MenuScene');menu.cameras.main.fadeOut(350,0,0,0);menu.time.delayedCall(350,()=>menu.scene.start(save.sceneKey));}
+btnStart.addEventListener('pointerdown',()=>stopMusicTrack('menu'));btnContinue.addEventListener('pointerdown',()=>stopMusicTrack('menu'));btnStart.addEventListener('click',e=>{e.preventDefault();startNew();});btnContinue.addEventListener('click',e=>{e.preventDefault();continueGame();});document.addEventListener('pointerdown',e=>{if(e.target!==btnStart&&e.target!==btnContinue)playMusicTrack('menu');},{once:true});updateContinue();
+})();
+</script>
+</body>
+</html>

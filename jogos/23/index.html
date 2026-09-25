@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Velocity - Modo 2 Jogadores (VS PS4)</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #010105; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: #fff; user-select: none; }
+        #game-container { box-shadow: 0 0 80px rgba(255, 0, 128, 0.4); border-radius: 20px; overflow: hidden; border: 3px solid #ff007f; background: #000; }
+    </style>
+</head>
+<body>
+
+<div id="game-container"></div>
+
+<script>
+const NOME_DO_ARQUIVO_MUSICA = 'kart_corrida_energetica.wav';
+const VOLUME_DA_MUSICA = 0.25;
+
+class SoundFx {
+    constructor() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+    resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }
+    playBeep(freq = 440, duration = 0.15) {
+        if (!this.ctx || this.ctx.state === 'suspended') return;
+        const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.1, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(); osc.stop(this.ctx.currentTime + duration);
+    }
+    playCrash() {
+        if (!this.ctx || this.ctx.state === 'suspended') return;
+        const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+        osc.type = 'square'; osc.frequency.setValueAtTime(100, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.1, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.2);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(); osc.stop(this.ctx.currentTime + 0.2);
+    }
+}
+const sfx = new SoundFx();
+
+const COLOR_PALETTE = [
+    { name: 'Ciano Neon', hex: 0x00f0ff }, { name: 'Rosa Magenta', hex: 0xff007f },
+    { name: 'Amarelo Volt', hex: 0xffe600 }, { name: 'Verde Elétrico', hex: 0x00ff66 },
+    { name: 'Roxo Cyber', hex: 0xa000ff }, { name: 'Laranja Nitro', hex: 0xff5500 }
+];
+
+const CAR_MODELS = [
+    { id: 'runner', name: 'Runner GT', speed: 480, accel: 18, turn: 0.055, type: 'Equilibrado' },
+    { id: 'viper', name: 'Viper Spec', speed: 530, accel: 20, turn: 0.062, type: 'Ágil' },
+    { id: 'phantom', name: 'Phantom V8', speed: 580, accel: 23, turn: 0.068, type: 'Super Esportivo' }
+];
+
+let matchSettings = { p1Model: 0, p1Color: 0, p2Model: 1, p2Color: 1, totalLaps: 3 };
+
+class LobbyDuplaScene extends Phaser.Scene {
+    constructor() { super('LobbyDuplaScene'); }
+
+    create() {
+        this.add.rectangle(600, 400, 1200, 800, 0x02020a);
+        this.add.grid(600, 400, 1200, 800, 40, 40, 0x200a15, 1, 0xff007f, 0.12);
+
+        this.add.text(600, 60, 'MODO 2 JOGADORES (VERSUS)', { fontSize: '42px', fontStyle: '900', fill: '#ff007f' }).setOrigin(0.5);
+        this.add.text(600, 105, 'CONECTE OS 2 CONTROLES DO PS4', { fontSize: '14px', fontStyle: 'bold', fill: '#ffe600' }).setOrigin(0.5);
+
+        this.createPlayerPanel(300, 440, 1);
+        this.createPlayerPanel(900, 440, 2);
+
+        this.statusText = this.add.text(600, 685, 'AMBOS OS JOGADORES DEVEM APERTAR [X]', { fontSize: '18px', fontStyle: 'bold', fill: '#00ffcc' }).setOrigin(0.5);
+        this.add.text(600, 750, 'Controles PS4: [D-Pad] Modelo/Cor  |  [X] Confirmar', { fontSize: '13px', fill: '#7788aa' }).setOrigin(0.5);
+
+        this.p1Ready = false; this.p2Ready = false;
+        this.p1Lock = false; this.p2Lock = false;
+        this.startingCountdown = false;
+    }
+
+    createPlayerPanel(x, y, pNum) {
+        let isP1 = pNum === 1;
+        let colorHex = isP1 ? 0x00f0ff : 0xff007f;
+        let colorStr = isP1 ? '#00f0ff' : '#ff007f';
+
+        this.add.rectangle(x, y, 420, 450, 0x080816, 0.95).setStrokeStyle(2, colorHex);
+        this.add.text(x, y - 190, `JOGADOR ${pNum}`, { fontSize: '24px', fontStyle: 'bold', fill: colorStr }).setOrigin(0.5);
+        this.add.text(x, y - 165, `[ CONTROLE PS4 #${pNum} ]`, { fontSize: '12px', fill: '#888' }).setOrigin(0.5);
+
+        let previewG = this.add.graphics();
+        let modelText = this.add.text(x, y + 60, '', { fontSize: '22px', fontStyle: 'bold', fill: '#ffffff' }).setOrigin(0.5);
+        let colorText = this.add.text(x, y + 95, '', { fontSize: '14px', fill: '#cccccc' }).setOrigin(0.5);
+
+        let badge = this.add.text(x, y + 170, 'AGUARDANDO [X]...', { fontSize: '16px', fontStyle: 'bold', fill: '#ff3333', backgroundColor: '#220000' }).setOrigin(0.5).setPadding(12, 6);
+
+        let renderCar = () => {
+            let mIdx = isP1 ? matchSettings.p1Model : matchSettings.p2Model;
+            let cIdx = isP1 ? matchSettings.p1Color : matchSettings.p2Color;
+            let model = CAR_MODELS[mIdx];
+            let color = COLOR_PALETTE[cIdx];
+
+            previewG.clear();
+            previewG.fillStyle(color.hex, 1);
+            previewG.fillRoundedRect(x - 70, y - 75, 140, 70, 16);
+            previewG.lineStyle(3, 0xffffff, 0.8);
+            previewG.strokeRoundedRect(x - 70, y - 75, 140, 70, 16);
+
+            modelText.setText(model.name.toUpperCase());
+            colorText.setText('COR: ' + color.name.toUpperCase());
+        };
+
+        if (isP1) { this.p1Badge = badge; this.p1Render = renderCar; }
+        else { this.p2Badge = badge; this.p2Render = renderCar; }
+        renderCar();
+    }
+
+    update() {
+        let gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+        let pad1 = gamepads[0];
+        let pad2 = gamepads[1];
+
+        if (pad1) {
+            let btn = (i) => pad1.buttons[i] && (pad1.buttons[i].pressed || pad1.buttons[i].value > 0.5);
+            if (btn(0) && !this.p1Lock) {
+                sfx.resume();
+                this.p1Ready = !this.p1Ready;
+                this.p1Badge.setText(this.p1Ready ? 'PRONTO!' : 'AGUARDANDO [X]...').setStyle({ fill: this.p1Ready ? '#00ffcc' : '#ff3333', backgroundColor: this.p1Ready ? '#003322' : '#220000' });
+                sfx.playBeep(this.p1Ready ? 880 : 300);
+                this.p1Lock = true;
+            }
+            if (!this.p1Ready) {
+                if ((btn(14) || pad1.axes[0] < -0.5) && !this.p1Lock) { matchSettings.p1Model = (matchSettings.p1Model - 1 + CAR_MODELS.length) % CAR_MODELS.length; this.p1Render(); this.p1Lock = true; }
+                if ((btn(15) || pad1.axes[0] > 0.5) && !this.p1Lock) { matchSettings.p1Model = (matchSettings.p1Model + 1) % CAR_MODELS.length; this.p1Render(); this.p1Lock = true; }
+                if ((btn(12) || pad1.axes[1] < -0.5) && !this.p1Lock) { matchSettings.p1Color = (matchSettings.p1Color - 1 + COLOR_PALETTE.length) % COLOR_PALETTE.length; this.p1Render(); this.p1Lock = true; }
+                if ((btn(13) || pad1.axes[1] > 0.5) && !this.p1Lock) { matchSettings.p1Color = (matchSettings.p1Color + 1) % COLOR_PALETTE.length; this.p1Render(); this.p1Lock = true; }
+            }
+            if (!btn(0) && !btn(12) && !btn(13) && !btn(14) && !btn(15) && Math.abs(pad1.axes[0]) < 0.2 && Math.abs(pad1.axes[1]) < 0.2) this.p1Lock = false;
+        }
+
+        if (pad2) {
+            let btn = (i) => pad2.buttons[i] && (pad2.buttons[i].pressed || pad2.buttons[i].value > 0.5);
+            if (btn(0) && !this.p2Lock) {
+                sfx.resume();
+                this.p2Ready = !this.p2Ready;
+                this.p2Badge.setText(this.p2Ready ? 'PRONTO!' : 'AGUARDANDO [X]...').setStyle({ fill: this.p2Ready ? '#00ffcc' : '#ff3333', backgroundColor: this.p2Ready ? '#003322' : '#220000' });
+                sfx.playBeep(this.p2Ready ? 880 : 300);
+                this.p2Lock = true;
+            }
+            if (!this.p2Ready) {
+                if ((btn(14) || pad2.axes[0] < -0.5) && !this.p2Lock) { matchSettings.p2Model = (matchSettings.p2Model - 1 + CAR_MODELS.length) % CAR_MODELS.length; this.p2Render(); this.p2Lock = true; }
+                if ((btn(15) || pad2.axes[0] > 0.5) && !this.p2Lock) { matchSettings.p2Model = (matchSettings.p2Model + 1) % CAR_MODELS.length; this.p2Render(); this.p2Lock = true; }
+                if ((btn(12) || pad2.axes[1] < -0.5) && !this.p2Lock) { matchSettings.p2Color = (matchSettings.p2Color - 1 + COLOR_PALETTE.length) % COLOR_PALETTE.length; this.p2Render(); this.p2Lock = true; }
+                if ((btn(13) || pad2.axes[1] > 0.5) && !this.p2Lock) { matchSettings.p2Color = (matchSettings.p2Color + 1) % COLOR_PALETTE.length; this.p2Render(); this.p2Lock = true; }
+            }
+            if (!btn(0) && !btn(12) && !btn(13) && !btn(14) && !btn(15) && Math.abs(pad2.axes[0]) < 0.2 && Math.abs(pad2.axes[1]) < 0.2) this.p2Lock = false;
+        }
+
+        if (this.p1Ready && this.p2Ready && !this.startingCountdown) {
+            this.startingCountdown = true;
+            this.time.delayedCall(1000, () => this.scene.start('GameDuplaScene'));
+        }
+    }
+}
+
+class GameDuplaScene extends Phaser.Scene {
+    constructor() { super('GameDuplaScene'); }
+
+    preload() { this.load.audio('bg_music', NOME_DO_ARQUIVO_MUSICA); }
+
+    create() {
+        this.physics.world.setBounds(0, 0, 4000, 2500);
+        try { this.sound.add('bg_music', { volume: VOLUME_DA_MUSICA, loop: true }).play(); } catch (e) {}
+
+        let track = this.add.graphics();
+        track.fillStyle(0x03030a, 1); track.fillRect(0, 0, 4000, 2500);
+        track.fillStyle(0x101020, 1); track.fillRoundedRect(200, 200, 3600, 2100, 250);
+        track.lineStyle(20, 0xff007f, 1); track.strokeRoundedRect(200, 200, 3600, 2100, 250);
+        track.fillStyle(0x03030a, 1); track.fillRoundedRect(800, 800, 2400, 900, 150);
+        track.lineStyle(20, 0x00f0ff, 1); track.strokeRoundedRect(800, 800, 2400, 900, 150);
+        track.fillStyle(0xffffff, 0.9); track.fillRect(2000, 1700, 60, 400);
+
+        this.obstacles = this.physics.add.staticGroup();
+        [{ x: 2600, y: 1900 }, { x: 3200, y: 1900 }, { x: 2000, y: 500 }, { x: 400, y: 1200 }].forEach((p, idx) => {
+            let g = this.add.graphics(); g.fillStyle(0xff0044, 1); g.fillRoundedRect(-25, -25, 50, 50, 8);
+            g.generateTexture('obs_' + idx, 50, 50); g.destroy();
+            this.obstacles.create(p.x, p.y, 'obs_' + idx).refreshBody();
+        });
+
+        this.p1 = this.createCar(1900, 1850, COLOR_PALETTE[matchSettings.p1Color].hex, CAR_MODELS[matchSettings.p1Model]);
+        this.p2 = this.createCar(1900, 1980, COLOR_PALETTE[matchSettings.p2Color].hex, CAR_MODELS[matchSettings.p2Model]);
+
+        this.physics.add.collider(this.p1.sprite, this.obstacles, () => { this.p1.speed *= 0.3; sfx.playCrash(); });
+        this.physics.add.collider(this.p2.sprite, this.obstacles, () => { this.p2.speed *= 0.3; sfx.playCrash(); });
+
+        this.cameras.main.setSize(598, 800); this.cameras.main.startFollow(this.p1.sprite, true, 0.1, 0.1);
+        this.camP2 = this.cameras.add(602, 0, 598, 800); this.camP2.startFollow(this.p2.sprite, true, 0.1, 0.1);
+        this.add.rectangle(600, 400, 4, 800, 0x00f0ff).setScrollFactor(0).setDepth(999);
+
+        this.hudP1 = this.add.text(20, 20, 'P1 (PS4): 0 KM/H', { fontSize: '18px', fontStyle: 'bold', fill: '#00f0ff' }).setScrollFactor(0).setDepth(1000);
+        this.hudP2 = this.add.text(620, 20, 'P2 (PS4): 0 KM/H', { fontSize: '18px', fontStyle: 'bold', fill: '#ff007f' }).setScrollFactor(0).setDepth(1000);
+    }
+
+    createCar(x, y, color, data) {
+        let g = this.add.graphics(); g.fillStyle(color, 1); g.fillRoundedRect(4, 6, 52, 24, 8);
+        g.generateTexture('car_' + color, 60, 36); g.destroy();
+        let sprite = this.physics.add.sprite(x, y, 'car_' + color).setCollideWorldBounds(true).setOrigin(0.5, 0.5);
+        return { sprite: sprite, speed: 0, maxSpeed: data.speed, accel: data.accel, turnSpeed: data.turn };
+    }
+
+    update() {
+        let gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+        this.updatePlayerPhysics(this.p1, gamepads[0] || null);
+        this.updatePlayerPhysics(this.p2, gamepads[1] || null);
+
+        this.hudP1.setText(`P1 (PS4): ${Math.round(Math.abs(this.p1.speed) / 3)} KM/H`);
+        this.hudP2.setText(`P2 (PS4): ${Math.round(Math.abs(this.p2.speed) / 3)} KM/H`);
+    }
+
+    updatePlayerPhysics(v, pad) {
+        let isAccel = false, isReverse = false, isNitro = false;
+        let moveX = 0, moveY = 0;
+
+        if (pad) {
+            let btn = (idx) => pad.buttons[idx] ? (pad.buttons[idx].pressed || pad.buttons[idx].value > 0.1) : false;
+            if (btn(0) || (pad.buttons[7] && pad.buttons[7].value > 0.1)) isAccel = true;
+            if (btn(3)) { isAccel = true; isNitro = true; }
+            if (btn(2) || (pad.buttons[6] && pad.buttons[6].value > 0.1)) isReverse = true;
+
+            if (pad.axes && pad.axes.length >= 2) {
+                if (Math.abs(pad.axes[0]) > 0.2) moveX = pad.axes[0];
+                if (Math.abs(pad.axes[1]) > 0.2) moveY = pad.axes[1];
+            }
+            if (btn(14)) moveX = -1; if (btn(15)) moveX = 1;
+            if (btn(12)) moveY = -1; if (btn(13)) moveY = 1;
+        }
+
+        let maxSpd = isNitro ? v.maxSpeed * 1.4 : v.maxSpeed;
+        if (isAccel) { if (v.speed < maxSpd) v.speed += v.accel; }
+        else if (isReverse) { if (v.speed > -140) v.speed -= v.accel; }
+        else { v.speed *= 0.96; }
+
+        if (moveX !== 0 || moveY !== 0) {
+            let targetAngle = Math.atan2(moveY, moveX);
+            if (Math.abs(v.speed) > 15) {
+                let diff = Phaser.Math.Angle.ShortestBetween(Phaser.Math.RadToDeg(v.sprite.rotation), Phaser.Math.RadToDeg(targetAngle));
+                v.sprite.rotation += Phaser.Math.DegToRad(diff) * v.turnSpeed * 1.8;
+            }
+        }
+
+        v.sprite.body.velocity.x = Math.cos(v.sprite.rotation) * v.speed;
+        v.sprite.body.velocity.y = Math.sin(v.sprite.rotation) * v.speed;
+    }
+}
+
+const config = {
+    type: Phaser.AUTO, width: 1200, height: 800, parent: 'game-container', input: { gamepad: true },
+    physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
+    scene: [LobbyDuplaScene, GameDuplaScene]
+};
+const game = new Phaser.Game(config);
+</script>
+</body>
+</html>

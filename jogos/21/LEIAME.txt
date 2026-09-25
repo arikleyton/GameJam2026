@@ -1,0 +1,16 @@
+﻿SPEAR RUSH - como rodar
+=======================
+1. Descompacte o zip.
+2. Dentro da pasta, rode no terminal (PowerShell):
+     powershell -NoProfile -ExecutionPolicy Bypass -File serve.ps1 -Port 8080
+   (ou use a extensao Live Server do VS Code)
+3. Abra http://localhost:8080 no navegador. Precisa de internet (o Phaser vem de CDN).
+
+Controles: WASD/setas mover | botao esquerdo carregar/arremessar | botao direito defender/aparar | ESPACO esquiva
+
+Onde mexer:
+  src/config.js   numeros de balanceamento (dano, esquiva, armadura, ricochete)
+  src/bosses.js   bosses e ataques
+  src/game.js     logica do jogo (tutorial, portas, jogador, lanca)
+  src/scenes.js   carregamento, menu e tela final
+  assets/player/  sprites do personagem

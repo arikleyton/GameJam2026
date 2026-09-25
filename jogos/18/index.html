@@ -1,0 +1,3280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Jogo</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+
+    <style>
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: black;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            margin: auto;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<script>
+
+
+// =====================================================
+// PUZZLE 1
+// =====================================================
+
+class Puzzle7 extends Phaser.Scene {
+
+    constructor() {
+        super("Puzzle7");
+    }
+
+    create() {
+
+        const fundoPuzzle = this.add.image(
+            640,
+            360,
+            "qq"
+        );
+
+        fundoPuzzle.setDisplaySize(
+            1280,
+            720
+        );
+
+        fundoPuzzle.setDepth(-10);
+
+
+        this.add.text(
+            640,
+            45,
+            "Puzzle 1",
+            {
+                fontSize: "36px",
+                color: "#EEB422",
+                fontStyle: "bold"
+            }
+        ).setOrigin(0.5);
+
+
+        this.info = this.add.text(
+            640,
+            95,
+            "Encontre todos os pares!",
+            {
+                fontSize: "22px",
+                color: "#EEB422"
+            }
+        ).setOrigin(0.5);
+
+
+        const voltar = this.add.image(
+            640,
+            590,
+            "voltar"
+        );
+
+        voltar.setScale(0.08);
+        voltar.setDepth(100);
+
+        voltar.setInteractive({
+            useHandCursor: true
+        });
+
+
+        voltar.on("pointerover", () => {
+
+            this.tweens.add({
+
+                targets: voltar,
+                scale: 0.10,
+                duration: 100,
+                ease: "Power2"
+
+            });
+
+        });
+
+
+        voltar.on("pointerout", () => {
+
+            this.tweens.add({
+
+                targets: voltar,
+                scale: 0.08,
+                duration: 100,
+                ease: "Power2"
+
+            });
+
+        });
+
+
+        voltar.on("pointerdown", () => {
+
+            voltar.disableInteractive();
+
+
+            this.tweens.add({
+
+                targets: voltar,
+                scale: 0.06,
+                duration: 80,
+                yoyo: true,
+                ease: "Power2"
+
+            });
+
+
+            this.cameras.main.fade(
+                800,
+                0,
+                0,
+                0
+            );
+
+
+            this.cameras.main.once(
+
+                Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
+
+                () => {
+
+                    this.scene.start(
+                        "MainScene",
+                        {
+                            mostrarQuarto: true
+                        }
+                    );
+
+                }
+
+            );
+
+        });
+
+
+        const simbolos = [
+
+            "★", "★",
+            "●", "●",
+            "▲", "▲",
+            "◆", "◆"
+
+        ];
+
+
+        Phaser.Utils.Array.Shuffle(simbolos);
+
+
+        this.cartas = [];
+
+        this.primeiraCarta = null;
+        this.segundaCarta = null;
+        this.bloqueado = false;
+        this.paresEncontrados = 0;
+
+
+        simbolos.forEach((simbolo, index) => {
+
+            const coluna = index % 4;
+            const linha = Math.floor(index / 4);
+
+            const espacamentoX = 140;
+            const espacamentoY = 150;
+
+
+            const x =
+                640 +
+                (coluna - 1.5) *
+                espacamentoX;
+
+
+            const y =
+                310 +
+                linha *
+                espacamentoY;
+
+
+            const carta = this.add.rectangle(
+                x,
+                y,
+                90,
+                110,
+                0x800000
+            );
+
+
+            carta.setInteractive({
+                useHandCursor: true
+            });
+
+
+            const texto = this.add.text(
+                x,
+                y,
+                "?",
+                {
+                    fontSize: "40px",
+                    color: "#ffffff",
+                    fontStyle: "bold"
+                }
+            ).setOrigin(0.5);
+
+
+            carta.simbolo = simbolo;
+            carta.texto = texto;
+            carta.revelada = false;
+            carta.encontrada = false;
+
+
+            carta.on("pointerover", () => {
+
+                if (
+                    !carta.revelada &&
+                    !carta.encontrada
+                ) {
+
+                    carta.setScale(1.05);
+
+                }
+
+            });
+
+
+            carta.on("pointerout", () => {
+
+                carta.setScale(1);
+
+            });
+
+
+            carta.on("pointerdown", () => {
+
+                this.virarCarta(carta);
+
+            });
+
+
+            this.cartas.push(carta);
+
+        });
+
+    }
+
+
+    virarCarta(carta) {
+
+        if (
+            this.bloqueado ||
+            carta.revelada ||
+            carta.encontrada
+        ) {
+            return;
+        }
+
+
+        carta.revelada = true;
+
+        carta.texto.setText(
+            carta.simbolo
+        );
+
+
+        if (!this.primeiraCarta) {
+
+            this.primeiraCarta = carta;
+
+            return;
+
+        }
+
+
+        this.segundaCarta = carta;
+        this.bloqueado = true;
+
+
+        if (
+            this.primeiraCarta.simbolo ===
+            this.segundaCarta.simbolo
+        ) {
+
+            this.primeiraCarta.encontrada = true;
+            this.segundaCarta.encontrada = true;
+
+            this.paresEncontrados++;
+
+
+            this.primeiraCarta = null;
+            this.segundaCarta = null;
+            this.bloqueado = false;
+
+
+            if (
+                this.paresEncontrados === 4
+            ) {
+
+                this.mostrarFinal();
+
+            }
+
+        }
+
+        else {
+
+            this.time.delayedCall(
+
+                800,
+
+                () => {
+
+                    this.primeiraCarta.revelada = false;
+                    this.segundaCarta.revelada = false;
+
+                    this.primeiraCarta.texto.setText("?");
+                    this.segundaCarta.texto.setText("?");
+
+                    this.primeiraCarta = null;
+                    this.segundaCarta = null;
+                    this.bloqueado = false;
+
+                }
+
+            );
+
+        }
+
+    }
+
+
+    mostrarFinal() {
+
+        this.bloqueado = true;
+
+
+        const provisoria = this.add.image(
+            640,
+            360,
+            "provisoria"
+        );
+
+
+        provisoria.setDisplaySize(
+            1280,
+            720
+        );
+
+
+        provisoria.setDepth(50);
+        provisoria.setAlpha(0);
+
+
+        this.tweens.add({
+
+            targets: provisoria,
+            alpha: 1,
+            duration: 1200,
+            ease: "Power2"
+
+        });
+
+
+        const voltar = this.children.list.find(
+
+            objeto =>
+                objeto.texture &&
+                objeto.texture.key === "voltar"
+
+        );
+
+
+        if (voltar) {
+
+            voltar.setDepth(100);
+
+            this.children.bringToTop(
+                voltar
+            );
+
+        }
+
+    }
+
+}
+
+
+
+// =====================================================
+// PUZZLE 2 - LIVROS
+// =====================================================
+
+class PuzzleLivros extends Phaser.Scene {
+
+    constructor() {
+        super("PuzzleLivros");
+    }
+
+
+    create() {
+
+        const fundoPuzzle = this.add.image(
+            640,
+            360,
+            "livro"
+        );
+
+
+        fundoPuzzle.setDisplaySize(
+            1280,
+            720
+        );
+
+
+        fundoPuzzle.setDepth(-10);
+
+
+        this.add.text(
+            640,
+            45,
+            "Organize os Livros",
+            {
+                fontSize: "36px",
+                color: "#EEB422",
+                fontStyle: "bold"
+            }
+        ).setOrigin(0.5);
+
+
+        this.add.text(
+            640,
+            100,
+            "Organize os livros seguindo a sequência:",
+            {
+                fontSize: "22px",
+                color: "#EEB422"
+            }
+        ).setOrigin(0.5);
+
+
+        this.add.text(
+            640,
+            135,
+            "Ímpares em ordem crescente → Pares em ordem decrescente",
+            {
+                fontSize: "18px",
+                color: "#EEB422"
+            }
+        ).setOrigin(0.5);
+
+
+        this.solucao = [
+
+            1, 3, 5, 7,
+            9, 11, 13, 15,
+            16, 14, 12, 10,
+            8, 6, 4, 2
+
+        ];
+
+
+        this.ordem = [
+            ...this.solucao
+        ];
+
+
+        Phaser.Utils.Array.Shuffle(
+            this.ordem
+        );
+
+
+        this.livros = [];
+        this.livroSelecionado = null;
+
+
+        this.criarLivros();
+
+
+        const voltar = this.add.image(
+            640,
+            660,
+            "voltar"
+        );
+
+
+        voltar.setScale(0.08);
+        voltar.setDepth(100);
+
+
+        voltar.setInteractive({
+            useHandCursor: true
+        });
+
+
+        voltar.on("pointerover", () => {
+
+            this.tweens.add({
+
+                targets: voltar,
+                scale: 0.10,
+                duration: 100,
+                ease: "Power2"
+
+            });
+
+        });
+
+
+        voltar.on("pointerout", () => {
+
+            this.tweens.add({
+
+                targets: voltar,
+                scale: 0.08,
+                duration: 100,
+                ease: "Power2"
+
+            });
+
+        });
+
+
+        voltar.on("pointerdown", () => {
+
+            voltar.disableInteractive();
+
+
+            this.tweens.add({
+
+                targets: voltar,
+                scale: 0.06,
+                duration: 80,
+                yoyo: true,
+                ease: "Power2"
+
+            });
+
+
+            this.cameras.main.fade(
+                800,
+                0,
+                0,
+                0
+            );
+
+
+            this.cameras.main.once(
+
+                Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
+
+                () => {
+
+                    this.scene.start(
+                        "MainScene",
+                        {
+                            mostrarLado4: true
+                        }
+                    );
+
+                }
+
+            );
+
+        });
+
+    }
+
+
+    criarLivros() {
+
+        const largura = 65;
+        const altura = 130;
+        const espacamentoX = 72;
+        const espacamentoY = 160;
+
+
+        this.ordem.forEach(
+
+            (numero, index) => {
+
+                const coluna = index % 8;
+                const linha = Math.floor(index / 8);
+
+
+                const x =
+                    390 +
+                    coluna *
+                    espacamentoX;
+
+
+                const y =
+                    300 +
+                    linha *
+                    espacamentoY;
+
+
+                const livro =
+                    this.add.rectangle(
+                        x,
+                        y,
+                        largura,
+                        altura,
+                        0x800000
+                    );
+
+
+                livro.setStrokeStyle(
+                    3,
+                    0xffffff
+                );
+
+
+                const texto =
+                    this.add.text(
+                        x,
+                        y,
+                        numero.toString(),
+                        {
+                            fontSize: "28px",
+                            color: "#ffffff",
+                            fontStyle: "bold"
+                        }
+                    ).setOrigin(0.5);
+
+
+                livro.numero = numero;
+                livro.texto = texto;
+                livro.indexLivro = index;
+
+
+                livro.setInteractive({
+                    useHandCursor: true
+                });
+
+
+                livro.on("pointerover", () => {
+
+                    this.tweens.add({
+
+                        targets: [
+                            livro,
+                            texto
+                        ],
+
+                        scale: 1.08,
+                        duration: 100
+
+                    });
+
+                });
+
+
+                livro.on("pointerout", () => {
+
+                    this.tweens.add({
+
+                        targets: [
+                            livro,
+                            texto
+                        ],
+
+                        scale: 1,
+                        duration: 100
+
+                    });
+
+                });
+
+
+                livro.on("pointerdown", () => {
+
+                    this.selecionarLivro(
+                        livro
+                    );
+
+                });
+
+
+                this.livros.push(
+                    livro
+                );
+
+            }
+
+        );
+
+    }
+
+
+    selecionarLivro(livro) {
+
+        if (
+            this.livroSelecionado ===
+            livro
+        ) {
+
+            livro.setStrokeStyle(
+                3,
+                0xffffff
+            );
+
+            this.livroSelecionado = null;
+
+            return;
+
+        }
+
+
+        if (!this.livroSelecionado) {
+
+            this.livroSelecionado =
+                livro;
+
+
+            livro.setStrokeStyle(
+                5,
+                0xffff00
+            );
+
+            return;
+
+        }
+
+
+        const primeiro =
+            this.livroSelecionado;
+
+        const segundo =
+            livro;
+
+
+        const index1 =
+            primeiro.indexLivro;
+
+        const index2 =
+            segundo.indexLivro;
+
+
+        const temp =
+            this.ordem[index1];
+
+
+        this.ordem[index1] =
+            this.ordem[index2];
+
+        this.ordem[index2] =
+            temp;
+
+
+        primeiro.numero =
+            this.ordem[index1];
+
+        segundo.numero =
+            this.ordem[index2];
+
+
+        primeiro.texto.setText(
+            primeiro.numero.toString()
+        );
+
+
+        segundo.texto.setText(
+            segundo.numero.toString()
+        );
+
+
+        primeiro.setStrokeStyle(
+            3,
+            0xffffff
+        );
+
+
+        segundo.setStrokeStyle(
+            3,
+            0xffffff
+        );
+
+
+        this.livroSelecionado = null;
+
+
+        this.verificarPuzzle();
+
+    }
+
+
+    verificarPuzzle() {
+
+        const correto =
+            this.ordem.every(
+
+                (numero, index) =>
+                    numero ===
+                    this.solucao[index]
+
+            );
+
+
+        if (correto) {
+
+            this.puzzleResolvido();
+
+        }
+
+    }
+
+
+    // =================================================
+    // PUZZLE 2 RESOLVIDO
+    // =================================================
+
+    puzzleResolvido() {
+
+        this.livros.forEach(
+            livro => {
+                livro.disableInteractive();
+            }
+        );
+
+
+        const imagemLi = this.add.image(
+            640,
+            360,
+            "li"
+        );
+
+
+        imagemLi.setDisplaySize(
+            1280,
+            720
+        );
+
+
+        imagemLi.setDepth(60);
+        imagemLi.setAlpha(0);
+
+
+        this.tweens.add({
+
+            targets: imagemLi,
+            alpha: 1,
+            duration: 1000,
+            ease: "Power2"
+
+        });
+
+
+        // =================================================
+        // BOTÃO VOLTAR
+        // =================================================
+
+        const voltar = this.add.image(
+            640,
+            660,
+            "voltar"
+        );
+
+
+        voltar.setScale(0.08);
+        voltar.setDepth(100);
+
+
+        voltar.setInteractive({
+            useHandCursor: true
+        });
+
+
+        voltar.on("pointerover", () => {
+
+            this.tweens.add({
+
+                targets: voltar,
+                scale: 0.10,
+                duration: 100,
+                ease: "Power2"
+
+            });
+
+        });
+
+
+        voltar.on("pointerout", () => {
+
+            this.tweens.add({
+
+                targets: voltar,
+                scale: 0.08,
+                duration: 100,
+                ease: "Power2"
+
+            });
+
+        });
+
+
+        voltar.on("pointerdown", () => {
+
+            voltar.disableInteractive();
+
+
+            this.tweens.add({
+
+                targets: voltar,
+                scale: 0.06,
+                duration: 80,
+                yoyo: true,
+                ease: "Power2"
+
+            });
+
+
+            this.tweens.add({
+
+                targets: imagemLi,
+                alpha: 0,
+                duration: 500,
+                ease: "Power2"
+
+            });
+
+
+            this.cameras.main.fade(
+                800,
+                0,
+                0,
+                0
+            );
+
+
+            this.cameras.main.once(
+
+                Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
+
+                () => {
+
+                    // VOLTA DIRETAMENTE PARA O LADO4
+
+                    this.scene.start(
+                        "MainScene",
+                        {
+                            mostrarLado4: true
+                        }
+                    );
+
+                }
+
+            );
+
+        });
+
+    }
+
+}
+
+
+
+// =====================================================
+// PUZZLE 3 - DISCO DE VINIL
+// =====================================================
+
+class PuzzleVinil extends Phaser.Scene {
+
+    constructor() {
+        super("PuzzleVinil");
+    }
+
+
+    create() {
+
+        this.codigo = "";
+        this.resolvido = false;
+
+
+        const fundo = this.add.image(
+            640,
+            360,
+            "imagemvinil"
+        );
+
+
+        fundo.setDisplaySize(
+            1280,
+            720
+        );
+
+
+        fundo.setDepth(-20);
+
+
+        const vinheta = this.add.rectangle(
+            640,
+            360,
+            1280,
+            720,
+            0x000000,
+            0.28
+        );
+
+
+        vinheta.setDepth(-10);
+
+
+        this.disco = this.add.circle(
+            653,
+            166,
+            62,
+            0x080808
+        );
+
+
+        this.disco.setStrokeStyle(
+            4,
+            0x302016
+        );
+
+
+        this.disco.setInteractive({
+            useHandCursor: true
+        });
+
+
+        for (
+            let raio = 12;
+            raio <= 58;
+            raio += 8
+        ) {
+
+            const sulco = this.add.circle(
+                653,
+                166,
+                raio,
+                0x000000,
+                0
+            );
+
+
+            sulco.setStrokeStyle(
+                1,
+                0x242424
+            );
+
+        }
+
+
+        this.add.circle(
+            653,
+            166,
+            19,
+            0x681f1f
+        ).setStrokeStyle(
+            3,
+            0xb9844b
+        );
+
+
+        this.add.circle(
+            653,
+            166,
+            4,
+            0xe0c18c
+        );
+
+
+        this.add.text(
+            653,
+            245,
+            "clique no disco...",
+            {
+                fontSize: "15px",
+                color: "#d6b58b",
+                shadow: {
+                    offsetX: 2,
+                    offsetY: 2,
+                    color: "#000000",
+                    blur: 4,
+                    stroke: true,
+                    fill: true
+                }
+            }
+        ).setOrigin(0.5);
+
+
+        const voltar = this.add.image(
+            80,
+            650,
+            "voltar"
+        );
+
+
+        voltar.setScale(0.07);
+        voltar.setDepth(100);
+
+
+        voltar.setInteractive({
+            useHandCursor: true
+        });
+
+
+        voltar.on("pointerover", () => {
+            voltar.setScale(0.09);
+        });
+
+
+        voltar.on("pointerout", () => {
+            voltar.setScale(0.07);
+        });
+
+
+        voltar.on("pointerdown", () => {
+
+            voltar.disableInteractive();
+
+
+            this.cameras.main.fade(
+                600,
+                0,
+                0,
+                0
+            );
+
+
+            this.cameras.main.once(
+
+                Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
+
+                () => {
+
+                    this.scene.start(
+                        "MainScene",
+                        {
+                            mostrarLado1: true
+                        }
+                    );
+
+                }
+
+            );
+
+        });
+
+
+        this.disco.on(
+            "pointerover",
+            () => {
+
+                if (!this.resolvido) {
+
+                    this.tweens.add({
+
+                        targets: this.disco,
+                        scale: 1.08,
+                        duration: 200
+
+                    });
+
+                }
+
+            }
+        );
+
+
+        this.disco.on(
+            "pointerout",
+            () => {
+
+                this.disco.setScale(1);
+
+            }
+        );
+
+
+        this.disco.on(
+            "pointerdown",
+            () => {
+
+                if (!this.resolvido) {
+
+                    this.abrirPainel();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    // =================================================
+    // PAINEL
+    // =================================================
+
+    abrirPainel() {
+
+        if (this.painelAberto) return;
+
+
+        this.painelAberto = true;
+
+
+        this.overlay = this.add.rectangle(
+            640,
+            360,
+            1280,
+            720,
+            0x000000,
+            0.72
+        );
+
+
+        this.overlay.setDepth(20);
+
+
+        this.painel = this.add.rectangle(
+            640,
+            360,
+            560,
+            430,
+            0x110a0b
+        );
+
+
+        this.painel.setStrokeStyle(
+            3,
+            0x75472e
+        );
+
+
+        this.painel.setDepth(21);
+
+
+        this.add.text(
+            640,
+            180,
+            "♪ O DISCO",
+            {
+                fontSize: "32px",
+                color: "#d59a56",
+                fontStyle: "bold"
+            }
+        ).setOrigin(0.5).setDepth(22);
+
+
+        this.add.text(
+            640,
+            225,
+            "A gravação parece esconder alguma coisa.",
+            {
+                fontSize: "17px",
+                color: "#e5c89e"
+            }
+        ).setOrigin(0.5).setDepth(22);
+
+
+        this.add.text(
+            640,
+            285,
+            "PISTA",
+            {
+                fontSize: "20px",
+                color: "#e0a25e",
+                fontStyle: "bold"
+            }
+        ).setOrigin(0.5).setDepth(22);
+
+
+        this.add.text(
+            640,
+            330,
+            "O relógio sabe a sequência.\n\n" +
+            "Primeira sequência",
+            {
+                fontSize: "17px",
+                color: "#c9ad87",
+                align: "center",
+                lineSpacing: 5
+            }
+        ).setOrigin(0.5).setDepth(22);
+
+
+        this.add.text(
+            640,
+            405,
+            "Digite a sequência:",
+            {
+                fontSize: "17px",
+                color: "#e5c89e"
+            }
+        ).setOrigin(0.5).setDepth(22);
+
+
+        this.caixas = [];
+        this.textosNumeros = [];
+
+
+        for (let i = 0; i < 4; i++) {
+
+            const x = 565 + i * 50;
+
+
+            const caixa = this.add.rectangle(
+                x,
+                455,
+                40,
+                48,
+                0x0b0809
+            );
+
+
+            caixa.setStrokeStyle(
+                2,
+                0x65402c
+            );
+
+
+            caixa.setDepth(22);
+
+
+            const numero = this.add.text(
+                x,
+                455,
+                "",
+                {
+                    fontSize: "25px",
+                    color: "#e5bd80",
+                    fontStyle: "bold"
+                }
+            ).setOrigin(0.5);
+
+
+            numero.setDepth(23);
+
+
+            this.caixas.push(caixa);
+            this.textosNumeros.push(numero);
+
+        }
+
+
+        this.mensagem = this.add.text(
+            640,
+            510,
+            "",
+            {
+                fontSize: "16px",
+                color: "#d45b50",
+                fontStyle: "bold",
+                align: "center"
+            }
+        ).setOrigin(0.5);
+
+
+        this.mensagem.setDepth(22);
+
+
+        const verificar = this.add.text(
+            640,
+            555,
+            "COLOCAR A AGULHA",
+            {
+                fontSize: "17px",
+                color: "#efd5a6",
+                backgroundColor: "#4b281c",
+                padding: {
+                    left: 18,
+                    right: 18,
+                    top: 10,
+                    bottom: 10
+                },
+                fontStyle: "bold"
+            }
+        ).setOrigin(0.5);
+
+
+        verificar.setDepth(22);
+
+
+        verificar.setInteractive({
+            useHandCursor: true
+        });
+
+
+        verificar.on(
+            "pointerover",
+            () => {
+
+                verificar.setStyle({
+                    backgroundColor: "#693823"
+                });
+
+            }
+        );
+
+
+        verificar.on(
+            "pointerout",
+            () => {
+
+                verificar.setStyle({
+                    backgroundColor: "#4b281c"
+                });
+
+            }
+        );
+
+
+        verificar.on(
+            "pointerdown",
+            () => {
+
+                this.verificarCodigo();
+
+            }
+        );
+
+
+        const fechar = this.add.text(
+            640,
+            620,
+            "FECHAR",
+            {
+                fontSize: "16px",
+                color: "#efd5a6",
+                backgroundColor: "#241719",
+                padding: {
+                    left: 20,
+                    right: 20,
+                    top: 8,
+                    bottom: 8
+                }
+            }
+        ).setOrigin(0.5);
+
+
+        fechar.setDepth(22);
+
+
+        fechar.setInteractive({
+            useHandCursor: true
+        });
+
+
+        fechar.on(
+            "pointerdown",
+            () => {
+
+                this.fecharPainel();
+
+            }
+        );
+
+
+        this.input.keyboard.on(
+            "keydown",
+            this.digitarNumero,
+            this
+        );
+
+    }
+
+
+    // =================================================
+    // DIGITAR
+    // =================================================
+
+    digitarNumero(event) {
+
+        if (!this.painelAberto) return;
+        if (this.resolvido) return;
+
+
+        if (
+            event.key >= "0" &&
+            event.key <= "9"
+        ) {
+
+            if (this.codigo.length < 4) {
+
+                this.codigo += event.key;
+
+                this.atualizarNumeros();
+
+            }
+
+        }
+
+
+        if (event.key === "Backspace") {
+
+            this.codigo =
+                this.codigo.slice(0, -1);
+
+
+            this.atualizarNumeros();
+
+        }
+
+    }
+
+
+    // =================================================
+    // ATUALIZAR NÚMEROS
+    // =================================================
+
+    atualizarNumeros() {
+
+        for (let i = 0; i < 4; i++) {
+
+            this.textosNumeros[i].setText(
+                this.codigo[i] || ""
+            );
+
+        }
+
+    }
+
+
+    // =================================================
+    // VERIFICAR
+    // =================================================
+
+    verificarCodigo() {
+
+        if (this.codigo === "1234") {
+
+            this.mensagem.setText(
+                "A agulha encontrou a gravação..."
+            );
+
+
+            this.mensagem.setColor(
+                "#7ecb78"
+            );
+
+
+            this.resolvido = true;
+
+
+            this.disco.disableInteractive();
+
+
+            this.fecharPainel();
+
+
+            this.tweens.add({
+
+                targets: this.disco,
+                angle: 360,
+                duration: 1200,
+                repeat: -1
+
+            });
+
+
+            this.time.delayedCall(
+                1500,
+                () => {
+                    this.mostrarFinal();
+                }
+            );
+
+        }
+
+        else {
+
+            this.mensagem.setText(
+                "Código incorreto. O disco continua em silêncio."
+            );
+
+
+            this.mensagem.setColor(
+                "#d45b50"
+            );
+
+        }
+
+    }
+
+
+    // =================================================
+    // FECHAR PAINEL
+    // =================================================
+
+    fecharPainel() {
+
+        if (!this.painelAberto) return;
+
+
+        this.painelAberto = false;
+
+
+        if (this.overlay) {
+            this.overlay.destroy();
+        }
+
+
+        if (this.painel) {
+            this.painel.destroy();
+        }
+
+
+        this.children.list.slice().forEach(
+
+            objeto => {
+
+                if (
+                    objeto.depth >= 20 &&
+                    objeto !== this.disco
+                ) {
+
+                    objeto.destroy();
+
+                }
+
+            }
+
+        );
+
+
+        this.codigo = "";
+
+    }
+
+
+    // =================================================
+    // FINAL
+    // =================================================
+
+    mostrarFinal() {
+
+        const overlayFinal = this.add.rectangle(
+            640,
+            360,
+            1280,
+            720,
+            0x040203,
+            0.96
+        );
+
+
+        overlayFinal.setDepth(50);
+
+
+        this.add.text(
+            640,
+            230,
+            "♪ A GRAVAÇÃO COMEÇOU...",
+            {
+                fontSize: "32px",
+                color: "#d99b58",
+                fontStyle: "bold",
+                align: "center"
+            }
+        ).setOrigin(0.5).setDepth(51);
+
+
+        this.add.text(
+            640,
+            350,
+            "A agulha toca o disco.\n\n" +
+            "Por alguns segundos,\n" +
+            "só existe o som dos chiados.\n\n" +
+            "Então uma voz baixa sussurra:\n\n" +
+            "\"Você prometeu nos contar tudo.\"",
+            {
+                fontSize: "18px",
+                color: "#cbb08d",
+                align: "center",
+                lineSpacing: 8
+            }
+        ).setOrigin(0.5).setDepth(51);
+
+
+        const continua = this.add.text(
+            640,
+            570,
+            "CONTINUA",
+            {
+                fontSize: "18px",
+                color: "#efd5a6",
+                backgroundColor: "#4b281c",
+                padding: {
+                    left: 25,
+                    right: 25,
+                    top: 12,
+                    bottom: 12
+                },
+                fontStyle: "bold"
+            }
+        ).setOrigin(0.5);
+
+
+        continua.setDepth(51);
+
+
+        continua.setInteractive({
+            useHandCursor: true
+        });
+
+
+        continua.on(
+            "pointerover",
+            () => {
+
+                continua.setStyle({
+                    backgroundColor: "#693823"
+                });
+
+            }
+        );
+
+
+        continua.on(
+            "pointerout",
+            () => {
+
+                continua.setStyle({
+                    backgroundColor: "#4b281c"
+                });
+
+            }
+        );
+
+
+        continua.on(
+            "pointerdown",
+            () => {
+
+                continua.disableInteractive();
+
+                this.mostrarCreditos();
+
+            }
+        );
+
+    }
+
+
+    // =================================================
+    // CRÉDITOS
+    // =================================================
+
+    mostrarCreditos() {
+
+        this.children.list.slice().forEach(
+
+            objeto => {
+
+                if (objeto.depth >= 50) {
+
+                    objeto.destroy();
+
+                }
+
+            }
+
+        );
+
+
+        const mascaraGraphics =
+            this.make.graphics({
+
+                x: 0,
+                y: 0,
+                add: true
+
+            });
+
+
+        mascaraGraphics.fillStyle(
+            0xffffff,
+            1
+        );
+
+
+        mascaraGraphics.fillRect(
+            0,
+            0,
+            1280,
+            720
+        );
+
+
+        mascaraGraphics.setVisible(false);
+
+
+        const mask =
+            mascaraGraphics.createGeometryMask();
+
+
+        const creditos =
+
+`Sofia vinha enfrentando problemas de memória e começou a acreditar
+que sua família escondia algo dela. Durante uma discussão, perdeu o
+controle e matou Henrique, Rafael e Lucas, que apenas tentavam ajudá-la.
+
+
+Ao perceber o que havia feito, Sofia criou várias pistas pela casa —
+fotografias, chaves, livros, mensagens e uma fita — para ajudá-la a
+recuperar a memória caso esquecesse tudo novamente. Depois, sua mente
+apagou aquela noite.
+
+
+Anos depois, Sofia finalmente encontrou todas as pistas e ouviu o
+disco que guardava as vozes de sua família. As lembranças voltaram, e
+ela descobriu a verdade: Henrique, Rafael e Lucas nunca foram seus
+inimigos.
+
+
+Sofia finalmente se lembrou de que havia causado a morte deles. Sem
+mais pistas para seguir ou verdades para esconder, restou apenas
+enfrentar as consequências de suas próprias lembranças.
+
+
+FIM`;
+
+
+        const textoCreditos = this.add.text(
+            640,
+            760,
+            creditos,
+            {
+                fontFamily: "Courier New",
+                fontSize: "18px",
+                color: "#dddddd",
+                align: "center",
+                lineSpacing: 12,
+                wordWrap: {
+                    width: 700
+                },
+                shadow: {
+                    offsetX: 2,
+                    offsetY: 2,
+                    color: "#000000",
+                    blur: 4,
+                    fill: true
+                }
+            }
+        );
+
+
+        textoCreditos.setOrigin(
+            0.5,
+            0
+        );
+
+
+        textoCreditos.setDepth(100);
+
+
+        textoCreditos.setMask(mask);
+
+
+        this.tweens.add({
+
+            targets: textoCreditos,
+
+            y: -650,
+
+            duration: 30000,
+
+            ease: "Linear",
+
+            onComplete: () => {
+
+                textoCreditos.destroy();
+
+                mascaraGraphics.destroy();
+
+
+                const imagemFinal = this.add.image(
+                    640,
+                    360,
+                    "final"
+                );
+
+
+                imagemFinal.setDisplaySize(
+                    1280,
+                    720
+                );
+
+
+                imagemFinal.setDepth(200);
+
+
+                imagemFinal.setAlpha(0);
+
+
+                this.tweens.add({
+
+                    targets: imagemFinal,
+
+                    alpha: 1,
+
+                    duration: 2000,
+
+                    ease: "Power2"
+
+                });
+
+            }
+
+        });
+
+    }
+
+}
+
+
+
+// =====================================================
+// CONFIGURAÇÃO DO PHASER
+// =====================================================
+
+const config = {
+
+    type: Phaser.AUTO,
+
+    width: 1280,
+
+    height: 720,
+
+
+    scale: {
+
+        mode: Phaser.Scale.FIT,
+
+        autoCenter: Phaser.Scale.CENTER_BOTH
+
+    },
+
+
+    scene: [
+
+        {
+
+            key: "MainScene",
+
+            preload: preload,
+
+            create: create
+
+        },
+
+        Puzzle7,
+
+        PuzzleLivros,
+
+        PuzzleVinil
+
+    ]
+
+};
+
+
+const game = new Phaser.Game(config);
+
+
+
+// =====================================================
+// PRELOAD
+// =====================================================
+
+function preload() {
+
+    this.load.image(
+        "quartu",
+        "quartu.jpeg"
+    );
+
+
+    this.load.image(
+        "lado1",
+        "lado1.jpeg"
+    );
+
+
+    this.load.image(
+        "lado3",
+        "lado3.png"
+    );
+
+
+    this.load.image(
+        "lado4",
+        "lado4.jpeg"
+    );
+
+
+    this.load.image(
+        "titu",
+        "titu.png"
+    );
+
+
+    this.load.image(
+        "buu",
+        "buu.png"
+    );
+
+
+    this.load.image(
+        "seta",
+        "seta.png"
+    );
+
+
+    this.load.image(
+        "seta2",
+        "seta2.png"
+    );
+
+
+    this.load.image(
+        "c",
+        "c.png"
+    );
+
+
+    this.load.image(
+        "lupa",
+        "lupa.png"
+    );
+
+
+    this.load.image(
+        "voltar",
+        "voltar.png"
+    );
+
+
+    this.load.image(
+        "qq",
+        "qq.jpeg"
+    );
+
+
+    this.load.image(
+        "livro",
+        "livro.jpeg"
+    );
+
+
+    this.load.image(
+        "provisoria",
+        "provisoria.jpeg"
+    );
+
+
+    this.load.image(
+        "li",
+        "li.jpeg"
+    );
+
+
+    this.load.image(
+        "imagemvinil",
+        "imagemvinil.jpeg"
+    );
+
+
+    // IMAGEM FINAL
+
+    this.load.image(
+        "final",
+        "final.jpeg"
+    );
+
+}
+
+
+
+// =====================================================
+// TELA INICIAL
+// =====================================================
+
+function create(data) {
+
+    if (
+        data &&
+        data.mostrarQuarto
+    ) {
+
+        iniciarJogo(this);
+
+        return;
+
+    }
+
+
+    if (
+        data &&
+        data.mostrarLado4
+    ) {
+
+        mostrarLado4(this);
+
+        return;
+
+    }
+
+
+    if (
+        data &&
+        data.mostrarLado1
+    ) {
+
+        mostrarLado1(this);
+
+        return;
+
+    }
+
+
+    const fundo = this.add.image(
+        640,
+        360,
+        "quartu"
+    );
+
+
+    fundo.setDisplaySize(
+        1280,
+        720
+    );
+
+
+    const titulo = this.add.image(
+        640,
+        180,
+        "titu"
+    );
+
+
+    titulo.setScale(0.3);
+
+
+    const botao = this.add.image(
+        640,
+        390,
+        "buu"
+    );
+
+
+    botao.setScale(0.2);
+
+
+    botao.setInteractive({
+        useHandCursor: true
+    });
+
+
+    botao.on("pointerover", () => {
+
+        this.tweens.add({
+
+            targets: botao,
+            scale: 0.35,
+            duration: 90,
+            ease: "Power2"
+
+        });
+
+    });
+
+
+    botao.on("pointerout", () => {
+
+        this.tweens.add({
+
+            targets: botao,
+            scale: 0.2,
+            duration: 100,
+            ease: "Power2"
+
+        });
+
+    });
+
+
+    botao.on("pointerdown", () => {
+
+        botao.disableInteractive();
+
+
+        this.tweens.add({
+
+            targets: botao,
+            scale: 0.25,
+            duration: 100
+
+        });
+
+
+        this.cameras.main.fade(
+            800,
+            0,
+            0,
+            0
+        );
+
+
+        this.cameras.main.once(
+
+            Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
+
+            () => {
+
+                iniciarJogo(this);
+
+            }
+
+        );
+
+    });
+
+}
+
+
+
+// =====================================================
+// QUARTO
+// =====================================================
+
+function iniciarJogo(scene) {
+
+    console.log(
+        "Ambiente: quartu"
+    );
+
+
+    scene.children.removeAll();
+
+
+    const fundo = scene.add.image(
+        640,
+        360,
+        "quartu"
+    );
+
+
+    fundo.setDisplaySize(
+        1280,
+        720
+    );
+
+
+    adicionarTelaCheia(scene);
+
+
+    adicionarBotaoLupa(scene);
+
+
+    const setaEsquerda = scene.add.image(
+        70,
+        360,
+        "seta2"
+    );
+
+
+    setaEsquerda.setScale(0.09);
+
+
+    setaEsquerda.setInteractive({
+        useHandCursor: true
+    });
+
+
+    const setaDireita = scene.add.image(
+        1210,
+        360,
+        "seta"
+    );
+
+
+    setaDireita.setScale(0.09);
+
+
+    setaDireita.setInteractive({
+        useHandCursor: true
+    });
+
+
+    configurarHover(
+        scene,
+        setaEsquerda
+    );
+
+
+    configurarHover(
+        scene,
+        setaDireita
+    );
+
+
+    setaEsquerda.on(
+        "pointerdown",
+        () => {
+
+            animarSeta(
+                scene,
+                setaEsquerda
+            );
+
+
+            trocarAmbiente(
+                scene,
+                "lado3"
+            );
+
+        }
+    );
+
+
+    setaDireita.on(
+        "pointerdown",
+        () => {
+
+            animarSeta(
+                scene,
+                setaDireita
+            );
+
+
+            trocarAmbiente(
+                scene,
+                "lado1"
+            );
+
+        }
+    );
+
+
+    scene.cameras.main.fadeIn(
+        800,
+        0,
+        0,
+        0
+    );
+
+}
+
+
+
+// =====================================================
+// LADO 1
+// =====================================================
+
+function mostrarLado1(scene) {
+
+    scene.children.removeAll();
+
+
+    const fundo = scene.add.image(
+        640,
+        360,
+        "lado1"
+    );
+
+
+    fundo.setDisplaySize(
+        1280,
+        720
+    );
+
+
+    adicionarTelaCheia(scene);
+
+
+    adicionarBotaoLupaVinil(scene);
+
+
+    const setaEsquerda = scene.add.image(
+        70,
+        360,
+        "seta2"
+    );
+
+
+    setaEsquerda.setScale(0.09);
+
+
+    setaEsquerda.setInteractive({
+        useHandCursor: true
+    });
+
+
+    const setaDireita = scene.add.image(
+        1210,
+        360,
+        "seta"
+    );
+
+
+    setaDireita.setScale(0.09);
+
+
+    setaDireita.setInteractive({
+        useHandCursor: true
+    });
+
+
+    configurarHover(
+        scene,
+        setaEsquerda
+    );
+
+
+    configurarHover(
+        scene,
+        setaDireita
+    );
+
+
+    setaEsquerda.on(
+        "pointerdown",
+        () => {
+
+            animarSeta(
+                scene,
+                setaEsquerda
+            );
+
+
+            trocarAmbiente(
+                scene,
+                "quartu"
+            );
+
+        }
+    );
+
+
+    setaDireita.on(
+        "pointerdown",
+        () => {
+
+            animarSeta(
+                scene,
+                setaDireita
+            );
+
+
+            trocarAmbiente(
+                scene,
+                "lado4"
+            );
+
+        }
+    );
+
+
+    scene.cameras.main.fadeIn(
+        800,
+        0,
+        0,
+        0
+    );
+
+}
+
+
+
+// =====================================================
+// LADO 3
+// =====================================================
+
+function mostrarLado3(scene) {
+
+    scene.children.removeAll();
+
+
+    const fundo = scene.add.image(
+        640,
+        360,
+        "lado3"
+    );
+
+
+    fundo.setDisplaySize(
+        1280,
+        720
+    );
+
+
+    adicionarTelaCheia(scene);
+
+
+    const setaEsquerda = scene.add.image(
+        70,
+        360,
+        "seta2"
+    );
+
+
+    setaEsquerda.setScale(0.09);
+
+
+    setaEsquerda.setInteractive({
+        useHandCursor: true
+    });
+
+
+    const setaDireita = scene.add.image(
+        1210,
+        360,
+        "seta"
+    );
+
+
+    setaDireita.setScale(0.09);
+
+
+    setaDireita.setInteractive({
+        useHandCursor: true
+    });
+
+
+    configurarHover(
+        scene,
+        setaEsquerda
+    );
+
+
+    configurarHover(
+        scene,
+        setaDireita
+    );
+
+
+    setaEsquerda.on(
+        "pointerdown",
+        () => {
+
+            animarSeta(
+                scene,
+                setaEsquerda
+            );
+
+
+            trocarAmbiente(
+                scene,
+                "lado4"
+            );
+
+        }
+    );
+
+
+    setaDireita.on(
+        "pointerdown",
+        () => {
+
+            animarSeta(
+                scene,
+                setaDireita
+            );
+
+
+            trocarAmbiente(
+                scene,
+                "quartu"
+            );
+
+        }
+    );
+
+
+    scene.cameras.main.fadeIn(
+        800,
+        0,
+        0,
+        0
+    );
+
+}
+
+
+
+// =====================================================
+// LADO 4
+// =====================================================
+
+function mostrarLado4(scene) {
+
+    scene.children.removeAll();
+
+
+    const fundo = scene.add.image(
+        640,
+        360,
+        "lado4"
+    );
+
+
+    fundo.setDisplaySize(
+        1280,
+        720
+    );
+
+
+    adicionarTelaCheia(scene);
+
+
+    adicionarBotaoLupaLado4(scene);
+
+
+    const setaEsquerda = scene.add.image(
+        70,
+        360,
+        "seta2"
+    );
+
+
+    setaEsquerda.setScale(0.09);
+
+
+    setaEsquerda.setInteractive({
+        useHandCursor: true
+    });
+
+
+    const setaDireita = scene.add.image(
+        1210,
+        360,
+        "seta"
+    );
+
+
+    setaDireita.setScale(0.09);
+
+
+    setaDireita.setInteractive({
+        useHandCursor: true
+    });
+
+
+    configurarHover(
+        scene,
+        setaEsquerda
+    );
+
+
+    configurarHover(
+        scene,
+        setaDireita
+    );
+
+
+    setaEsquerda.on(
+        "pointerdown",
+        () => {
+
+            animarSeta(
+                scene,
+                setaEsquerda
+            );
+
+
+            trocarAmbiente(
+                scene,
+                "lado1"
+            );
+
+        }
+    );
+
+
+    setaDireita.on(
+        "pointerdown",
+        () => {
+
+            animarSeta(
+                scene,
+                setaDireita
+            );
+
+
+            trocarAmbiente(
+                scene,
+                "lado3"
+            );
+
+        }
+    );
+
+
+    scene.cameras.main.fadeIn(
+        800,
+        0,
+        0,
+        0
+    );
+
+}
+
+
+
+// =====================================================
+// HOVER DAS SETAS
+// =====================================================
+
+function configurarHover(scene, seta) {
+
+    seta.on(
+        "pointerover",
+        () => {
+
+            scene.tweens.add({
+
+                targets: seta,
+                scale: 0.12,
+                duration: 100,
+                ease: "Power2"
+
+            });
+
+        }
+    );
+
+
+    seta.on(
+        "pointerout",
+        () => {
+
+            scene.tweens.add({
+
+                targets: seta,
+                scale: 0.09,
+                duration: 100,
+                ease: "Power2"
+
+            });
+
+        }
+    );
+
+}
+
+
+
+// =====================================================
+// ANIMAÇÃO DA SETA
+// =====================================================
+
+function animarSeta(scene, seta) {
+
+    scene.tweens.add({
+
+        targets: seta,
+        scale: 0.14,
+        duration: 80,
+        yoyo: true,
+        ease: "Power2"
+
+    });
+
+}
+
+
+
+// =====================================================
+// BOTÃO LUPA - PUZZLE 1
+// =====================================================
+
+function adicionarBotaoLupa(scene) {
+
+    const lupa1 = scene.add.image(
+        870,
+        410,
+        "lupa"
+    );
+
+
+    lupa1.setScale(0.07);
+    lupa1.setDepth(100);
+
+
+    lupa1.setInteractive({
+        useHandCursor: true
+    });
+
+
+    lupa1.on(
+        "pointerover",
+        () => {
+
+            scene.tweens.add({
+
+                targets: lupa1,
+                scale: 0.10,
+                duration: 100,
+                ease: "Power2"
+
+            });
+
+        }
+    );
+
+
+    lupa1.on(
+        "pointerout",
+        () => {
+
+            scene.tweens.add({
+
+                targets: lupa1,
+                scale: 0.08,
+                duration: 100,
+                ease: "Power2"
+
+            });
+
+        }
+    );
+
+
+    lupa1.on(
+        "pointerdown",
+        () => {
+
+            lupa1.disableInteractive();
+
+
+            scene.tweens.add({
+
+                targets: lupa1,
+                scale: 0.12,
+                duration: 80,
+                yoyo: true,
+                ease: "Power2"
+
+            });
+
+
+            scene.cameras.main.fade(
+                600,
+                0,
+                0,
+                0
+            );
+
+
+            scene.cameras.main.once(
+
+                Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
+
+                () => {
+
+                    scene.scene.start(
+                        "Puzzle7"
+                    );
+
+                }
+
+            );
+
+        }
+    );
+
+}
+
+
+
+// =====================================================
+// BOTÃO LUPA - PUZZLE DO VINIL
+// =====================================================
+
+function adicionarBotaoLupaVinil(scene) {
+
+    const lupaVinil = scene.add.image(
+        870,
+        410,
+        "lupa"
+    );
+
+
+    lupaVinil.setScale(0.07);
+    lupaVinil.setDepth(100);
+
+
+    lupaVinil.setInteractive({
+        useHandCursor: true
+    });
+
+
+    lupaVinil.on(
+        "pointerover",
+        () => {
+
+            scene.tweens.add({
+
+                targets: lupaVinil,
+                scale: 0.10,
+                duration: 100,
+                ease: "Power2"
+
+            });
+
+        }
+    );
+
+
+    lupaVinil.on(
+        "pointerout",
+        () => {
+
+            scene.tweens.add({
+
+                targets: lupaVinil,
+                scale: 0.07,
+                duration: 100,
+                ease: "Power2"
+
+            });
+
+        }
+    );
+
+
+    lupaVinil.on(
+        "pointerdown",
+        () => {
+
+            lupaVinil.disableInteractive();
+
+
+            scene.tweens.add({
+
+                targets: lupaVinil,
+                scale: 0.12,
+                duration: 80,
+                yoyo: true,
+                ease: "Power2"
+
+            });
+
+
+            scene.cameras.main.fade(
+                600,
+                0,
+                0,
+                0
+            );
+
+
+            scene.cameras.main.once(
+
+                Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
+
+                () => {
+
+                    scene.scene.start(
+                        "PuzzleVinil"
+                    );
+
+                }
+
+            );
+
+        }
+    );
+
+}
+
+
+
+// =====================================================
+// BOTÃO LUPA - PUZZLE 2
+// =====================================================
+
+function adicionarBotaoLupaLado4(scene) {
+
+    const lupa2 = scene.add.image(
+        870,
+        410,
+        "lupa"
+    );
+
+
+    lupa2.setScale(0.07);
+    lupa2.setDepth(100);
+
+
+    lupa2.setInteractive({
+        useHandCursor: true
+    });
+
+
+    lupa2.on(
+        "pointerover",
+        () => {
+
+            scene.tweens.add({
+
+                targets: lupa2,
+                scale: 0.10,
+                duration: 100,
+                ease: "Power2"
+
+            });
+
+        }
+    );
+
+
+    lupa2.on(
+        "pointerout",
+        () => {
+
+            scene.tweens.add({
+
+                targets: lupa2,
+                scale: 0.07,
+                duration: 100,
+                ease: "Power2"
+
+            });
+
+        }
+    );
+
+
+    lupa2.on(
+        "pointerdown",
+        () => {
+
+            lupa2.disableInteractive();
+
+
+            scene.tweens.add({
+
+                targets: lupa2,
+                scale: 0.12,
+                duration: 80,
+                yoyo: true,
+                ease: "Power2"
+
+            });
+
+
+            scene.cameras.main.fade(
+                600,
+                0,
+                0,
+                0
+            );
+
+
+            scene.cameras.main.once(
+
+                Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
+
+                () => {
+
+                    scene.scene.start(
+                        "PuzzleLivros"
+                    );
+
+                }
+
+            );
+
+        }
+    );
+
+}
+
+
+
+// =====================================================
+// TELA CHEIA
+// =====================================================
+
+function adicionarTelaCheia(scene) {
+
+    const telaCheia = scene.add.image(
+        1215,
+        55,
+        "c"
+    );
+
+
+    telaCheia.setScale(0.06);
+    telaCheia.setDepth(100);
+
+
+    telaCheia.setInteractive({
+        useHandCursor: true
+    });
+
+
+    telaCheia.on(
+        "pointerover",
+        () => {
+
+            scene.tweens.add({
+
+                targets: telaCheia,
+                scale: 0.075,
+                duration: 100,
+                ease: "Power2"
+
+            });
+
+        }
+    );
+
+
+    telaCheia.on(
+        "pointerout",
+        () => {
+
+            scene.tweens.add({
+
+                targets: telaCheia,
+                scale: 0.06,
+                duration: 100,
+                ease: "Power2"
+
+            });
+
+        }
+    );
+
+
+    telaCheia.on(
+        "pointerdown",
+        () => {
+
+            const canvas =
+                scene.game.canvas;
+
+
+            if (!document.fullscreenElement) {
+
+                if (canvas.requestFullscreen) {
+
+                    canvas.requestFullscreen();
+
+                }
+
+                else if (
+                    canvas.webkitRequestFullscreen
+                ) {
+
+                    canvas.webkitRequestFullscreen();
+
+                }
+
+            }
+
+            else {
+
+                if (document.exitFullscreen) {
+
+                    document.exitFullscreen();
+
+                }
+
+                else if (
+                    document.webkitExitFullscreen
+                ) {
+
+                    document.webkitExitFullscreen();
+
+                }
+
+            }
+
+        }
+    );
+
+}
+
+
+
+// =====================================================
+// TROCAR AMBIENTE
+// =====================================================
+
+function trocarAmbiente(
+    scene,
+    ambiente
+) {
+
+    scene.cameras.main.fade(
+        800,
+        0,
+        0,
+        0
+    );
+
+
+    scene.cameras.main.once(
+
+        Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
+
+        () => {
+
+            scene.children.removeAll();
+
+
+            if (
+                ambiente === "quartu"
+            ) {
+
+                iniciarJogo(scene);
+
+            }
+
+            else if (
+                ambiente === "lado1"
+            ) {
+
+                mostrarLado1(scene);
+
+            }
+
+            else if (
+                ambiente === "lado3"
+            ) {
+
+                mostrarLado3(scene);
+
+            }
+
+            else if (
+                ambiente === "lado4"
+            ) {
+
+                mostrarLado4(scene);
+
+            }
+
+        }
+
+    );
+
+}
+
+
+</script>
+
+</body>
+
+</html>
