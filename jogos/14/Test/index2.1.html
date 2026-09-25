@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INfragmentado - Visual & Gameplay Update</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  min-height:100vh;background:#050508;color:#fff;
+  font-family:"Courier New",monospace;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+#game-container{position:relative;width:min(96vw,960px)}
+canvas{
+  width:100%;height:auto;display:block;background:#000;
+  border:2px solid #252525;image-rendering:pixelated;
+}
+#ui-overlay{
+  position:absolute;left:50%;bottom:6px;transform:translateX(-50%);
+  width:min(64%,480px);min-height:48px;padding:8px 12px;
+  background:rgba(0,0,0,.34);border:1px solid rgba(255,255,255,.12);border-radius:5px;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  pointer-events:none;box-shadow:0 0 0 1px rgba(255,255,255,.02);
+  backdrop-filter:blur(1px);
+}
+#dialogue-text{font-size:11px;line-height:1.3;color:#f0f0f0;text-shadow:0 1px 2px rgba(0,0,0,.8)}
+#start-screen{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(ellipse at 50% 40%, #140d24 0%, #0b0714 45%, #050308 100%);
+  color:#e8e6f0; overflow:hidden; z-index:30; transition:opacity .25s ease, visibility .25s ease;
+}
+#start-screen.hidden{opacity:0; visibility:hidden; pointer-events:none;}
+#stage{
+  position:relative; width:100%; height:100vh; height:100dvh; display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+#stars{position:absolute; inset:0; background-image:
+  radial-gradient(1px 1px at 10% 20%, #6a6280 50%, transparent 51%),
+  radial-gradient(1px 1px at 80% 15%, #6a6280 50%, transparent 51%),
+  radial-gradient(1px 1px at 30% 70%, #6a6280 50%, transparent 51%),
+  radial-gradient(1px 1px at 60% 85%, #6a6280 50%, transparent 51%),
+  radial-gradient(1px 1px at 90% 60%, #6a6280 50%, transparent 51%),
+  radial-gradient(1px 1px at 45% 30%, #6a6280 50%, transparent 51%),
+  radial-gradient(1px 1px at 20% 90%, #6a6280 50%, transparent 51%),
+  radial-gradient(1px 1px at 70% 40%, #6a6280 50%, transparent 51%);
+  opacity:.5; animation:twinkle 3s steps(2) infinite;
+}
+@keyframes twinkle{50%{opacity:.15;}}
+#scan{
+  position:absolute; inset:0; pointer-events:none; background:repeating-linear-gradient(
+    to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,0,0,.25) 3px, rgba(0,0,0,.25) 4px
+  ); mix-blend-mode:multiply; z-index:20;
+}
+#vignette{
+  position:absolute; inset:0; pointer-events:none; box-shadow:inset 0 0 18vw 4vw #000; z-index:19;
+}
+#content{
+  position:relative; z-index:5; display:flex; flex-direction:column; align-items:center; gap:min(6vh,40px); width:100%; padding:20px;
+}
+#prismWrap{position:relative; width:min(46vw,220px); height:min(46vw,220px); display:flex; align-items:center; justify-content:center;}
+.beam{position:absolute; left:50%; top:8%; width:6px; height:36%; background:#fff; box-shadow:0 0 8px 2px #fff; transform:translateX(-50%); opacity:0; animation:beamIn 4s ease-in-out infinite;}
+@keyframes beamIn{0%,10%{opacity:0;height:0%}20%,45%{opacity:1;height:36%}55%,100%{opacity:0;height:36%}}
+.prism{width:0; height:0; border-left:46px solid transparent; border-right:46px solid transparent; border-bottom:80px solid #cfd6ff; filter: drop-shadow(0 0 10px #cfd6ff) drop-shadow(0 0 22px #8f9bff); position:relative; z-index:3; animation:pulse 4s ease-in-out infinite;}
+@keyframes pulse{0%,15%{filter:drop-shadow(0 0 4px #9aa3d9) drop-shadow(0 0 8px #6b74a8)}30%,45%{filter:drop-shadow(0 0 14px #ffffff) drop-shadow(0 0 30px #cfd6ff)}60%,100%{filter:drop-shadow(0 0 4px #9aa3d9) drop-shadow(0 0 8px #6b74a8)}}
+.ray{position:absolute; top:52%; left:50%; width:2px; height:2px; transform-origin:0 50%; opacity:0;}
+.ray span{position:absolute; left:0; top:-1.5px; width:min(22vw,120px); height:3px; display:block;}
+.ray:nth-child(1){transform:translate(-50%,-50%) rotate(-26deg)}
+.ray:nth-child(2){transform:translate(-50%,-50%) rotate(-15deg)}
+.ray:nth-child(3){transform:translate(-50%,-50%) rotate(-5deg)}
+.ray:nth-child(4){transform:translate(-50%,-50%) rotate(5deg)}
+.ray:nth-child(5){transform:translate(-50%,-50%) rotate(15deg)}
+.ray:nth-child(6){transform:translate(-50%,-50%) rotate(26deg)}
+.ray:nth-child(1) span{background:#ff3b5c; box-shadow:0 0 6px #ff3b5c;}
+.ray:nth-child(2) span{background:#ff9e3b; box-shadow:0 0 6px #ff9e3b;}
+.ray:nth-child(3) span{background:#ffe93b; box-shadow:0 0 6px #ffe93b;}
+.ray:nth-child(4) span{background:#3bff8e; box-shadow:0 0 6px #3bff8e;}
+.ray:nth-child(5) span{background:#3bd0ff; box-shadow:0 0 6px #3bd0ff;}
+.ray:nth-child(6) span{background:#b23bff; box-shadow:0 0 6px #b23bff;}
+.rays .ray{animation:rayFire 4s ease-in-out infinite;}
+@keyframes rayFire{0%,42%{opacity:0;}46%{opacity:1;}70%{opacity:.9;}85%,100%{opacity:0;}}
+#title{display:flex; gap:.35em; flex-wrap:wrap; justify-content:center; font-size:clamp(16px,5.4vw,34px); letter-spacing:.06em; text-align:center; color:#e8e6f0;}
+#title span{display:inline-block; animation:frag 3.6s ease-in-out infinite; text-shadow:0 0 6px rgba(232,230,240,.35);}
+#title span:nth-child(1){color:#ff3b5c; animation-delay:.0s;}#title span:nth-child(2){color:#ff9e3b; animation-delay:.05s;}#title span:nth-child(3){color:#ffe93b; animation-delay:.10s;}#title span:nth-child(4){color:#3bff8e; animation-delay:.15s;}#title span:nth-child(5){color:#3bd0ff; animation-delay:.20s;}#title span:nth-child(6){color:#4d6bff; animation-delay:.25s;}#title span:nth-child(7){color:#b23bff; animation-delay:.30s;}#title span:nth-child(8){color:#e8e6f0; animation-delay:.35s;}#title span:nth-child(9){color:#ff3b5c; animation-delay:.40s;}#title span:nth-child(10){color:#ff9e3b; animation-delay:.45s;}#title span:nth-child(11){color:#ffe93b; animation-delay:.50s;}#title span:nth-child(12){color:#3bff8e; animation-delay:.55s;}#title span:nth-child(13){color:#e8e6f0; animation-delay:.60s;}
+@keyframes frag{0%,100%{transform:translate(0,0); opacity:1;}46%{transform:translate(0,0); opacity:1;}48%{transform:translate(calc(var(--jx,1) * 3px), calc(var(--jy,1) * -2px)); opacity:.6;}50%{transform:translate(calc(var(--jx,1) * -4px), calc(var(--jy,1) * 3px)); opacity:1;}52%{transform:translate(0,0); opacity:1;}}
+#title span:nth-child(odd){--jx:1;--jy:-1;}#title span:nth-child(even){--jx:-1;--jy:1;}
+#subtitle{color:#6a6280; font-size:clamp(7px,2vw,10px); letter-spacing:.25em; text-align:center;}
+#startText{color:#e8e6f0; font-size:clamp(9px,2.6vw,14px); letter-spacing:.15em; animation:blink 1.1s steps(1) infinite;}
+@keyframes blink{50%{opacity:0;}}
+#flash{position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:50;}
+#flash.on{animation:flashOut .6s ease-out forwards;}
+@keyframes flashOut{0%{opacity:1;}100%{opacity:0; visibility:hidden;}}
+#hud{
+  position:absolute;top:12px;left:12px;right:12px;
+  display:flex;justify-content:space-between;pointer-events:none;
+  font-size:12px;text-transform:uppercase;letter-spacing:1px;
+}
+#weapon-indicator{font-size:11px;color:#aaa;background:rgba(0,0,0,0.6);padding:3px 8px;border-radius:3px}
+#fragments{display:flex;gap:7px}
+.fragment{width:12px;height:12px;border-radius:50%;opacity:.18;border:1px solid #777}
+.fragment.on{opacity:1;box-shadow:0 0 10px currentColor}
+#message{
+  position:absolute;top:44px;left:50%;transform:translateX(-50%);
+  padding:7px 12px;background:rgba(0,0,0,.85);border:1px solid #555;
+  font-size:11px;opacity:0;transition:opacity .2s;pointer-events:none;color:#fff;
+}
+#message.show{opacity:1}
+.controls-hint{margin-top:10px;color:#777;font-size:11px;text-align:center}
+button{
+  margin-top:12px;background:#111;color:#fff;border:1px solid #555;
+  padding:8px 14px;font-family:inherit;cursor:pointer
+}
+button:hover{background:#222}
+</style>
+</head>
+<body>
+
+<div id="start-screen">
+  <div id="stage">
+    <div id="stars"></div>
+
+    <div id="content">
+      <div id="prismWrap">
+        <div class="beam"></div>
+        <div class="rays">
+          <div class="ray"><span></span></div>
+          <div class="ray"><span></span></div>
+          <div class="ray"><span></span></div>
+          <div class="ray"><span></span></div>
+          <div class="ray"><span></span></div>
+          <div class="ray"><span></span></div>
+        </div>
+        <div class="prism"></div>
+      </div>
+
+      <div id="title">
+        <span>I</span><span>N</span><span>F</span><span>R</span><span>A</span><span>G</span><span>M</span><span>E</span><span>N</span><span>T</span><span>A</span><span>D</span><span>O</span>
+      </div>
+      <div id="subtitle">CADA CACO GUARDA UMA VERDADE</div>
+      <div id="startText">PRESSIONE PARA COMEÇAR</div>
+    </div>
+
+    <div id="vignette"></div>
+    <div id="scan"></div>
+  </div>
+</div>
+
+<div id="flash"></div>
+
+<div id="game-container">
+  <canvas id="gameCanvas" width="640" height="360"></canvas>
+
+  <div id="hud">
+    <span id="phase-name">VAZIO</span>
+    <span id="weapon-indicator">ARMA: NENHUMA</span>
+    <div id="fragments">
+      <span class="fragment" id="f1" style="color:#ffe100;background:#ffe100"></span>
+      <span class="fragment" id="f2" style="color:#00a2ff;background:#00a2ff"></span>
+      <span class="fragment" id="f3" style="color:#ff2233;background:#ff2233"></span>
+      <span class="fragment" id="f4" style="color:#b026ff;background:#b026ff"></span>
+    </div>
+  </div>
+
+  <div id="message"></div>
+  <div id="ui-overlay"><div id="dialogue-text">...</div></div>
+</div>
+
+<div class="controls-hint">
+  [A/D] ou [←/→] Mover &nbsp;|&nbsp; [W/ESPAÇO/↑] Pular &nbsp;|&nbsp; [J] Alegria &nbsp;|&nbsp; [K] Tristeza &nbsp;|&nbsp; [L] Raiva &nbsp;|&nbsp; [Ç] Medo &nbsp;|&nbsp; [E] Interagir &nbsp;|&nbsp; [ESC] Pausar &nbsp;|&nbsp; [ENTER] Fala
+</div>
+<button id="restart">Reiniciar jogo</button>
+
+<script>
+"use strict";
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const dialogueEl = document.getElementById("dialogue-text");
+const phaseNameEl = document.getElementById("phase-name");
+const weaponIndEl = document.getElementById("weapon-indicator");
+const messageEl = document.getElementById("message");
+const startScreenEl = document.getElementById("start-screen");
+const flashEl = document.getElementById("flash");
+const stageEl = document.getElementById("stage");
+
+let currentPhaseIdx = 0;
+let platforms = [];
+let interactables = [];
+let hazards = [];
+let projectiles = [];
+let bgParticles = [];
+let attackEffects = [];
+let emotionNPC = null;
+let exitDoor = null;
+let isTransitioning = false;
+let transitionAlpha = 0;
+let dialogueQueue = [];
+let currentDialogue = "";
+let dialogueIndex = 0;
+let dialogueDone = false;
+let messageTimer = null;
+let isPaused = false;
+let gameStarted = false;
+let loopStarted = false;
+
+const bossState = {
+  active: false,
+  x: 470,
+  y: 250,
+  width: 42,
+  height: 42,
+  hp: 5,
+  invuln: 0
+};
+
+// Trilhas MP3 em ../songs/game Audio; repetem durante todas as fases da emoção.
+const musicByPhase = {
+  ALEGRIA_1: "../songs/game Audio/fase da alegria.mp3",
+  ALEGRIA_2: "../songs/game Audio/fase da alegria.mp3",
+  ALEGRIA_3: "../songs/game Audio/fase da alegria.mp3",
+  TRISTEZA_1: "../songs/game Audio/fase da tristeza.mp3",
+  TRISTEZA_2: "../songs/game Audio/fase da tristeza.mp3",
+  TRISTEZA_3: "../songs/game Audio/fase da tristeza.mp3",
+  RAIVA_1: "../songs/game Audio/fase da raiva.mp3",
+  RAIVA_2: "../songs/game Audio/fase da raiva.mp3",
+  RAIVA_3: "../songs/game Audio/fase da raiva.mp3",
+  MEDO_1: "../songs/game Audio/fase do medo.mp3",
+  MEDO_2: "../songs/game Audio/fase do medo.mp3",
+  MEDO_3: "../songs/game Audio/fase do medo.mp3"
+};
+const backgroundMusic = new Audio();
+backgroundMusic.loop = true;
+backgroundMusic.preload = "auto";
+backgroundMusic.volume = 0.35;
+let currentMusicSrc = "";
+
+function normalizeAudioUrl(src){
+  if(!src) return "";
+  return encodeURI(src).replace(/#/g, "%23");
+}
+
+function unlockAudio() {
+  if(!backgroundMusic) return;
+  backgroundMusic.muted = false;
+  backgroundMusic.volume = 0.35;
+  if(backgroundMusic.paused){
+    backgroundMusic.play().catch(() => {});
+  }
+}
+
+function syncPhaseMusic(phaseId){
+  const nextSrc = musicByPhase[phaseId] || "";
+  if(nextSrc !== currentMusicSrc){
+    backgroundMusic.pause();
+    backgroundMusic.removeAttribute("src");
+    backgroundMusic.load();
+    currentMusicSrc = nextSrc;
+    if(nextSrc) backgroundMusic.src = normalizeAudioUrl(nextSrc);
+  }
+  if(nextSrc && gameStarted && !isPaused && backgroundMusic.paused){
+    unlockAudio();
+  }
+}
+
+const keys = {};
+const justPressed = {};
+let lastFrameTime = 0;
+
+window.addEventListener("keydown", e => {
+  if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space","KeyW"].includes(e.code))
+    e.preventDefault();
+
+  if(!keys[e.code]) justPressed[e.code] = true;
+  keys[e.code] = true;
+
+  const key = (e.key || "").toLowerCase();
+
+  if(e.code === "Digit1" || key === "1" || e.code === "KeyJ" || key === "j") useAbility("Digit1");
+  if(e.code === "Digit2" || key === "2" || e.code === "KeyK" || key === "k") useAbility("Digit2");
+  if(e.code === "Digit3" || key === "3" || e.code === "KeyL" || key === "l") useAbility("Digit3");
+  if(e.code === "Digit4" || key === "4" || e.code === "Semicolon" || key === "ç" || key === ";") useAbility("Digit4");
+  if(e.code === "KeyE") handleInteraction();
+  if(e.code === "Escape") togglePause();
+  if(e.code === "Enter") advanceDialogue();
+});
+
+window.addEventListener("keyup", e => keys[e.code] = false);
+
+document.getElementById("restart").addEventListener("click", restartGame);
+
+function showTitleScreen(){
+  gameStarted = false;
+  isPaused = true;
+  bossState.active = false;
+  player.fragments = {alegria:false, tristeza:false, raiva:false, medo:false};
+  startScreenEl.classList.remove("hidden");
+  loadPhase(0);
+  setDialogue(PHASES[0].dialogues);
+}
+
+function startGame(){
+  if(gameStarted) return;
+  unlockAudio();
+  gameStarted = true;
+  isPaused = false;
+  syncPhaseMusic(PHASES[currentPhaseIdx].id);
+  flashEl.classList.add("on");
+  setTimeout(() => {
+    startScreenEl.classList.add("hidden");
+  }, 250);
+  if(!loopStarted){
+    loopStarted = true;
+    requestAnimationFrame(gameLoop);
+  }
+}
+
+stageEl.addEventListener("click", () => {
+  unlockAudio();
+  startGame();
+});
+window.addEventListener("keydown", (e) => {
+  unlockAudio();
+
+  if((e.code === "Space" || e.code === "Enter") && !gameStarted && !startScreenEl.classList.contains("hidden")){
+    startGame();
+    return;
+  }
+});
+
+const player = {
+  x:30,y:250,width:16,height:28,
+  vx:0,vy:0,speed:2.3,jumpForce:-6.8,
+  isGrounded:false,canDoubleJump:false,
+  stillTimer:0,facingRight:true,
+  attackTimer:0,
+  abilityActive:false,
+  currentWeapon: null,
+  lightOn:false,
+  observeOn:false,
+  perceiveOn:false,
+  fragments:{alegria:false,tristeza:false,raiva:false,medo:false},
+
+  update(dt = 1 / 60){
+    if(isPaused) return;
+
+    const step = dt * 60;
+    this.vy += 0.35 * step;
+
+    let moving=false;
+    if(keys.KeyA || keys.ArrowLeft){
+      this.vx=-this.speed; this.facingRight=false; moving=true;
+    }else if(keys.KeyD || keys.ArrowRight){
+      this.vx=this.speed; this.facingRight=true; moving=true;
+    }else{
+      this.vx=0;
+    }
+
+    if((keys.KeyW || keys.Space || keys.ArrowUp) && (justPressed.KeyW || justPressed.Space || justPressed.ArrowUp)){
+      if(this.isGrounded){
+        this.vy = this.jumpForce;
+        this.isGrounded = false;
+        this.canDoubleJump = true;
+      }else if(this.canDoubleJump){
+        this.vy = this.jumpForce * 0.9;
+        this.canDoubleJump = false;
+        for(let i=0; i<6; i++){
+          bgParticles.push({
+            x: this.x + 8, y: this.y + 28,
+            vx: (Math.random()-0.5)*3, vy: Math.random()*2,
+            size: 2, color: "#ffffff", alpha: 1, life: 15
+          });
+        }
+      }
+    }
+
+    if(!moving && this.isGrounded) this.stillTimer += step;
+    else this.stillTimer = 0;
+
+    if(this.attackTimer > 0) this.attackTimer -= step;
+
+    this.x += this.vx * step;
+    this.checkHorizontalCollisions();
+
+    this.y += this.vy * step;
+    this.checkVerticalCollisions();
+
+    if(this.x<0)this.x=0;
+    if(this.x+this.width>canvas.width)this.x=canvas.width-this.width;
+
+    if(this.y>canvas.height+50){
+      this.respawn();
+    }
+  },
+
+  respawn(){
+    if(PHASES[currentPhaseIdx].id === "FINAL"){
+      this.x=30;this.y=250;this.vy=0;this.vx=0;
+      return;
+    }
+
+    this.x=30;this.y=250;this.vy=0;this.vx=0;
+    showMessage("Você falhou. Tente novamente.");
+    loadPhase(currentPhaseIdx);
+  },
+
+  checkHorizontalCollisions(){
+    for(const plat of platforms){
+      if(plat.isBroken) continue;
+      if(plat.isFog && !plat.active) continue;
+      if(plat.hidden && !this.abilityActive) continue;
+
+      if(this.collidesWith(plat)){
+        if(this.vx>0)this.x=plat.x-this.width;
+        else if(this.vx<0)this.x=plat.x+plat.width;
+      }
+    }
+  },
+
+  checkVerticalCollisions(){
+    this.isGrounded=false;
+
+    for(const plat of platforms){
+      if(plat.isBroken) continue;
+      if(plat.isFog && !plat.active) continue;
+      if(plat.hidden && !this.abilityActive) continue;
+
+      if(this.collidesWith(plat)){
+        if(this.vy>0 && this.y+this.height-this.vy<=plat.y+10){
+          this.y=plat.y-this.height;
+          this.vy=0;
+          this.isGrounded=true;
+          this.canDoubleJump=false;
+          if(plat.isMoving && plat.vx){
+            this.x += plat.vx;
+          }
+        }else if(this.vy<0){
+          this.y=plat.y+plat.height;
+          this.vy=0;
+        }
+      }
+    }
+  },
+
+  collidesWith(obj){
+    return this.x < obj.x+obj.width &&
+           this.x+this.width > obj.x &&
+           this.y < obj.y+obj.height &&
+           this.y+this.height > obj.y;
+  },
+
+  draw(){
+    const px = Math.floor(this.x);
+    const py = Math.floor(this.y);
+    const isFinal = PHASES[currentPhaseIdx] && PHASES[currentPhaseIdx].id === "FINAL";
+    const bodyColor = isFinal ? "#ffffff" : "#111116";
+    const hairColor = isFinal ? "#ffffff" : "#000000";
+
+    ctx.save();
+
+    ctx.fillStyle = hairColor;
+    if (this.facingRight) {
+      ctx.beginPath();
+      ctx.moveTo(px + 2, py + 4);
+      ctx.lineTo(px - 3, py - 3);
+      ctx.lineTo(px + 8, py + 1);
+      ctx.lineTo(px + 12, py - 2);
+      ctx.lineTo(px + 14, py + 6);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(px + 14, py + 4);
+      ctx.lineTo(px + 19, py - 3);
+      ctx.lineTo(px + 8, py + 1);
+      ctx.lineTo(px + 2, py - 2);
+      ctx.lineTo(px, py + 6);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.fillStyle = bodyColor;
+    ctx.fillRect(px + 3, py + 4, 10, 9);
+
+    ctx.fillStyle = bodyColor;
+    ctx.fillRect(px + 4, py + 13, 8, 8);
+
+    const isMoving = Math.abs(this.vx) > 0.1;
+    const walkOffset = isMoving ? Math.sin(Date.now() * 0.015) * 3 : 0;
+    ctx.fillRect(px + 4, py + 21, 3, 7 + walkOffset);
+    ctx.fillRect(px + 9, py + 21, 3, 7 - walkOffset);
+
+    if (this.lightOn || this.observeOn || this.perceiveOn) {
+      ctx.strokeStyle = this.lightOn ? "#ffe100" : (this.observeOn ? "#00a2ff" : "#b026ff");
+      ctx.lineWidth = 2;
+      const wx = this.facingRight ? px + 14 : px - 4;
+      const wy = py + 12;
+      ctx.beginPath();
+      ctx.arc(wx, wy, 12, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    const center = {x: this.x + this.width / 2, y: this.y + this.height / 2};
+    const time = Date.now() * 0.003;
+    const fragments = [
+      ["alegria","#ffe100",0],
+      ["tristeza","#00a2ff",1.5],
+      ["raiva","#ff2233",3],
+      ["medo","#b026ff",4.5]
+    ];
+
+    fragments.forEach(([name, color, offset]) => {
+      if(this.fragments[name]){
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(
+          center.x + Math.cos(time + offset) * 16,
+          center.y + Math.sin(time + offset) * 16 - 8,
+          3, 0, Math.PI * 2
+        );
+        ctx.fill();
+      }
+    });
+  }
+};
+
+const PHASES = [
+  { id: "VAZIO", group: "VAZIO", name: "VAZIO", weapon: null, dialogues: [
+      "...",
+      "Uma luz branca se abre no escuro.",
+      "Siga em direção à presença que te chama."
+  ]},
+
+  { id: "ALEGRIA_1", group: "ALEGRIA", name: "ALEGRIA I", weapon: null, dialogues: [
+      "🟡 Alegria: A tocha revela o que o vazio queria esconder.",
+      "🟡 Alegria: Pressione [1] para acender a tocha e explorar a escuridão."
+  ]},
+  { id: "ALEGRIA_2", group: "ALEGRIA", name: "ALEGRIA II", weapon: null, dialogues: [
+      "🟡 Alegria: A luz não destrói tudo; ela mostra o caminho.",
+      "🟡 Alegria: Use [1] para iluminar os trechos escondidos e seguir em frente."
+  ]},
+  { id: "ALEGRIA_3", group: "ALEGRIA", name: "ALEGRIA III", weapon: null, dialogues: [
+      "🟡 Alegria: Acenda os totens para abrir a passagem final.",
+      "🟡 Alegria: A luz também revela os vazios em movimento."
+  ]},
+
+  { id: "TRISTEZA_1", group: "TRISTEZA", name: "TRISTEZA I", weapon: null, dialogues: [
+      "🔵 Tristeza: O silêncio do mundo torna-se claro quando você para.",
+      "🔵 Tristeza: Aproxime-se do banco e pressione [E] para observar."
+  ]},
+  { id: "TRISTEZA_2", group: "TRISTEZA", name: "TRISTEZA II", weapon: null, dialogues: [
+      "🔵 Tristeza: Nem tudo aparece enquanto se corre.",
+      "🔵 Tristeza: Observe antes de agir. O caminho nasce da atenção."
+  ]},
+  { id: "TRISTEZA_3", group: "TRISTEZA", name: "TRISTEZA III", weapon: null, dialogues: [
+      "🔵 Tristeza: A névoa não é um obstáculo; é uma resposta ao olhar.",
+      "🔵 Tristeza: O orbe responde à contemplação."
+  ]},
+
+  { id: "RAIVA_1", group: "RAIVA", name: "RAIVA I", weapon: null, dialogues: [
+      "🔴 Raiva: O mundo não se abre com gentileza; ele responde ao impacto.",
+      "🔴 Raiva: Pressione [3] para romper o que insiste em bloquear o caminho."
+  ]},
+  { id: "RAIVA_2", group: "RAIVA", name: "RAIVA II", weapon: null, dialogues: [
+      "🔴 Raiva: O chão rachado guarda a força que você precisa.",
+      "🔴 Raiva: Uma batida certeira abre portas escondidas."
+  ]},
+  { id: "RAIVA_3", group: "RAIVA", name: "RAIVA III", weapon: null, dialogues: [
+      "🔴 Raiva: A sequência do ataque é a diferença entre cair e vencer.",
+      "🔴 Raiva: Rompa o caminho e siga sem hesitar."
+  ]},
+
+  { id: "MEDO_1", group: "MEDO", name: "MEDO I", weapon: null, dialogues: [
+      "🟣 Medo: A escuridão não é só silêncio; ela esconde perigo.",
+      "🟣 Medo: Pressione [4] para perceber o que se move nas sombras."
+  ]},
+  { id: "MEDO_2", group: "MEDO", name: "MEDO II", weapon: null, dialogues: [
+      "🟣 Medo: Nem todo olho é fácil de alcançar, mas ele responde à atenção.",
+      "🟣 Medo: Perceba a sombra, ative o orbe e abra a passagem."
+  ]},
+  { id: "MEDO_3", group: "MEDO", name: "MEDO III", weapon: null, dialogues: [
+      "🟣 Medo: O perigo não desaparece; apenas se revela quando você o escolhe ver.",
+      "🟣 Medo: Use luz, observação e percepção em conjunto."
+  ]},
+
+  { id: "INTEGRACAO", group: "INTEGRACAO", name: "INTEGRAÇÃO", weapon: null, dialogues: [
+      "Todos os fragmentos já apontam para o mesmo lugar.",
+      "Aproxime-se do espelho e pressione [E]."
+  ]},
+  { id: "FINAL", group: "FINAL", name: "INTEGRADO", weapon: null, dialogues: [
+      "Dentre todos os sentimentos que você acha e é: alegria, tristeza, raiva, medo.",
+      "Você é todas elas...",
+      "Você é apenas... Um."
+  ]}
+];
+
+function setDialogue(lines){
+  dialogueQueue=[...lines];
+  nextDialogue();
+}
+
+function nextDialogue(){
+  if(dialogueQueue.length){
+    currentDialogue=dialogueQueue.shift();
+    dialogueIndex=0;
+    dialogueDone=false;
+  }else{
+    currentDialogue="";
+    dialogueDone=true;
+  }
+}
+
+function advanceDialogue(){
+  if(!currentDialogue)return;
+  if(!dialogueDone){
+    dialogueIndex=currentDialogue.length;
+    dialogueDone=true;
+  }else{
+    nextDialogue();
+  }
+}
+
+function updateDialogue(){
+  if(dialogueDone){
+    dialogueEl.textContent=currentDialogue+"  [ENTER]";
+    return;
+  }
+
+  if(dialogueIndex<currentDialogue.length){
+    dialogueIndex+=0.65;
+    dialogueEl.textContent=currentDialogue.substring(0,Math.floor(dialogueIndex));
+    if(dialogueIndex>=currentDialogue.length) dialogueDone=true;
+  }
+}
+
+function showMessage(text){
+  messageEl.textContent=text;
+  messageEl.classList.add("show");
+  clearTimeout(messageTimer);
+  messageTimer=setTimeout(()=>messageEl.classList.remove("show"),2000);
+}
+
+function initBackgroundParticles(group){
+  bgParticles = [];
+  const count = group === "MEDO" ? 15 : 25;
+  for(let i=0; i<count; i++){
+    bgParticles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: group === "RAIVA" ? (Math.random()-0.5)*0.5 : (Math.random()-0.5)*0.2,
+      vy: group === "TRISTEZA" ? Math.random()*1.5 + 0.5 : (group === "RAIVA" ? -Math.random()*1 - 0.2 : (Math.random()-0.5)*0.3),
+      size: Math.random()*2 + 1,
+      alpha: Math.random()*0.5 + 0.2,
+      color: group === "ALEGRIA" ? "#ffe100" : (group === "TRISTEZA" ? "#00a2ff" : (group === "RAIVA" ? "#ff2233" : "#b026ff"))
+    });
+  }
+}
+
+function loadPhase(idx){
+  currentPhaseIdx = idx;
+  const phase = PHASES[idx];
+
+  platforms=[];
+  interactables=[];
+  hazards=[];
+  projectiles=[];
+  attackEffects=[];
+  emotionNPC=null;
+  exitDoor=null;
+
+  player.x=30; player.y=250; player.vx=0; player.vy=0;
+  player.abilityActive=false;
+  player.lightOn=false;
+  player.observeOn=false;
+  player.perceiveOn=false;
+  player.currentWeapon = null;
+
+  if(phase.id === "FINAL"){
+    player.fragments = {alegria:true, tristeza:true, raiva:true, medo:true};
+  }
+
+  bossState.active = phase.id === "MEDO_3";
+  if(phase.id !== "MEDO_3"){
+    bossState.hp = 5;
+    bossState.invuln = 0;
+  }
+
+  phaseNameEl.textContent = phase.name;
+  weaponIndEl.textContent = `HABILIDADE: ${getPhaseAbilityLabel(phase)}`;
+  syncPhaseMusic(phase.id);
+  setDialogue(phase.dialogues);
+  initBackgroundParticles(phase.group);
+
+  switch(phase.id){
+    case "VAZIO":
+      platforms.push({x:0,y:320,width:640,height:40});
+      exitDoor={x:580,y:260,width:30,height:60,color:"#fff"};
+      break;
+
+    case "ALEGRIA_1":
+      emotionNPC={x:80,y:290,color:"#ffe100"};
+      platforms.push(
+        {x:0,y:320,width:200,height:40},
+        {x:250,y:250,width:100,height:15,hidden:true},
+        {x:420,y:320,width:220,height:40}
+      );
+      exitDoor={x:580,y:260,width:30,height:60,color:"#ffe100"};
+      break;
+
+    case "ALEGRIA_2":
+      platforms.push(
+        {x:0,y:320,width:120,height:40},
+        {x:145,y:320,width:80,height:40,hidden:true},
+        {x:210,y:290,width:80,height:15,hidden:true},
+        {x:300,y:260,width:90,height:15,hidden:true},
+        {x:410,y:240,width:90,height:15,hidden:true},
+        {x:520,y:230,width:60,height:15,hidden:true},
+        {x:560,y:320,width:80,height:40},
+        {x:140,y:260,width:18,height:80,hidden:true},
+        {x:270,y:210,width:18,height:100,hidden:true},
+        {x:390,y:180,width:18,height:110,hidden:true},
+        {x:500,y:160,width:18,height:120,hidden:true},
+        {x:245,y:180,width:90,height:15,hidden:true},
+        {x:345,y:150,width:90,height:15,hidden:true},
+        {x:445,y:120,width:80,height:15,hidden:true},
+        {x:230,y:220,width:20,height:100,isVine:true,color:"#d4ba00"},
+        {x:410,y:220,width:20,height:100,isVine:true,color:"#d4ba00"}
+      );
+      exitDoor={x:580,y:260,width:30,height:60,color:"#ffe100"};
+      break;
+
+    case "ALEGRIA_3":
+      platforms.push(
+        {x:0,y:320,width:120,height:40},
+        {x:180,y:270,width:90,height:15,isMoving:true,vx:1.4,minX:170,maxX:310},
+        {x:330,y:230,width:90,height:15},
+        {x:430,y:220,width:80,height:15},
+        {x:540,y:320,width:100,height:40}
+      );
+      interactables.push(
+        {x:100,y:280,width:15,height:15,active:false,id:1,isTotem:true},
+        {x:250,y:220,width:15,height:15,active:false,id:2,isTotem:true},
+        {x:450,y:180,width:15,height:15,active:false,id:3,isTotem:true}
+      );
+      exitDoor={x:580,y:260,width:30,height:60,color:"#ffe100",locked:true};
+      break;
+
+    case "TRISTEZA_1":
+      emotionNPC={x:80,y:290,color:"#00a2ff"};
+      platforms.push(
+        {x:0,y:320,width:150,height:40},
+        {
+          x:180, y:280, width:330, height:20,
+          isFog: true, active: false, timer: 15.0, warning: false,
+          color: "rgba(0, 162, 255, 0.45)"
+        },
+        {x:530,y:320,width:110,height:40}
+      );
+      interactables.push({x:110,y:290,width:18,height:18,isBench:true});
+      exitDoor={x:580,y:260,width:30,height:60,color:"#00a2ff"};
+      break;
+
+    case "TRISTEZA_2":
+      platforms.push({x:0,y:320,width:640,height:40});
+      interactables.push({x:500,y:280,width:20,height:20,isShooter:true,timer:0});
+      exitDoor={x:580,y:260,width:30,height:60,color:"#00a2ff"};
+      break;
+
+    case "TRISTEZA_3":
+      platforms.push(
+        {x:0,y:320,width:150,height:40},
+        {x:230,y:220,width:80,height:15},
+        {x:480,y:320,width:160,height:40}
+      );
+      interactables.push(
+        {x:300,y:100,width:25,height:25,isTargetOrbe:true,hit:false},
+        {x:450,y:280,width:20,height:20,isShooter:true,timer:0}
+      );
+      exitDoor={x:580,y:260,width:30,height:60,color:"#00a2ff"};
+      break;
+
+    case "RAIVA_1":
+      emotionNPC={x:80,y:290,color:"#ff2233"};
+      platforms.push(
+        {x:0,y:320,width:640,height:40},
+        {x:220,y:170,width:25,height:150,breakable:true,color:"#ff2233"},
+        {x:400,y:170,width:25,height:150,breakable:true,color:"#ff2233"}
+      );
+      exitDoor={x:580,y:260,width:30,height:60,color:"#ff2233"};
+      break;
+
+    case "RAIVA_2":
+      platforms.push(
+        {x:0,y:320,width:200,height:40},
+        {x:350,y:320,width:290,height:40}
+      );
+      interactables.push({x:170,y:310,width:25,height:10,isCrackedFloor:true});
+      exitDoor={x:580,y:260,width:30,height:60,color:"#ff2233"};
+      break;
+
+    case "RAIVA_3":
+      platforms.push(
+        {x:0,y:320,width:120,height:40},
+        {x:180,y:170,width:20,height:150,breakable:true,color:"#ff2233"},
+        {x:260,y:320,width:100,height:40},
+        {x:400,y:170,width:20,height:150,breakable:true,color:"#ff2233"},
+        {x:500,y:320,width:140,height:40}
+      );
+      exitDoor={x:580,y:260,width:30,height:60,color:"#ff2233"};
+      break;
+
+    case "MEDO_1":
+      emotionNPC={x:80,y:290,color:"#b026ff"};
+      platforms.push({x:0,y:320,width:640,height:40});
+      hazards.push(
+        {x:200,y:300,width:60,height:20,type:"hiddenSpike"},
+        {x:380,y:300,width:80,height:20,type:"hiddenSpike"}
+      );
+      exitDoor={x:580,y:260,width:30,height:60,color:"#b026ff"};
+      break;
+
+    case "MEDO_2":
+      platforms.push(
+        {x:0,y:320,width:170,height:40},
+        {x:200,y:260,width:90,height:15},
+        {x:320,y:215,width:95,height:15},
+        {x:435,y:260,width:90,height:15},
+        {x:510,y:320,width:130,height:40}
+      );
+      interactables.push({x:360,y:180,width:20,height:20,isEyeTarget:true,hit:false});
+      exitDoor={x:580,y:260,width:30,height:60,color:"#b026ff",locked:true};
+      break;
+
+    case "MEDO_3":
+      platforms.push(
+        {x:0,y:320,width:120,height:40},
+        {x:180,y:260,width:140,height:15},
+        {x:450,y:320,width:190,height:40}
+      );
+      hazards.push({x:120,y:310,width:330,height:10,type:"spike"});
+      interactables.push({x:320,y:120,width:20,height:20,isEyeTarget:true,hit:false});
+      bossState.active = true;
+      bossState.x = 480;
+      bossState.y = 238;
+      bossState.hp = 5;
+      bossState.invuln = 0;
+      exitDoor={x:580,y:260,width:30,height:60,color:"#b026ff",locked:true};
+      break;
+
+    case "INTEGRACAO":
+      platforms.push({x:0,y:320,width:640,height:40});
+      interactables.push({x:310,y:240,width:20,height:80,isMirror:true});
+      break;
+
+    case "FINAL":
+      platforms.push({x:0,y:320,width:640,height:40});
+      break;
+  }
+
+  updateFragmentHUD();
+}
+
+function hitBoss(){
+  if(!bossState.active || bossState.invuln > 0) return;
+
+  bossState.hp -= 1;
+  bossState.invuln = 0.5;
+  showMessage(`O Guardado: ${Math.max(0, bossState.hp)} HP`);
+
+  if(bossState.hp <= 0){
+    bossState.active = false;
+    if(exitDoor) exitDoor.locked = false;
+    player.fragments.medo = true;
+    updateFragmentHUD();
+    showMessage("O Guardado foi vencido! A saída foi liberada.");
+  }
+}
+
+function drawNPC(npc) {
+  if (!npc) return;
+  const nx = Math.floor(npc.x);
+  const ny = Math.floor(npc.y);
+
+  ctx.save();
+  const hover = Math.sin(Date.now() * 0.005) * 3;
+  ctx.fillStyle = npc.color;
+  ctx.fillRect(nx, ny - 16 + hover, 12, 10);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(nx + 4, ny - 13 + hover, 4, 4);
+
+  ctx.fillStyle = npc.color;
+  ctx.beginPath();
+  ctx.moveTo(nx - 2, ny - 6 + hover);
+  ctx.lineTo(nx + 14, ny - 6 + hover);
+  ctx.lineTo(nx + 10, ny + 12 + hover);
+  ctx.lineTo(nx + 2, ny + 12 + hover);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function updateFragmentHUD(){
+  document.getElementById("f1").classList.toggle("on",player.fragments.alegria);
+  document.getElementById("f2").classList.toggle("on",player.fragments.tristeza);
+  document.getElementById("f3").classList.toggle("on",player.fragments.raiva);
+  document.getElementById("f4").classList.toggle("on",player.fragments.medo);
+}
+
+function useAbility(code){
+  if(isTransitioning || isPaused) return;
+
+  const phase = PHASES[currentPhaseIdx];
+
+  if(code === "Digit1" && phase.group === "ALEGRIA"){
+    const torchOn = !player.lightOn;
+    player.lightOn = torchOn;
+    player.abilityActive = torchOn;
+    setTimeout(() => {
+      if(player.lightOn && torchOn){
+        player.abilityActive = false;
+        player.lightOn = false;
+      }
+    }, 2000);
+
+    attackEffects.push({
+      x: player.x + (player.facingRight ? 16 : -24),
+      y: player.y - 10,
+      type: "arc", color: "#ffe100", facingRight: player.facingRight, life: 15
+    });
+
+    platforms.forEach(p => {
+      if(p.isVine && Math.abs(player.x - p.x) < 55){
+        p.isBroken = true;
+        showMessage("Vinha iluminada e quebrada!");
+      }
+    });
+
+    interactables.forEach(item => {
+      if(item.isTotem && Math.hypot(player.x - item.x, player.y - item.y) < 65){
+        item.active = true;
+      }
+    });
+
+    if(interactables.filter(i=>i.isTotem).length > 0 && interactables.filter(i=>i.isTotem).every(i=>i.active)){
+      if(exitDoor) exitDoor.locked = false;
+      showMessage("Todos os totens acesos!");
+    }
+    return;
+  }
+
+  if(code === "Digit2" && phase.group === "TRISTEZA"){
+    player.observeOn = !player.observeOn;
+    player.abilityActive = player.observeOn;
+    if(player.observeOn){
+      platforms.forEach(p => {
+        if(p.isFog){
+          p.active = true;
+          p.timer = 15.0;
+          p.warning = false;
+        }
+      });
+    }
+    showMessage(player.observeOn ? "Observação ativada." : "Observação encerrada.");
+    return;
+  }
+
+  if(code === "Digit3" && phase.group === "RAIVA"){
+    attackEffects.push({
+      x: player.x + (player.facingRight ? 10 : -20),
+      y: player.y + 10,
+      type: "smash", color: "#ff2233", facingRight: player.facingRight, life: 18
+    });
+
+    platforms.forEach(plat => {
+      if(plat.breakable && Math.abs(player.x - plat.x) < 50){
+        plat.isBroken = true;
+        showMessage("Parede rompida!");
+      }
+    });
+
+    interactables.forEach(item => {
+      if(item.isCrackedFloor && Math.abs(player.x - item.x) < 35 && player.isGrounded){
+        player.vy = -10.5;
+        showMessage("Impacto! Caminho liberado!");
+      }
+    });
+    return;
+  }
+
+  if(code === "Digit4" && phase.group === "MEDO"){
+    const target = interactables.find(item => item.isEyeTarget && !item.hit);
+    if(target && Math.abs(player.x - target.x) < 55 && Math.abs(player.y - target.y) < 55){
+      target.hit = true;
+      if(exitDoor) exitDoor.locked = false;
+      player.perceiveOn = true;
+      player.abilityActive = true;
+      showMessage("Orbe ativado! Porta aberta!");
+      setTimeout(() => {
+        player.perceiveOn = false;
+        player.abilityActive = false;
+      }, 1200);
+      return;
+    }
+
+    player.perceiveOn = !player.perceiveOn;
+    player.abilityActive = player.perceiveOn;
+    showMessage(player.perceiveOn ? "Percepção ativada." : "Percepção interrompida.");
+    return;
+  }
+
+  showMessage("Habilidade indisponível nesta fase.");
+}
+
+function handleAbility(){
+  return useAbility("Digit1");
+}
+
+function handleInteraction(){
+  const phase = PHASES[currentPhaseIdx];
+  if(isTransitioning || isPaused) return;
+
+  if(phase.group === "ALEGRIA"){
+    let touchedTorch = false;
+    interactables.forEach(item => {
+      if(item.isTotem && Math.hypot(player.x - item.x, player.y - item.y) < 65){
+        item.active = true;
+        touchedTorch = true;
+      }
+    });
+
+    if(touchedTorch){
+      showMessage("Tocha acesa!");
+      return;
+    }
+  }
+
+  if(phase.group === "TRISTEZA"){
+    const bank = interactables.find(item => item.isBench);
+    if(bank && Math.abs(player.x - bank.x) < 30){
+      player.x = bank.x + 8;
+      player.vx = 0;
+      player.observeOn = true;
+      player.abilityActive = true;
+      platforms.forEach(p => {
+        if(p.isFog){
+          p.active = true;
+          p.timer = 15.0;
+          p.warning = false;
+        }
+      });
+      setTimeout(() => {
+        player.observeOn = false;
+        player.abilityActive = false;
+      }, 1800);
+      showMessage("Você observa... e percebe o caminho.");
+      return;
+    }
+    showMessage("Aproxime-se do banco.");
+    return;
+  }
+
+  if(phase.id === "INTEGRACAO"){
+    const mirror = interactables.find(i => i.isMirror);
+    if(mirror && Math.abs(player.x - mirror.x) < 55){
+      triggerPhaseTransition(currentPhaseIdx + 1);
+    } else {
+      showMessage("Aproxime-se do espelho.");
+    }
+  }
+}
+
+function triggerPhaseTransition(nextIdx){
+  if(isTransitioning)return;
+  isTransitioning=true;
+
+  const currentGroup = PHASES[currentPhaseIdx].group;
+
+  const fadeOut=setInterval(()=>{
+    transitionAlpha+=0.06;
+
+    if(transitionAlpha>=1){
+      clearInterval(fadeOut);
+
+      if(currentGroup === "ALEGRIA" && PHASES[nextIdx].group !== "ALEGRIA") player.fragments.alegria = true;
+      if(currentGroup === "TRISTEZA" && PHASES[nextIdx].group !== "TRISTEZA") player.fragments.tristeza = true;
+      if(currentGroup === "RAIVA" && PHASES[nextIdx].group !== "RAIVA") player.fragments.raiva = true;
+      if(currentGroup === "MEDO" && PHASES[nextIdx].group !== "MEDO") player.fragments.medo = true;
+
+      updateFragmentHUD();
+      loadPhase(nextIdx);
+
+      const fadeIn=setInterval(()=>{
+        transitionAlpha-=0.06;
+        if(transitionAlpha<=0){
+          transitionAlpha=0;
+          clearInterval(fadeIn);
+          isTransitioning=false;
+        }
+      },30);
+    }
+  },30);
+}
+
+function togglePause(){
+  isPaused = !isPaused;
+  if(isPaused){
+    backgroundMusic.pause();
+  }else if(currentMusicSrc){
+    backgroundMusic.play().catch(error => console.warn("Não foi possível retomar a trilha:", error));
+  }
+  showMessage(isPaused ? "Jogo pausado" : "Jogo retomado");
+}
+
+function getPhaseAbilityLabel(phase){
+  if(!phase) return "NENHUMA";
+  if(phase.group === "ALEGRIA") return "TOCHA";
+  if(phase.group === "TRISTEZA") return "OBSERVAR";
+  if(phase.group === "RAIVA") return "ROMPER";
+  if(phase.group === "MEDO") return "PERCEBER";
+  if(phase.id === "FINAL") return "CONCLUSÃO";
+  return "NENHUMA";
+}
+
+function restartGame(){
+  bossState.active = false;
+  player.fragments = {alegria:false, tristeza:false, raiva:false, medo:false};
+  if(PHASES[currentPhaseIdx].id === "FINAL"){
+    showTitleScreen();
+    return;
+  }
+  loadPhase(0);
+}
+
+function drawBackground(group){
+  const w = canvas.width;
+  const h = canvas.height;
+
+  if(group === "ALEGRIA"){
+    const grad = ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0, "#2a2200");
+    grad.addColorStop(1, "#0a0900");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,w,h);
+
+    ctx.fillStyle = "rgba(255,225,0,0.03)";
+    ctx.beginPath();
+    ctx.moveTo(w*0.2, 0); ctx.lineTo(w*0.4, h); ctx.lineTo(w*0.1, h); ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(w*0.7, 0); ctx.lineTo(w*0.9, h); ctx.lineTo(w*0.6, h); ctx.closePath(); ctx.fill();
+
+  }else if(group === "TRISTEZA"){
+    const grad = ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0, "#021224");
+    grad.addColorStop(1, "#02050b");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,w,h);
+
+  }else if(group === "RAIVA"){
+    const grad = ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0, "#260305");
+    grad.addColorStop(1, "#080102");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,w,h);
+
+  }else if(group === "MEDO"){
+    const grad = ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0, "#140224");
+    grad.addColorStop(1, "#040008");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,w,h);
+
+    ctx.fillStyle = "rgba(176, 38, 255, 0.2)";
+    ctx.fillRect(100, 80, 4, 2); ctx.fillRect(108, 80, 4, 2);
+    ctx.fillRect(480, 120, 4, 2); ctx.fillRect(488, 120, 4, 2);
+
+  }else if(group === "INTEGRACAO"){
+    ctx.fillStyle="#e0e0e0";
+    ctx.fillRect(0,0,w,h);
+  }else if(group === "FINAL"){
+    const grad = ctx.createLinearGradient(0,0,w,h);
+    grad.addColorStop(0, "#f8f8f8");
+    grad.addColorStop(1, "#dcdcdc");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,w,h);
+  }else{
+    ctx.fillStyle="#08080c";
+    ctx.fillRect(0,0,w,h);
+  }
+
+  bgParticles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+
+    if(p.y < 0) p.y = h;
+    if(p.y > h) p.y = 0;
+    if(p.x < 0) p.x = w;
+    if(p.x > w) p.x = 0;
+
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.alpha;
+    ctx.fillRect(p.x, p.y, p.size, p.size);
+    ctx.globalAlpha = 1.0;
+  });
+}
+
+function update(dt = 1 / 60){
+  const step = dt * 60;
+
+  if(bossState.active){
+    bossState.invuln = Math.max(0, bossState.invuln - dt);
+
+    const playerCenterX = player.x + player.width / 2;
+    const bossCenterX = bossState.x + bossState.width / 2;
+    const dx = playerCenterX - bossCenterX;
+
+    if(Math.abs(dx) > 8){
+      const speed = 1.1;
+      bossState.x += Math.sign(dx) * speed * step;
+    }
+
+    if(bossState.x < 160) bossState.x = 160;
+    if(bossState.x > 520) bossState.x = 520;
+
+    const bossRect = {x: bossState.x, y: bossState.y, width: bossState.width, height: bossState.height};
+    if(player.collidesWith(bossRect)){
+      if(player.perceiveOn || player.lightOn || player.observeOn){
+        hitBoss();
+      }else{
+        player.respawn();
+      }
+    }
+
+    if(player.perceiveOn && Math.abs(player.x - bossState.x) < 80 && !player.isGrounded){
+      hitBoss();
+    }
+  }
+
+  player.update(dt);
+  updateDialogue();
+
+  platforms.forEach(p => {
+    if(p.isMoving){
+      p.x += p.vx * step;
+      if(p.x > p.maxX || p.x < p.minX) p.vx = -p.vx;
+    }
+    // Atualiza a mecânica do Chão de Névoas
+    if(p.isFog && p.active){
+      p.timer -= dt;
+      if(p.timer <= 3.0 && !p.warning){
+        p.warning = true;
+        showMessage("ALERTA: O Chão de Névoa vai se dissipar!");
+      }
+      if(p.timer <= 0){
+        p.active = false;
+        showMessage("A névoa se dissipou!");
+      }
+    }
+  });
+
+  interactables.forEach(item => {
+    if(item.isShooter){
+      item.timer += step;
+      if(item.timer >= 120){
+        item.timer -= 120;
+        projectiles.push({
+          x: item.x,
+          y: item.y + 5,
+          vx: -3,
+          vy: 0,
+          isEnemy: true
+        });
+      }
+    }
+  });
+
+  for(let i = projectiles.length - 1; i >= 0; i--){
+    const p = projectiles[i];
+    p.x += p.vx * step;
+    p.y += p.vy * step;
+
+    if(p.isArrow){
+      interactables.forEach(item => {
+        if(item.isEyeTarget && Math.hypot(p.x - item.x, p.y - item.y) < 20){
+          item.hit = true;
+          if(exitDoor) exitDoor.locked = false;
+          showMessage("Alvo acertado! Porta aberta!");
+        }
+      });
+    }
+
+    if(p.reflected){
+      interactables.forEach(item => {
+        if(item.isTargetOrbe && Math.hypot(p.x - item.x, p.y - item.y) < 25){
+          item.hit = true;
+          platforms.push({x:180,y:320,width:300,height:40,color:"#00a2ff"});
+          showMessage("Orbe ativado! Ponte de gelo formada!");
+        }
+      });
+    }
+
+    if(p.isEnemy && !p.reflected && player.collidesWith({x:p.x, y:p.y, width:8, height:8})){
+      player.respawn();
+    }
+
+    if(p.x < 0 || p.x > canvas.width) projectiles.splice(i, 1);
+  }
+
+  for(let i = attackEffects.length - 1; i >= 0; i--){
+    const ef = attackEffects[i];
+    ef.life -= step;
+    if(ef.life <= 0) attackEffects.splice(i, 1);
+  }
+
+  hazards.forEach(h => {
+    if((h.type === "spike" || h.type === "hiddenSpike") && player.collidesWith(h)){
+      player.respawn();
+    }
+  });
+
+  if(exitDoor && !exitDoor.locked && player.collidesWith(exitDoor)){
+    triggerPhaseTransition(currentPhaseIdx + 1);
+  }
+
+  if(PHASES[currentPhaseIdx].id === "FINAL"){
+    return;
+  }
+
+  if(isPaused) return;
+
+  Object.keys(justPressed).forEach(k=>delete justPressed[k]);
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  const phase = PHASES[currentPhaseIdx];
+  drawBackground(phase.group);
+
+  if((phase.group === "ALEGRIA" || phase.group === "MEDO") && !player.abilityActive){
+    ctx.fillStyle="rgba(0,0,0,.82)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    const g=ctx.createRadialGradient(
+      player.x+7,player.y+14,10,
+      player.x+7,player.y+14,75
+    );
+    g.addColorStop(0,"rgba(255,255,255,.2)");
+    g.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.fillStyle=g;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+
+  // Renderizar Plataformas
+  platforms.forEach(plat => {
+    if(plat.isBroken) return;
+    if(plat.isFog && !plat.active) return;
+    if(plat.hidden && !player.abilityActive) return;
+
+    if(plat.isFog){
+      // Efeito de piscar nos últimos 3s de névoa
+      if(plat.warning && Math.floor(Date.now() / 150) % 2 === 0){
+        ctx.fillStyle = "rgba(0, 162, 255, 0.15)";
+      }else{
+        ctx.fillStyle = plat.color;
+      }
+    }else{
+      ctx.fillStyle = plat.color || "#1d202d";
+    }
+
+    ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+  });
+
+  drawNPC(emotionNPC);
+
+  // Renderizar Porta
+  if(exitDoor){
+    ctx.fillStyle = exitDoor.locked ? "#333" : exitDoor.color;
+    ctx.fillRect(exitDoor.x, exitDoor.y, exitDoor.width, exitDoor.height);
+  }
+
+  // Renderizar Objetos Interativos
+  interactables.forEach(item => {
+    if(item.isMirror){
+      ctx.fillStyle="#fff"; ctx.fillRect(item.x,item.y,item.width,item.height);
+      ctx.strokeStyle="#888"; ctx.strokeRect(item.x,item.y,item.width,item.height);
+    }else if(item.isVine){
+      ctx.fillStyle="#d4ba00"; ctx.fillRect(item.x,item.y,item.width,item.height);
+    }else if(item.isTotem){
+      ctx.fillStyle=item.active?"#ffe100":"#444";
+      ctx.beginPath(); ctx.arc(item.x+7,item.y+7,7,0,Math.PI*2); ctx.fill();
+    }else if(item.isShooter){
+      ctx.fillStyle="#00a2ff"; ctx.fillRect(item.x,item.y,item.width,item.height);
+    }else if(item.isTargetOrbe){
+      ctx.fillStyle=item.hit?"#00a2ff":"#ff0255";
+      ctx.beginPath(); ctx.arc(item.x+12,item.y+12,10,0,Math.PI*2); ctx.fill();
+    }else if(item.isCrackedFloor){
+      ctx.fillStyle="#ff2233"; ctx.fillRect(item.x,item.y,item.width,item.height);
+    }else if(item.isEyeTarget){
+      ctx.fillStyle=item.hit?"#b026ff":"#444";
+      ctx.beginPath(); ctx.arc(item.x+10,item.y+10,8,0,Math.PI*2); ctx.fill();
+    }else if(item.isBench){
+      ctx.fillStyle="#8a5a2b"; ctx.fillRect(item.x,item.y,item.width,item.height);
+      ctx.fillStyle="#caa76a"; ctx.fillRect(item.x+2,item.y+4,item.width-4,4);
+    }
+  });
+
+  // Renderizar Perigos
+  hazards.forEach(h => {
+    if(h.type === "spike"){
+      ctx.fillStyle="#b026ff"; ctx.fillRect(h.x,h.y,h.width,h.height);
+    }else if(h.type === "hiddenSpike" && player.perceiveOn){
+      ctx.fillStyle="#b026ff"; ctx.fillRect(h.x,h.y,h.width,h.height);
+    }
+  });
+
+  // Renderizar Projéteis
+  projectiles.forEach(p => {
+    ctx.fillStyle = p.isArrow ? "#b026ff" : (p.reflected ? "#00a2ff" : "#ff0255");
+    ctx.fillRect(p.x, p.y, 8, 8);
+  });
+
+  // Boss do Medo
+  if(bossState.active){
+    const blink = bossState.invuln > 0 && Math.floor(Date.now() / 80) % 2 === 0;
+    ctx.fillStyle = blink ? "#f5d6ff" : "#7b2cf4";
+    ctx.fillRect(bossState.x, bossState.y, bossState.width, bossState.height);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(bossState.x + 10, bossState.y + 12, 7, 7);
+    ctx.fillRect(bossState.x + 25, bossState.y + 12, 7, 7);
+    ctx.fillStyle = "#3d0b52";
+    ctx.fillRect(bossState.x + 12, bossState.y + 26, 18, 5);
+
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.font = "10px Courier New";
+    ctx.fillText(`Guardado ${bossState.hp}/5`, bossState.x - 8, bossState.y - 12);
+  }
+
+  // Renderizar Jogador
+  player.draw();
+
+  // Transição entre fases
+  if(transitionAlpha > 0){
+    ctx.fillStyle = `rgba(0,0,0,${transitionAlpha})`;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+}
+
+function gameLoop(timestamp){
+  if(!lastFrameTime) lastFrameTime = timestamp;
+
+  const deltaSeconds = Math.min((timestamp - lastFrameTime) / 1000, 0.033);
+  lastFrameTime = timestamp;
+
+  update(deltaSeconds);
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+loadPhase(0);
+draw();
+</script>
+</body>
+</html>

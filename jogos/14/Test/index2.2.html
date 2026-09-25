@@ -1,0 +1,3269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>INfragmentado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  height:100%;background:#050308;overflow:hidden;
+  font-family:'Courier New',monospace;color:#e8e6f0;
+  position:fixed;inset:0;touch-action:none;overscroll-behavior:none;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;
+}
+body{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+
+/* ============ ABERTURA / MENU ============ */
+#start-screen{
+  position:fixed;inset:0;z-index:900;
+  transition:opacity .25s ease,visibility .25s ease;
+}
+#start-screen.hidden{opacity:0;visibility:hidden;pointer-events:none}
+#stage{
+  position:relative;width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  background:radial-gradient(ellipse at 50% 40%,#140d24 0%,#0b0714 45%,#050308 100%);
+  font-family:'Press Start 2P',monospace;
+}
+#stars{position:absolute;inset:0;opacity:.5;animation:twinkle 3s steps(2) infinite;
+  background-image:
+    radial-gradient(1px 1px at 10% 20%,#6a6280 50%,transparent 51%),
+    radial-gradient(1px 1px at 80% 15%,#6a6280 50%,transparent 51%),
+    radial-gradient(1px 1px at 30% 70%,#6a6280 50%,transparent 51%),
+    radial-gradient(1px 1px at 60% 85%,#6a6280 50%,transparent 51%),
+    radial-gradient(1px 1px at 90% 60%,#6a6280 50%,transparent 51%),
+    radial-gradient(1px 1px at 45% 30%,#6a6280 50%,transparent 51%),
+    radial-gradient(1px 1px at 20% 90%,#6a6280 50%,transparent 51%),
+    radial-gradient(1px 1px at 70% 40%,#6a6280 50%,transparent 51%);
+}
+@keyframes twinkle{50%{opacity:.15}}
+#scan{position:absolute;inset:0;pointer-events:none;z-index:20;mix-blend-mode:multiply;
+  background:repeating-linear-gradient(to bottom,
+    rgba(0,0,0,0) 0px,rgba(0,0,0,0) 2px,rgba(0,0,0,.25) 3px,rgba(0,0,0,.25) 4px);}
+#ss-vignette{position:absolute;inset:0;pointer-events:none;z-index:19;box-shadow:inset 0 0 18vw 4vw #000}
+#content{position:relative;z-index:5;display:flex;flex-direction:column;
+  align-items:center;gap:min(6vh,40px);width:100%;padding:20px}
+#prismWrap{position:relative;width:min(46vw,220px);height:min(46vw,220px);
+  display:flex;align-items:center;justify-content:center}
+.beam{position:absolute;left:50%;top:8%;width:6px;height:36%;background:#fff;
+  box-shadow:0 0 8px 2px #fff;transform:translateX(-50%);opacity:0;
+  animation:beamIn 4s ease-in-out infinite}
+@keyframes beamIn{0%,10%{opacity:0;height:0%}20%,45%{opacity:1;height:36%}55%,100%{opacity:0;height:36%}}
+.prism{width:0;height:0;border-left:46px solid transparent;border-right:46px solid transparent;
+  border-bottom:80px solid #cfd6ff;position:relative;z-index:3;
+  filter:drop-shadow(0 0 10px #cfd6ff) drop-shadow(0 0 22px #8f9bff);
+  animation:pulse 4s ease-in-out infinite}
+@keyframes pulse{0%,15%{filter:drop-shadow(0 0 4px #9aa3d9) drop-shadow(0 0 8px #6b74a8)}
+  30%,45%{filter:drop-shadow(0 0 14px #fff) drop-shadow(0 0 30px #cfd6ff)}
+  60%,100%{filter:drop-shadow(0 0 4px #9aa3d9) drop-shadow(0 0 8px #6b74a8)}}
+.ray{position:absolute;top:52%;left:50%;width:2px;height:2px;transform-origin:0 50%;opacity:0}
+.ray span{position:absolute;left:0;top:-1.5px;width:min(22vw,120px);height:3px;display:block}
+.ray:nth-child(1){transform:translate(-50%,-50%) rotate(-26deg)}
+.ray:nth-child(2){transform:translate(-50%,-50%) rotate(-15deg)}
+.ray:nth-child(3){transform:translate(-50%,-50%) rotate(-5deg)}
+.ray:nth-child(4){transform:translate(-50%,-50%) rotate(5deg)}
+.ray:nth-child(5){transform:translate(-50%,-50%) rotate(15deg)}
+.ray:nth-child(6){transform:translate(-50%,-50%) rotate(26deg)}
+.ray:nth-child(1) span{background:#ff3b5c;box-shadow:0 0 6px #ff3b5c}
+.ray:nth-child(2) span{background:#ff9e3b;box-shadow:0 0 6px #ff9e3b}
+.ray:nth-child(3) span{background:#ffe93b;box-shadow:0 0 6px #ffe93b}
+.ray:nth-child(4) span{background:#3bff8e;box-shadow:0 0 6px #3bff8e}
+.ray:nth-child(5) span{background:#3bd0ff;box-shadow:0 0 6px #3bd0ff}
+.ray:nth-child(6) span{background:#b23bff;box-shadow:0 0 6px #b23bff}
+.rays .ray{animation:rayFire 4s ease-in-out infinite}
+@keyframes rayFire{0%,42%{opacity:0}46%{opacity:1}70%{opacity:.9}85%,100%{opacity:0}}
+#title{display:flex;gap:.35em;flex-wrap:wrap;justify-content:center;
+  font-size:clamp(16px,5.4vw,34px);letter-spacing:.06em;text-align:center;color:#e8e6f0}
+#title span{display:inline-block;animation:frag 3.6s ease-in-out infinite;
+  text-shadow:0 0 6px rgba(232,230,240,.35)}
+#title span:nth-child(1){color:#ff3b5c;animation-delay:.0s}
+#title span:nth-child(2){color:#ff9e3b;animation-delay:.05s}
+#title span:nth-child(3){color:#ffe93b;animation-delay:.10s}
+#title span:nth-child(4){color:#3bff8e;animation-delay:.15s}
+#title span:nth-child(5){color:#3bd0ff;animation-delay:.20s}
+#title span:nth-child(6){color:#4d6bff;animation-delay:.25s}
+#title span:nth-child(7){color:#b23bff;animation-delay:.30s}
+#title span:nth-child(8){color:#e8e6f0;animation-delay:.35s}
+#title span:nth-child(9){color:#ff3b5c;animation-delay:.40s}
+#title span:nth-child(10){color:#ff9e3b;animation-delay:.45s}
+#title span:nth-child(11){color:#ffe93b;animation-delay:.50s}
+#title span:nth-child(12){color:#3bff8e;animation-delay:.55s}
+#title span:nth-child(13){color:#e8e6f0;animation-delay:.60s}
+@keyframes frag{0%,100%{transform:translate(0,0);opacity:1}46%{transform:translate(0,0);opacity:1}
+  48%{transform:translate(calc(var(--jx,1)*3px),calc(var(--jy,1)*-2px));opacity:.6}
+  50%{transform:translate(calc(var(--jx,1)*-4px),calc(var(--jy,1)*3px));opacity:1}
+  52%{transform:translate(0,0);opacity:1}}
+#title span:nth-child(odd){--jx:1;--jy:-1}
+#title span:nth-child(even){--jx:-1;--jy:1}
+#subtitle{color:#6a6280;font-size:clamp(7px,2vw,10px);letter-spacing:.25em;text-align:center}
+#startText{color:#e8e6f0;font-size:clamp(9px,2.6vw,14px);letter-spacing:.15em;
+  animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:950}
+#flash.on{animation:flashOut .6s ease-out forwards}
+@keyframes flashOut{0%{opacity:1}100%{opacity:0;visibility:hidden}}
+
+/* ============ JOGO ============ */
+#game-container{position:relative;width:min(96vw,960px);margin:0 auto;
+  top:50%;transform:translateY(-50%)}
+#game{
+  width:100% !important;height:auto !important;display:block;background:#000;
+  border:2px solid #252525;image-rendering:pixelated;touch-action:none;
+}
+#hud{
+  position:absolute;top:12px;left:12px;right:12px;
+  display:flex;justify-content:space-between;align-items:center;pointer-events:none;
+  font-size:11px;text-transform:uppercase;letter-spacing:1px;
+  font-family:'Press Start 2P',monospace;text-shadow:0 1px 2px #000;
+}
+#weapon-indicator{font-size:9px;color:#aaa;background:rgba(0,0,0,.6);padding:3px 8px;border-radius:3px}
+#fragments{display:flex;gap:7px}
+.fragment{width:12px;height:12px;border-radius:50%;opacity:.18;border:1px solid #777;transition:.3s}
+.fragment.on{opacity:1;box-shadow:0 0 10px currentColor}
+#message{
+  position:absolute;top:44px;left:50%;transform:translateX(-50%);
+  padding:7px 12px;background:rgba(0,0,0,.85);border:1px solid #555;
+  font-size:11px;opacity:0;transition:opacity .2s;pointer-events:none;color:#fff;
+  z-index:15;white-space:nowrap;
+}
+#message.show{opacity:1}
+#ui-overlay{
+  position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
+  width:min(84%,640px);min-height:52px;padding:10px 14px;
+  background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.25);border-radius:5px;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  pointer-events:none;opacity:0;transition:opacity .2s;z-index:14;
+}
+#dialogue-text{font-size:13px;line-height:1.35;color:#f0f0f0;text-shadow:0 1px 2px rgba(0,0,0,.9)}
+.controls-hint{margin-top:8px;color:#777;font-size:11px;text-align:center}
+#restart{
+  display:block;margin:8px auto 0;background:#111;color:#fff;border:1px solid #555;
+  padding:8px 14px;font-family:'Press Start 2P',monospace;font-size:9px;cursor:pointer;
+}
+#restart:hover{background:#222}
+#rotate-hint{display:none;position:fixed;inset:0;z-index:980;background:#000;color:#fff;
+  flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px}
+#rotate-hint .phone{font-size:54px;animation:tilt 1.6s ease-in-out infinite}
+#rotate-hint p{font-size:16px;letter-spacing:2px}
+#rotate-hint small{color:#888;font-size:12px}
+@keyframes tilt{0%,100%{transform:rotate(0deg)}50%{transform:rotate(90deg)}}
+@media (orientation:portrait) and (pointer:coarse){#rotate-hint{display:flex}}
+</style>
+</head>
+<body>
+
+<!-- ============ ABERTURA / MENU ============ -->
+<div id="start-screen">
+  <div id="stage">
+    <div id="stars"></div>
+    <div id="content">
+      <div id="prismWrap">
+        <div class="beam"></div>
+        <div class="rays">
+          <div class="ray"><span></span></div>
+          <div class="ray"><span></span></div>
+          <div class="ray"><span></span></div>
+          <div class="ray"><span></span></div>
+          <div class="ray"><span></span></div>
+          <div class="ray"><span></span></div>
+        </div>
+        <div class="prism"></div>
+      </div>
+      <div id="title">
+        <span>I</span><span>N</span><span>F</span><span>R</span><span>A</span><span>G</span><span>M</span><span>E</span><span>N</span><span>T</span><span>A</span><span>D</span><span>O</span>
+      </div>
+      <div id="subtitle">CADA CACO GUARDA UMA VERDADE</div>
+      <div id="startText">PRESSIONE PARA COMEÇAR</div>
+    </div>
+    <div id="ss-vignette"></div>
+    <div id="scan"></div>
+  </div>
+</div>
+<div id="flash"></div>
+
+<!-- ============ JOGO ============ -->
+<div id="game-container">
+  <canvas id="game" width="960" height="540"></canvas>
+  <div id="hud">
+    <span id="phase-name">MENU</span>
+    <span id="weapon-indicator">HABILIDADE: —</span>
+    <div id="fragments">
+      <span class="fragment" id="f1" style="color:#ffe100;background:#ffe100"></span>
+      <span class="fragment" id="f2" style="color:#3bd0ff;background:#3bd0ff"></span>
+      <span class="fragment" id="f3" style="color:#ff3b5c;background:#ff3b5c"></span>
+      <span class="fragment" id="f4" style="color:#b23bff;background:#b23bff"></span>
+    </div>
+  </div>
+  <div id="message"></div>
+  <div id="ui-overlay"><div id="dialogue-text">...</div></div>
+</div>
+
+<div class="controls-hint">
+  [A/D ou ←/→] Mover · [W/↑] Pulo duplo · [E] Habilidade · [ESPAÇO] Fúria/Ação ·
+  [Q] Barreira · [F] Fenda · [P] Pausa · [R] Reiniciar · [M] Som
+</div>
+<button id="restart">REINICIAR FASE</button>
+
+<div id="rotate-hint">
+  <div class="phone">📱</div>
+  <p>GIRE O CELULAR</p>
+  <small>o jogo acontece na paisagem</small>
+</div>
+
+<script src="https://unpkg.com/kaplay@3001.0.0-alpha.21/dist/kaplay.js"></script>
+<script>
+// ============================================================
+// INfragmentado — BUILD 4117 (tudo-em-um)
+// Casco visual do protótipo + motor Kaplay completo.
+// >>> EDITE: "[SUA EQUIPE]" na cena de título <<<
+// ============================================================
+console.log(">>> INfragmentado — build 4117 <<<");
+
+const PLAYER_W = 24;
+const PLAYER_H = 48;
+const MOVE_SPEED = 220;
+const JUMP_FORCE = 500;
+const ACCEL = 1600, AIR_ACCEL = 1000, COYOTE = 0.1, JUMP_BUF = 0.12;
+const MAX_FALL = 950;
+const JOY_FADE = 6;
+
+const collectedFragments = [];
+const powers = { raiva: false, alegria: false, tristeza: false, medo: false };
+let transitioning = false, currentSceneName = "title";
+let paused = false, pauseUI = [], dialogueOpen = false, dlg = null;
+let _camTarget = null, _camWorldW = 800, camSnap = true;
+let _spawn = { x: 64, y: 448 }, _fallGuard = false, _fragHud = [], _sadInvuln = false;
+let _joyFadeWarned = false;
+
+kaplay({
+  canvas: document.getElementById("game"),
+  background: [0, 0, 0], width: 960, height: 540, crisp: true,
+  letterbox: true,
+});
+setGravity(800);
+
+// ---- Ponte com o casco DOM ----
+const phaseNameEl = document.getElementById("phase-name");
+const weaponIndEl = document.getElementById("weapon-indicator");
+const dialogueEl = document.getElementById("dialogue-text");
+const overlayEl = document.getElementById("ui-overlay");
+const messageEl = document.getElementById("message");
+
+const PHASE_META = {
+  title: ["MENU", "—"],
+  void: ["VAZIO", "MOVER · PULAR"],
+  joy1: ["ALEGRIA I", "ILUMINAR (E)"],
+  joy2: ["ALEGRIA II", "CORTAR (E)"],
+  joy3: ["ALEGRIA III", "TOTENS (E)"],
+  sad1: ["TRISTEZA I", "PARAR · REFLETIR"],
+  sad2: ["TRISTEZA II", "REFLETIR (E)"],
+  sad3: ["TRISTEZA III", "REFLETIR (E)"],
+  anger: ["RAIVA", "ROMPER (ESPAÇO)"],
+  fear: ["MEDO", "PERCEBER (ESPAÇO)"],
+  shadow: ["SOMBRA", "4 PODERES"],
+  integration: ["INTEGRAÇÃO", "OLHAR"],
+};
+function syncPhaseHUD() {
+  const m = PHASE_META[currentSceneName] || ["—", "—"];
+  phaseNameEl.textContent = m[0];
+  weaponIndEl.textContent = "HABILIDADE: " + m[1];
+}
+function updateFragmentHUD() {
+  const has = (c) => collectedFragments.some((f) => f.color[0] === c[0] && f.color[1] === c[1]);
+  document.getElementById("f1").classList.toggle("on", has([255, 215, 0]));
+  document.getElementById("f2").classList.toggle("on", has([0, 0, 255]));
+  document.getElementById("f3").classList.toggle("on", has([255, 0, 0]));
+  document.getElementById("f4").classList.toggle("on", has([128, 0, 128]));
+}
+
+window.__startGame = () => { initAudio(); transitionTo("void", [255, 255, 255]); };
+window.__showStartScreen = () => {
+  const ss = document.getElementById("start-screen");
+  if (ss) ss.classList.remove("hidden");
+  collectedFragments.length = 0;
+  powers.raiva = powers.alegria = powers.tristeza = powers.medo = false;
+  updateFragmentHUD();
+  stopAudioLoops();
+  go("title");
+};
+
+// ============================================================
+// ASSETS — pixel art em código
+// ============================================================
+function pxCanvas(w, h, draw) {
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  draw(c.getContext("2d"));
+  return c;
+}
+function pxFromRows(rows, pal) {
+  return pxCanvas(rows[0].length, rows.length, (g) => {
+    rows.forEach((row, y) => [...row].forEach((ch, x) => {
+      if (pal[ch]) { g.fillStyle = pal[ch]; g.fillRect(x, y, 1, 1); }
+    }));
+  });
+}
+const _loaded = new Set();
+function loadOnce(name, maker) {
+  if (_loaded.has(name)) return;
+  _loaded.add(name);
+  loadSprite(name, maker());
+}
+
+const PAL_P = { h: "#000000", b: "#101014", w: "#ffffff", c: "#00f0ff" };
+const P_TOP = [
+  "....hhhh....", "...hhhhhh...", "..hhhhhhhh..", "..hbbbbbbh..",
+  "..hbbwwcbbh.", "..hbbbbbbh..", "...hbbbbh...", "..bbbbbbbb..", "..bbbbbbbb..",
+];
+const P_MID = Array.from({ length: 7 }, () => "...bbbbbb...");
+const P_RUN = ["...bb..bb...", "...bb..bb...", "...bb..bb...", "..bbb..bbb..", "..bbb..bbb.."];
+const P_IDLE = ["....bbbb....", "....b..b....", "....b..b....", "...bb..bb...", "...bb..bb..."];
+const P_JUMP = ["...bbbbbb...", "..bb....bb..", "..bb....bb..", ".bbb....bbb.", ".bb......bb."];
+const mkF = (legs) => pxFromRows([...P_TOP, ...P_MID, ...legs], PAL_P);
+const pSheet = pxCanvas(36, 24, (g) => {
+  g.drawImage(mkF(P_RUN), 0, 0);
+  g.drawImage(mkF(P_IDLE), 12, 0);
+  g.drawImage(mkF(P_JUMP), 24, 0);
+});
+loadSprite("player", pSheet, {
+  sliceX: 3,
+  anims: {
+    idle: { from: 1, to: 1 },
+    run: { from: 0, to: 1, loop: true, speed: 9 },
+    jump: { from: 2, to: 2 },
+  },
+});
+
+loadSprite("npc", pxFromRows([
+  "...WWWWWW...", "..WWWWWWWW..", "..WkWWWWkW..", "..WWWWWWWW..",
+  "...WWWWWW...", ".WWWWWWWWWW.", "WWWWWWWWWWWW", "WWWWWWWWWWWW",
+  "WWWWWWWWWWWW", "WWWWWWWWWWWW", ".WWWWWWWWWW.", ".WWWWWWWWWW.",
+  "..WWW..WWW..", "..WWW..WWW..", "...W....W...", "...W....W...",
+], { W: "#ffffff", k: "#0a0a0c" }));
+
+loadSprite("totem", pxFromRows([
+  "..WWWW..", ".WWWWWW.", ".WkkkkW.", ".WWWWWW.", "..WWWW..", "...WW...",
+  "..WWWW..", ".WWWWWW.", "WWWWWWWW", ".WWWWWW.", "..WWWW..", ".WWWWWW.",
+], { W: "#ffffff", k: "#0a0a0c" }));
+
+loadSprite("door", pxFromRows([
+  "..WWWWWW..", ".WWWkkWWW.", ".WWWkkWWW.", ".WWWkkWWW.", ".WWWkkWWW.",
+  ".WWWkkWWW.", ".WWWkkWWW.", ".WWWkkWWW.", ".WWWkkWWW.", ".WWWkkWWW.",
+  ".WWWkkWWW.", ".WWWkkWWW.", ".WWWkkWWW.", ".WWWkkWWW.", ".WWWkkWWW.",
+  ".WWWkkWWW.", ".WWWkkWWW.", ".WWWkkWWW.",
+], { W: "#ffffff", k: "#9a9aa4" }));
+
+loadSprite("tree", pxFromRows([
+  "....WWWWW.....", "..WWWWWWWWW...", ".WWWWWWWWWWWW.", ".WWWWWWWWWWWW.",
+  "..WWWWWWWWWW..", "....WWWWWW....", "......WW......", "......WW......",
+  "......WW......", "......WW......", "......WW......", "......WW......",
+  "......WW......", "......WW......", "......WW......", "......WW......",
+  "......WW......", "......WW......", "......WW......", "......WW......",
+], { W: "#ffffff" }));
+
+loadSprite("spire", pxFromRows([
+  "...WW...", "...WW...", "..WWWW..", "..WWWW..", "..WWWW..", ".WWWWWW.",
+  ".WWWWWW.", ".WWWWWW.", "WWWWWWWW", "WWWWWWWW", "WWWWWWWW", "WWWWWWWW",
+  "WWWWWWWW", "WWWWWWWW", "WWWWWWWW", "WWWWWWWW", "WWWWWWWW", "WWWWWWWW",
+], { W: "#ffffff" }));
+
+loadSprite("pillar", pxFromRows(
+  Array.from({ length: 22 }, (_, i) => (i % 6 === 5) ? "W....W" : "WWWWWW"),
+  { W: "#ffffff" }));
+
+loadSprite("mirror", pxCanvas(10, 30, (g) => {
+  g.fillStyle = "#5a5f6a"; g.fillRect(0, 0, 10, 30);
+  g.fillStyle = "#dfe4ec"; g.fillRect(1, 1, 8, 28);
+  g.fillStyle = "#ffffff";
+  g.fillRect(2, 3, 1, 1); g.fillRect(3, 4, 1, 1); g.fillRect(4, 5, 1, 1);
+  g.fillRect(6, 20, 1, 1); g.fillRect(7, 21, 1, 1);
+}));
+
+loadSprite("vine", pxCanvas(10, 51, (g) => {
+  g.fillStyle = "#ffffff";
+  g.fillRect(4, 0, 2, 51);
+  for (let y = 2; y < 48; y += 6) { g.fillRect(2, y, 2, 2); g.fillRect(6, y + 3, 2, 2); }
+}));
+
+loadOnce("darkGrad", () => pxCanvas(2048, 2048, (g) => {
+  const gr = g.createRadialGradient(1024, 1024, 0, 1024, 1024, 1024);
+  gr.addColorStop(0, "rgba(0,0,0,0)");
+  gr.addColorStop(0.1, "rgba(0,0,0,0)");
+  gr.addColorStop(0.42, "rgba(0,0,0,1)");
+  gr.addColorStop(1, "rgba(0,0,0,1)");
+  g.fillStyle = gr;
+  g.fillRect(0, 0, 2048, 2048);
+}));
+loadOnce("glowGrad", () => pxCanvas(512, 512, (g) => {
+  const gr = g.createRadialGradient(256, 256, 0, 256, 256, 256);
+  gr.addColorStop(0, "rgba(255,255,255,1)");
+  gr.addColorStop(0.5, "rgba(255,255,255,0.35)");
+  gr.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = gr;
+  g.fillRect(0, 0, 512, 512);
+}));
+
+// ============================================================
+// ÁUDIO SINTETIZADO
+// ============================================================
+let AC = null, master = null, muted = false;
+let ambienceStop = null, rainStop = null, battleStop = null, noiseBuf = null;
+
+function initAudio() {
+  if (AC) return;
+  try {
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === "suspended") AC.resume();
+    master = AC.createGain();
+    master.gain.value = 0.9;
+    master.connect(AC.destination);
+    noiseBuf = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  } catch (e) { AC = null; }
+}
+document.addEventListener("keydown", initAudio, { once: true });
+document.addEventListener("pointerdown", initAudio, { once: true });
+
+function updateMaster() { if (master) master.gain.value = muted ? 0 : (paused ? 0.22 : 0.9); }
+
+function tone({ f = 440, f2 = null, type = "sine", a = 0.005, d = 0.15, v = 0.15, delay = 0 }) {
+  if (!AC || muted) return;
+  if (AC.state === "suspended") AC.resume();
+  const t0 = AC.currentTime + delay;
+  const o = AC.createOscillator();
+  o.type = type;
+  o.frequency.setValueAtTime(f, t0);
+  if (f2) o.frequency.exponentialRampToValueAtTime(Math.max(1, f2), t0 + a + d);
+  const g = AC.createGain();
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.linearRampToValueAtTime(v, t0 + a);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + d);
+  o.connect(g).connect(master);
+  o.start(t0);
+  o.stop(t0 + a + d + 0.05);
+}
+function noiseHit({ d = 0.2, v = 0.25, lp = 1000, hp = 0, delay = 0 }) {
+  if (!AC || muted) return;
+  if (AC.state === "suspended") AC.resume();
+  const t0 = AC.currentTime + delay;
+  const src = AC.createBufferSource();
+  src.buffer = noiseBuf;
+  const g = AC.createGain();
+  g.gain.setValueAtTime(v, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+  let node = src;
+  if (lp > 0) { const f = AC.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = lp; node.connect(f); node = f; }
+  if (hp > 0) { const f = AC.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp; node.connect(f); node = f; }
+  node.connect(g).connect(master);
+  src.start(t0);
+  src.stop(t0 + d + 0.05);
+}
+
+const SFX = {
+  jump() { tone({ f: 300, f2: 620, type: "triangle", d: 0.14, v: 0.11 }); },
+  jump2() { tone({ f: 420, f2: 840, type: "triangle", d: 0.14, v: 0.1 }); },
+  land() { tone({ f: 150, f2: 70, d: 0.09, v: 0.14 }); },
+  step() { tone({ f: 95, f2: 60, d: 0.05, v: 0.045, type: "triangle" }); },
+  collect() { tone({ f: 660, type: "triangle", d: 0.12, v: 0.13 });
+    tone({ f: 990, type: "triangle", d: 0.2, v: 0.11, delay: 0.08 });
+    tone({ f: 1320, d: 0.25, v: 0.07, delay: 0.16 }); },
+  spark() { tone({ f: 1568, d: 0.15, v: 0.08, type: "triangle" });
+    tone({ f: 2093, d: 0.2, v: 0.05, delay: 0.06 }); },
+  reveal() { [440, 554, 659].forEach((f, i) => tone({ f, d: 0.5, v: 0.055, delay: i * 0.07 })); },
+  break() { noiseHit({ d: 0.18, v: 0.22, lp: 900 }); tone({ f: 95, f2: 55, type: "square", d: 0.12, v: 0.11 }); },
+  crack() { tone({ f: 180, f2: 90, type: "square", d: 0.16, v: 0.13 }); },
+  hurt() { tone({ f: 220, f2: 70, type: "sawtooth", d: 0.25, v: 0.16 }); },
+  warn() { tone({ f: 1180, d: 0.05, v: 0.04 }); },
+  perceive() { [880, 1174, 1568].forEach((f, i) => tone({ f, d: 0.35, v: 0.06, delay: i * 0.05 })); },
+  aura() { tone({ f: 520, f2: 880, d: 0.3, v: 0.055 }); },
+  slam() { tone({ f: 180, f2: 90, type: "sawtooth", d: 0.2, v: 0.08 }); },
+  cut() { noiseHit({ d: 0.1, v: 0.16, lp: 3000, hp: 900 }); tone({ f: 1300, f2: 500, d: 0.12, v: 0.08 }); },
+  reflect() { tone({ f: 500, f2: 1400, d: 0.16, v: 0.12, type: "triangle" }); },
+  totem() { tone({ f: 660, d: 0.3, v: 0.09 }); tone({ f: 990, d: 0.4, v: 0.07, delay: 0.1 }); },
+  shot() { tone({ f: 240, f2: 130, d: 0.09, v: 0.05 }); },
+  dissipate() { tone({ f: 320, f2: 110, d: 0.4, v: 0.07 }); },
+  win() { [523, 659, 784, 1046].forEach((f, i) => tone({ f, type: "triangle", d: 0.5, v: 0.09, delay: i * 0.09 })); },
+  chord() { [261, 329, 392, 523].forEach((f, i) => tone({ f, a: 0.6, d: 2.5, v: 0.055, delay: i * 0.12 })); },
+  thunder() { noiseHit({ d: 1.4, v: 0.28, lp: 220 }); },
+  ui() { tone({ f: 740, d: 0.06, v: 0.07, type: "triangle" }); },
+  type() { tone({ f: 1050, d: 0.015, v: 0.018, type: "square" }); },
+  creep() { tone({ f: 70, d: 0.4, v: 0.03 }); },
+  atk() { noiseHit({ d: 0.12, v: 0.2, lp: 700 }); tone({ f: 140, f2: 60, type: "sawtooth", d: 0.16, v: 0.14 }); },
+  pulse() { [660, 880, 1320].forEach((f, i) => tone({ f, d: 0.6, v: 0.07, delay: i * 0.06 })); },
+  shield() { tone({ f: 392, d: 0.4, v: 0.09 }); tone({ f: 523, d: 0.5, v: 0.07, delay: 0.08 }); },
+  dash() { noiseHit({ d: 0.14, v: 0.16, lp: 2600, hp: 700 }); tone({ f: 740, f2: 240, d: 0.14, v: 0.08 }); },
+  bossHit() { tone({ f: 90, f2: 45, type: "square", d: 0.2, v: 0.16 }); },
+  bossDie() { [392, 311, 261, 196].forEach((f, i) => tone({ f, type: "sawtooth", d: 0.7, v: 0.1, delay: i * 0.22 })); },
+};
+
+function startAmbience(freqs, { type = "sine", vol = 0.045, attack = 2 } = {}) {
+  stopAmbienceOnly();
+  if (!AC) return;
+  const nodes = freqs.map((f) => {
+    const o = AC.createOscillator(); o.type = type; o.frequency.value = f;
+    const g = AC.createGain();
+    g.gain.setValueAtTime(0, AC.currentTime);
+    g.gain.linearRampToValueAtTime(vol, AC.currentTime + attack);
+    o.connect(g).connect(master); o.start();
+    return { o, g };
+  });
+  ambienceStop = () => {
+    try {
+      nodes.forEach(({ o, g }) => {
+        g.gain.cancelScheduledValues(AC.currentTime);
+        g.gain.setValueAtTime(g.gain.value, AC.currentTime);
+        g.gain.linearRampToValueAtTime(0, AC.currentTime + 0.6);
+        o.stop(AC.currentTime + 0.7);
+      });
+    } catch (e) {}
+    ambienceStop = null;
+  };
+}
+function stopAmbienceOnly() { if (ambienceStop) ambienceStop(); }
+function startRain() {
+  if (!AC || rainStop) return;
+  const src = AC.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+  const lp = AC.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1400;
+  const hp = AC.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 300;
+  const g = AC.createGain(); g.gain.value = 0.03;
+  src.connect(hp); hp.connect(lp); lp.connect(g); g.connect(master);
+  src.start();
+  rainStop = () => { try { src.stop(); } catch (e) {} rainStop = null; };
+}
+function stopRain() { if (rainStop) rainStop(); }
+
+function startBattle() {
+  stopBattle();
+  if (!AC) return;
+  const o = AC.createOscillator(); o.type = "sawtooth"; o.frequency.value = 41;
+  const g = AC.createGain(); g.gain.value = 0;
+  g.gain.linearRampToValueAtTime(0.035, AC.currentTime + 2);
+  o.connect(g).connect(master); o.start();
+  let alive = true;
+  (function thump() {
+    if (!alive) return;
+    wait(0.85, () => {
+      if (!alive) return;
+      tone({ f: 58, f2: 40, type: "sine", d: 0.16, v: 0.12 });
+      tone({ f: 52, f2: 36, type: "sine", d: 0.14, v: 0.09, delay: 0.19 });
+      thump();
+    });
+  })();
+  battleStop = () => {
+    alive = false;
+    try {
+      g.gain.cancelScheduledValues(AC.currentTime);
+      g.gain.linearRampToValueAtTime(0, AC.currentTime + 0.5);
+      o.stop(AC.currentTime + 0.6);
+    } catch (e) {}
+    battleStop = null;
+  };
+}
+function stopBattle() { if (battleStop) battleStop(); }
+
+// ============================================================
+// MÚSICA — 4 trilhas contínuas por emoção
+// Se os seus arquivos tiverem outro nome/caminho, ajuste SÓ aqui:
+// ============================================================
+loadSound("musAlegria", "audio/fase da alegria.mp3");
+loadSound("musTristeza", "audio/fase da tristeza.mp3");
+loadSound("musRaiva", "audio/fase da raiva.mp3");
+loadSound("musMedo", "audio/fase do medo.mp3");
+
+let musicStop = null, currentMusic = null, musicVol = 0.5;
+
+function applyMusic() {
+  if (musicStop) { try { musicStop(); } catch (e) {} musicStop = null; }
+  if (!muted && currentMusic) {
+    try {
+      const pb = play(currentMusic, { loop: true, volume: musicVol });
+      musicStop = () => { try { pb.stop(); } catch (e) {} musicStop = null; };
+    } catch (e) {}
+  }
+}
+function startMusic(name, vol = 0.5) {
+  if (currentMusic === name && musicStop) return; // já tocando: CONTINUA
+  currentMusic = name; musicVol = vol; applyMusic();
+}
+function stopMusic() { currentMusic = null; applyMusic(); }
+function stopAudioLoops() { stopAmbienceOnly(); stopRain(); stopMusic(); stopBattle(); }
+
+// ============================================================
+// UTILITÁRIOS
+// ============================================================
+const approach = (cur, target, amt) =>
+  cur < target ? Math.min(cur + amt, target) : Math.max(cur - amt, target);
+const centerOf = (o) => o.pos.add(vec2(o.width / 2, o.height / 2));
+const playerCenter = (p) => vec2(p.pos.x, p.pos.y - PLAYER_H / 2);
+const lighten = (c, amt = 45) => c.map((v) => Math.min(255, v + amt));
+const asRGB = (col) => Array.isArray(col) ? col : [col.r, col.g, col.b];
+
+function sceneInit(name) {
+  currentSceneName = name; transitioning = false; paused = false;
+  pauseUI.forEach((o) => { if (o.exists()) o.destroy(); }); pauseUI = [];
+  paused = false;
+  closeDialogue(false);
+  _camTarget = null;
+  stopAmbienceOnly(); stopRain(); stopBattle();
+  camSnap = true; camPos(width() / 2, height() / 2);
+  syncPhaseHUD();
+}
+
+function buildMap(rows, legend, ts = 32) {
+  rows.forEach((row, j) => [...row].forEach((ch, i) => {
+    const fn = legend[ch];
+    if (fn) fn(i * ts, j * ts);
+  }));
+}
+
+function makeSky(top, bottom) {
+  const key = "sky" + top.join("_") + bottom.join("_");
+  loadOnce(key, () => pxCanvas(32, 512, (g) => {
+    const gr = g.createLinearGradient(0, 0, 0, 512);
+    gr.addColorStop(0, `rgb(${top.join(",")})`);
+    gr.addColorStop(1, `rgb(${bottom.join(",")})`);
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 32, 512);
+  }));
+  add([sprite(key), scale(width() / 32, height() / 512), pos(0, 0), fixed(), z(-25)]);
+}
+
+function makeMoodTint(col) {
+  add([sprite("glowGrad"), pos(0, 0), anchor("center"),
+    color(...col), opacity(0.12), scale(6), fixed(), z(-24)]);
+  add([sprite("glowGrad"), pos(width(), height()), anchor("center"),
+    color(...col), opacity(0.1), scale(6), fixed(), z(-24)]);
+}
+
+function makeDarkness(player, op = 0.8, R = 560) {
+  const o = add([sprite("darkGrad"), pos(player.pos.x, player.pos.y - 24), anchor("center"),
+    color(255, 255, 255), opacity(op), scale(R / 430), z(30),
+    {
+      curOp: op,
+      update() {
+        if (player.exists()) { this.pos.x = player.pos.x; this.pos.y = player.pos.y - 24; }
+        this.opacity += (this.curOp - this.opacity) * 0.1;
+      },
+    }]);
+  return { setOp(v) { o.curOp = v; } };
+}
+function makeHalo(player, col = [255, 236, 170], op = 0.16, R = 320) {
+  return add([sprite("glowGrad"), pos(player.pos.x, player.pos.y - 24), anchor("center"),
+    color(...col), opacity(op), scale(R / 256), z(31),
+    { update() {
+      if (player.exists()) { this.pos.x = player.pos.x; this.pos.y = player.pos.y - 24; }
+      this.opacity = op + Math.sin(time() * 2.5) * 0.02;
+    } }]);
+}
+function addGlow(x, y, col, op, R) {
+  return add([sprite("glowGrad"), pos(x, y), anchor("center"),
+    color(...col), opacity(op), scale(R / 256), z(28)]);
+}
+
+function makeGround(x, y, w, h, zz = 0) {
+  const comps = [rect(w, h, { radius: 8 }), pos(x, y), area(), body({ isStatic: true }),
+    color(255, 255, 255), outline(1, rgb(175, 175, 190))];
+  if (zz > 0) comps.push(z(zz));
+  const g = add(comps);
+  g.add([rect(w - 8, 2), pos(4, 2), color(205, 205, 225), opacity(0.9)]);
+  g.add([rect(w - 24, 2), pos(12, 6), color(215, 215, 232), opacity(0.5)]);
+  g.add([rect(w - 16, 2), pos(8, h - 5), color(150, 150, 165), opacity(0.35)]);
+  return g;
+}
+function makeWaterGround(x, y, w, h) {
+  const g = makeGround(x, y, w, h);
+  g.use(color(26, 44, 82));
+  g.use(opacity(0.86));
+  return g;
+}
+function makeWalls(worldW) {
+  add([rect(32, height()), pos(-32, 0), area(), body({ isStatic: true })]);
+  add([rect(32, height()), pos(worldW, 0), area(), body({ isStatic: true })]);
+}
+
+function makeExit(x, y) {
+  addGlow(x, y, [255, 255, 255], 0.14, 190);
+  return add([sprite("door"), scale(2), pos(x, y), anchor("center"),
+    area(), color(255, 255, 255), z(31), "exit",
+    { update() { this.opacity = 0.85 + Math.sin(time() * 4) * 0.15; } }]);
+}
+
+function makeFragment(x, y, col) {
+  const f = add([
+    rect(16, 16, { radius: 4 }), rotate(45), pos(x, y), anchor("center"),
+    area(), color(...col), z(33), "fragment",
+    { colorArr: col, t: rand(0, 6),
+      update() {
+        this.t += dt();
+        this.angle += 50 * dt();
+        const s = 1 + Math.sin(time() * 5) * 0.12;
+        this.scale = vec2(s, s);
+        if (this._s1 && this._s1.exists() && this._s2 && this._s2.exists()) {
+          this._s1.pos.x = Math.cos(this.t * 2.4) * 26;
+          this._s1.pos.y = Math.sin(this.t * 2.4) * 12;
+          this._s2.pos.x = Math.cos(this.t * 2.4 + Math.PI) * 26;
+          this._s2.pos.y = Math.sin(this.t * 2.4 + Math.PI) * 12;
+        }
+      } },
+  ]);
+  f.add([circle(22), color(...col), opacity(0.16), anchor("center")]);
+  f._s1 = f.add([circle(1.6), pos(0, 0), color(255, 255, 255), opacity(0.9)]);
+  f._s2 = f.add([circle(1.2), pos(0, 0), color(255, 255, 255), opacity(0.7)]);
+  return f;
+}
+
+function makePlatform(x, y, w, h, col, zz = 0) {
+  const comps = [rect(w, h, { radius: 6 }), pos(x, y), area(), body({ isStatic: true }), color(...col)];
+  if (zz > 0) comps.push(z(zz));
+  const p = add(comps);
+  p.add([rect(w - 6, 2), pos(3, 2), color(...lighten(col, 60)), opacity(0.8)]);
+  return p;
+}
+
+function makeHiddenPlatform(x, y, w, h) {
+  return add([rect(w, h, { radius: 6 }), pos(x, y), area(), color(240, 230, 160), opacity(0), z(31), "hidden",
+    {
+      revealed: false, ftimer: 0,
+      update() {
+        if (!this.revealed) return;
+        this.ftimer -= dt();
+        if (this.ftimer <= 2 && this.ftimer > 0) {
+          this.opacity = Math.floor(time() * 8) % 2 === 0 ? 0.9 : 0.3;
+        }
+        if (this.ftimer <= 0) {
+          this.revealed = false;
+          this.unuse("body");
+          this.opacity = 0;
+          if (!_joyFadeWarned) {
+            _joyFadeWarned = true;
+            toast("A luz da alegria é fugaz — revele de novo com E!");
+          }
+        }
+      },
+    }]);
+}
+function revealPlatform(h) {
+  if (h.revealed || !h.exists()) return;
+  h.revealed = true;
+  h.ftimer = JOY_FADE;
+  h.use(body({ isStatic: true }));
+  h.use(opacity(0.92));
+  SFX.reveal();
+  const c = centerOf(h);
+  burst(c.x, c.y, [255, 240, 170], 8, 90);
+}
+
+function makeBreakable(x, y, stone = false) {
+  return add([rect(32, 32, { radius: 5 }), pos(x, y), area(), body({ isStatic: true }),
+    color(...(stone ? [120, 120, 128] : [255, 70, 50])),
+    outline(2, color(...(stone ? [80, 80, 88] : [170, 40, 30]))),
+    "breakable", ...(stone ? ["stone"] : [])]);
+}
+
+function makeCrumble(x, y) {
+  return add([rect(32, 14, { radius: 4 }), pos(x, y + 32), area({ width: 32, height: 14 }),
+    body({ isStatic: true }),
+    color(150, 150, 158), outline(2, color(90, 90, 98)), z(31), "crumble",
+    { trig: false }]);
+}
+
+function makeMovingPlatform(x, y, w, h, minX, maxX, speed, col = [235, 235, 240]) {
+  return add([rect(w, h, { radius: 6 }), pos(x, y), area(), body({ isStatic: true }),
+    color(...col), outline(2, color(180, 180, 190)), z(31), "mplat",
+    { dir: 1,
+      update() {
+        const prev = this.pos.x;
+        this.pos.x += this.dir * speed * dt();
+        if (this.pos.x < minX) { this.pos.x = minX; this.dir = 1; }
+        if (this.pos.x > maxX) { this.pos.x = maxX; this.dir = -1; }
+        const dx = this.pos.x - prev;
+        const pl = get("player")[0];
+        if (pl && pl.exists() && pl.isGrounded && pl.isGrounded()) {
+          const near = Math.abs(pl.pos.y - this.pos.y) < 4;
+          const overX = Math.abs(pl.pos.x - (this.pos.x + w / 2)) < w / 2 + 10;
+          if (near && overX) pl.pos.x += dx;
+        }
+      } }]);
+}
+
+function makeSpark(x, y) {
+  return add([circle(5), pos(x, y), anchor("center"), color(255, 250, 210),
+    opacity(0.95), area(), z(33), "spark",
+    { taken: false,
+      update() { this.pos.y = y + Math.sin(time() * 3 + x) * 5;
+        this.opacity = 0.7 + Math.sin(time() * 6) * 0.3; } }]);
+}
+function bindSparks(total) {
+  let got = 0;
+  onCollide("player", "spark", (p, s) => {
+    if (s.taken || transitioning) return;
+    s.taken = true;
+    SFX.spark();
+    burst(s.pos.x, s.pos.y, [255, 250, 200], 6, 100);
+    s.destroy(); got++;
+    toast(got >= total ? `Faíscas: ${got}/${total} — todas!` : `Faísca ${got}/${total}`);
+  });
+}
+
+function makeTri(cx, cy, s, col, op) {
+  const r = s / Math.sqrt(3);
+  const pts = [0, 120, 240].map((a) => {
+    const rad = (a - 90) * Math.PI / 180;
+    return vec2(cx + Math.cos(rad) * r, cy + Math.sin(rad) * r);
+  });
+  for (let i = 0; i < 3; i++) {
+    const a = pts[i], b = pts[(i + 1) % 3];
+    const mid = a.add(b).scale(0.5);
+    const ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+    add([rect(s, 2), pos(mid), rotate(ang), anchor("center"), color(...col), opacity(op)]);
+  }
+}
+
+function makeAura(x, y, col, maxR) {
+  const a = add([circle(12), pos(x, y), anchor("center"), color(...col), opacity(0.8), z(31)]);
+  tween(0, 1, 0.5, (v) => {
+    if (!a.exists()) return;
+    a.radius = 12 + v * (maxR - 12);
+    a.opacity = 0.8 * (1 - v);
+  }, easings.easeOutQuad).then(() => { if (a.exists()) a.destroy(); });
+}
+
+function dust(x, y, n = 6, col = [210, 210, 210]) {
+  for (let i = 0; i < n; i++) {
+    const vx = rand(-50, 50), vy = rand(-70, -20);
+    add([circle(rand(1.5, 3)), pos(x + rand(-10, 10), y - rand(0, 4)),
+      color(...col), opacity(0.8), z(31),
+      { t: 0, update() { this.t += dt(); this.pos.x += vx * dt(); this.pos.y += vy * dt();
+        this.opacity = 0.8 * (1 - this.t / 0.35); if (this.t >= 0.35) this.destroy(); } }]);
+  }
+}
+function burst(x, y, col, n = 10, spd = 140) {
+  for (let i = 0; i < n; i++) {
+    const a = rand(0, Math.PI * 2), s = rand(spd * 0.4, spd);
+    const vx = Math.cos(a) * s, vy0 = Math.sin(a) * s - 40;
+    const p = add([circle(rand(1.8, 3.4)), pos(x, y), color(...col), opacity(0.95), z(31),
+      { t: 0, vy: vy0, update() { this.t += dt(); this.pos.x += vx * dt();
+        this.vy += 300 * dt(); this.pos.y += this.vy * dt();
+        this.opacity = Math.max(0, 0.95 * (1 - this.t / 0.5)); if (this.t > 0.5) this.destroy(); } }]);
+    p.add([circle(6), color(...col), opacity(0.18)]);
+  }
+}
+function ring(x, y, col, r0, r1, dur, delay = 0) {
+  wait(delay, () => {
+    const cc = asRGB(col);
+    const c = add([circle(r0), pos(x, y), anchor("center"), color(...cc), opacity(0.5), z(40)]);
+    tween(r0, r1, dur, (v) => { if (c.exists()) c.radius = v; }, easings.easeOutQuad);
+    tween(0.5, 0, dur, (v) => { if (c.exists()) c.opacity = v; }, easings.easeInQuad)
+      .then(() => { if (c.exists()) c.destroy(); });
+  });
+}
+
+function makeStars(n) {
+  for (let i = 0; i < n; i++) {
+    add([rect(2, 2), pos(rand(0, width()), rand(16, height() * 0.55)),
+      color(255, 255, 255), opacity(rand(0.15, 0.6)), fixed(), z(-15),
+      { tw: rand(0, 6),
+        update() { this.tw += dt();
+          this.opacity = 0.12 + Math.abs(Math.sin(this.tw * 1.5)) * 0.45; } }]);
+  }
+}
+function makeRays(n = 3) {
+  for (let i = 0; i < n; i++) {
+    const x = width() * 0.2 + i * width() * 0.3 + rand(-30, 30);
+    add([rect(26, height() * 1.6), rotate(18), pos(x, -40), anchor("top"),
+      color(255, 235, 170), opacity(0.05), fixed(), z(-8),
+      { t: rand(0, 6),
+        update() { this.t += dt(); this.opacity = 0.04 + Math.sin(this.t * 0.7) * 0.022; } }]);
+  }
+}
+function makeParallax(sprName, scl, col, op, ys, factor, zval = -10, sway = 0) {
+  const span = width() + 300;
+  ys.forEach((y) => {
+    for (let i = 0; i < 5; i++) {
+      const bx = i * 220 + rand(0, 90);
+      add([sprite(sprName), rotate(0), scale(scl), pos(0, y), color(...col), opacity(op), fixed(), z(zval),
+        { update() {
+          const cx = camPos().x - width() / 2;
+          this.pos.x = ((bx - cx * factor) % span + span) % span - 150;
+          this.pos.y = y;
+          if (sway) this.angle = Math.sin(time() * 0.5 + bx) * sway;
+        } }]);
+    }
+  });
+}
+function makeMotes(n, worldW, col, { rise = true, op = 0.3 } = {}) {
+  for (let i = 0; i < n; i++) {
+    const sp = rand(6, 16) * (rise ? 1 : -1);
+    const m = add([circle(rand(1.2, 2.2)), pos(rand(0, worldW), rand(60, height() - 90)),
+      color(...col), opacity(op), z(31),
+      { update() { this.pos.y -= sp * dt();
+        this.pos.x += Math.sin(time() + this.pos.y) * 6 * dt();
+        if (rise && this.pos.y < 40) this.pos.y = height() - 40;
+        if (!rise && this.pos.y > height() - 40) this.pos.y = 40; } }]);
+    m.add([circle(5), color(...col), opacity(op * 0.35)]);
+  }
+}
+function makeSplashes(ranges) {
+  (function loop() {
+    wait(rand(0.05, 0.13), () => {
+      if (!transitioning) {
+        const rg = ranges[Math.floor(rand(0, ranges.length))];
+        const x = rand(rg[0], rg[1]);
+        add([circle(1.4), pos(x, 447), color(150, 190, 255), opacity(0.7), z(-2),
+          { t: 0, update() { this.t += dt(); this.pos.y -= 26 * dt();
+            this.opacity = 0.7 * (1 - this.t / 0.28); if (this.t > 0.28) this.destroy(); } }]);
+      }
+      loop();
+    });
+  })();
+}
+function makeWisps(n) {
+  for (let i = 0; i < n; i++) {
+    const bx = rand(40, width() - 40), by = rand(80, height() - 120);
+    const w = add([circle(rand(2, 4)), pos(bx, by), color(178, 68, 255), opacity(0), z(-5),
+      { t: rand(0, 9), update() {
+        this.t += dt();
+        this.pos.x = bx + Math.sin(this.t * 0.6 + i) * 26;
+        this.pos.y = by + Math.cos(this.t * 0.4 + i * 2) * 18;
+        this.opacity = 0.12 + Math.abs(Math.sin(this.t * 1.3)) * 0.25;
+      } }]);
+    w.add([circle(9), color(178, 68, 255), opacity(0.05)]);
+  }
+}
+function makePlayerGlow(player, col, op = 0.25) {
+  return add([sprite("glowGrad"), pos(player.pos.x, player.pos.y - 24), anchor("center"),
+    color(...col), opacity(op), scale(0.9), z(31),
+    { update() { if (player.exists()) { this.pos.x = player.pos.x; this.pos.y = player.pos.y - 24; } } }]);
+}
+
+function makeReflection(player, groundY) {
+  return add([sprite("player"), rotate(0), scale(2, -2), pos(player.pos.x, groundY + 24),
+    anchor("center"), color(150, 175, 220), opacity(0.14), z(-1),
+    { update() {
+      if (!player.exists()) return;
+      this.pos.x = player.pos.x;
+      this.pos.y = 2 * groundY - (player.pos.y - 24) + 24;
+      this.opacity = 0.11 + Math.abs(Math.sin(time() * 1.7)) * 0.05;
+      this.flipX = player.flipX;
+    } }]);
+}
+
+// --- Jogador ---
+function spawnPlayer(x, y) {
+  _spawn = { x, y };
+  return add([
+    sprite("player"), scale(2), pos(x, y), anchor("bot"),
+    area(), body({ gravityScale: 1 }), z(32),
+    "player",
+    {
+      _speed: MOVE_SPEED, _jump: JUMP_FORCE,
+      _blockMove: null, _blockJump: null,
+      _coyote: 0, _jumpBuf: 0, _wasG: true, _fallV: 0, _canDouble: true,
+      _stepT: 0, _dustT: 0, _anim: "", _bs: vec2(2, 2), _face: 1, _noGrav: false,
+      update() {
+        let dir = 0;
+        if (isKeyDown("left") || isKeyDown("a")) dir -= 1;
+        if (isKeyDown("right") || isKeyDown("d")) dir += 1;
+        const blocked = transitioning || dialogueOpen || paused ||
+          (this._blockMove && this._blockMove());
+        const target = blocked ? 0 : dir * this._speed;
+        const acc = (this.isGrounded() ? ACCEL : AIR_ACCEL) * (target === 0 ? 1.5 : 1);
+        this.vel.x = approach(this.vel.x, target, acc * dt());
+
+        const g = this.isGrounded();
+        if (this._noGrav) {
+          this.gravityScale = 0;
+        } else {
+          this.gravityScale = g ? 1
+            : (this.vel.y < 0 ? (Math.abs(this.vel.y) < 90 ? 0.55 : 1) : 1.18);
+        }
+
+        this._coyote = g ? COYOTE : this._coyote - dt();
+        this._jumpBuf -= dt();
+        if (g) this._canDouble = true;
+        const jumpBlocked = transitioning || dialogueOpen || paused ||
+          (this._blockJump && this._blockJump());
+        if (this._jumpBuf > 0 && !jumpBlocked) {
+          if (this._coyote > 0) {
+            this._jumpBuf = 0; this._coyote = 0;
+            this.vel.y = -this._jump;
+            SFX.jump(); squash(this, 0.78, 1.22);
+          } else if (this._canDouble) {
+            this._jumpBuf = 0; this._canDouble = false;
+            this.vel.y = -this._jump * 0.9;
+            SFX.jump2(); dust(this.pos.x, this.pos.y, 8, [200, 205, 255]);
+            squash(this, 0.85, 1.15);
+          }
+        }
+        if (this.vel.y > MAX_FALL) this.vel.y = MAX_FALL;
+
+        if (g && !this._wasG && this._fallV > 160) {
+          SFX.land(); dust(this.pos.x, this.pos.y, 6);
+          squash(this, 1.28, 0.72);
+          if (this._fallV > 430) { shake(3); ring(this.pos.x, this.pos.y, [220, 220, 230], 4, 26, 0.3); }
+        }
+        this._wasG = g;
+        this._fallV = this.vel.y;
+
+        const moving = g && Math.abs(this.vel.x) > 40;
+        this._stepT -= dt(); this._dustT -= dt();
+        if (moving && this._stepT <= 0) { SFX.step(); this._stepT = 0.26; }
+        if (moving && Math.abs(this.vel.x) > 150 && this._dustT <= 0) {
+          dust(this.pos.x, this.pos.y, 1, [160, 160, 170]); this._dustT = 0.18;
+        }
+        if (!moving) this._stepT = 0;
+
+        if (dir !== 0) { this.flipX = dir < 0; this._face = dir; }
+        const want = !g ? "jump" : (moving ? "run" : "idle");
+        if (want !== this._anim) { this._anim = want; this.play(want); }
+      },
+    },
+  ]);
+}
+
+function squash(p, sx, sy) {
+  if (!p.exists()) return;
+  const b = p.scale.clone();
+  p.scale = vec2(b.x * sx, b.y * sy);
+  tween(p.scale, b, 0.18, (v) => { if (p.exists()) p.scale = v; }, easings.easeOutQuad);
+}
+
+function hudLabel(txt, col) {
+  add([text(txt, { size: 14 }), pos(16, 16), color(...col), fixed(), z(15)]);
+}
+
+// Toast → DOM #message (design do protótipo)
+let toastTimer = null;
+function toast(msg) {
+  if (!messageEl) return;
+  messageEl.textContent = msg;
+  messageEl.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => messageEl.classList.remove("show"), 2000);
+}
+
+function titleCard(name, sub, col) {
+  const objs = [
+    add([text(name, { size: 44 }), pos(width() / 2, height() / 2 - 40), anchor("center"),
+      color(...col), opacity(0), z(80), fixed()]),
+    add([rect(150, 3), pos(width() / 2, height() / 2 - 6), anchor("center"),
+      color(...col), opacity(0), z(80), fixed()]),
+    add([text(sub || "", { size: 15 }), pos(width() / 2, height() / 2 + 20), anchor("center"),
+      color(200, 200, 200), opacity(0), z(80), fixed()]),
+  ];
+  tween(0, 1, 0.5, (v) => objs.forEach((o) => { if (o.exists()) o.opacity = v; }), easings.easeOutQuad)
+    .then(() => wait(1.3, () =>
+      tween(1, 0, 0.5, (v) => objs.forEach((o) => { if (o.exists()) o.opacity = v; }), easings.easeInQuad)
+        .then(() => objs.forEach((o) => { if (o.exists()) o.destroy(); }))));
+}
+
+// Diálogo → DOM #ui-overlay (typewriter + [ENTER], fiel ao protótipo)
+let dlgTypeTimer = null;
+function showDialogue(lines, onDone, tint = [120, 120, 130]) {
+  closeDialogue(false);
+  dialogueOpen = true;
+  dlg = { lines, idx: 0, onDone };
+  overlayEl.style.opacity = "1";
+  overlayEl.style.borderColor = `rgb(${tint[0]},${tint[1]},${tint[2]})`;
+  startDlgLine();
+}
+function startDlgLine() {
+  if (!dlg) return;
+  const full = dlg.lines[dlg.idx];
+  let i = 0;
+  dialogueEl.textContent = "";
+  if (dlgTypeTimer) clearInterval(dlgTypeTimer);
+  dlgTypeTimer = setInterval(() => {
+    if (!dlg) { clearInterval(dlgTypeTimer); dlgTypeTimer = null; return; }
+    if (i < full.length) {
+      i++;
+      dialogueEl.textContent = full.slice(0, i);
+      if (full[i - 1] !== " ") SFX.type();
+    } else {
+      clearInterval(dlgTypeTimer);
+      dlgTypeTimer = null;
+      dialogueEl.textContent = full + "  [ENTER]";
+    }
+  }, 26);
+}
+function dlgAdvance() {
+  if (!dlg) return;
+  const full = dlg.lines[dlg.idx];
+  if (dialogueEl.textContent !== full + "  [ENTER]") {
+    if (dlgTypeTimer) { clearInterval(dlgTypeTimer); dlgTypeTimer = null; }
+    dialogueEl.textContent = full + "  [ENTER]";
+    return;
+  }
+  if (dlg.idx < dlg.lines.length - 1) {
+    dlg.idx++;
+    SFX.ui();
+    startDlgLine();
+  } else closeDialogue(true);
+}
+function closeDialogue(callDone) {
+  if (dlgTypeTimer) { clearInterval(dlgTypeTimer); dlgTypeTimer = null; }
+  const d = dlg;
+  dlg = null; dialogueOpen = false;
+  if (overlayEl) overlayEl.style.opacity = "0";
+  if (callDone && d && d.onDone) d.onDone();
+}
+
+function transitionTo(sceneName, col = [0, 0, 0]) {
+  if (transitioning) return;
+  transitioning = true;
+  closeDialogue(false);
+  const fade = add([rect(width(), height()), pos(0, 0), color(...col), opacity(0), z(100), fixed()]);
+  tween(0, 1, 0.3, (v) => { if (fade.exists()) fade.opacity = v; }, easings.easeInQuad)
+    .then(() => go(sceneName));
+}
+
+function spawnFollower(player, col, i, cy = -PLAYER_H / 2) {
+  const ang = i * (Math.PI / 2) + 0.6;
+  const off = vec2(Math.cos(ang) * 30, Math.sin(ang) * 30 - 24);
+  return add([
+    circle(7), pos(player.pos.x + off.x, player.pos.y + off.y),
+    color(...col), opacity(0.95), z(31),
+    { merging: false,
+      update() {
+        if (this.merging || !player.exists()) return;
+        const target = player.pos.add(vec2(off.x, off.y + cy))
+          .add(vec2(0, Math.sin(time() * 3 + i) * 3));
+        this.pos = this.pos.lerp(target, 0.12);
+      } },
+  ]);
+}
+function spawnFollowers(player, cy) {
+  collectedFragments.forEach((f, i) => spawnFollower(player, f.color, i, cy));
+}
+function makeFragHUD() {
+  _fragHud.forEach((o) => { if (o.exists()) o.destroy(); });
+  _fragHud = collectedFragments.map((f, i) =>
+    add([circle(8), pos(width() - 28 - i * 26, 26), color(...f.color), fixed(), z(20)]));
+  updateFragmentHUD();
+}
+function grantPower(col) {
+  if (col[0] === 255 && col[1] === 215) powers.alegria = true;
+  else if (col[0] === 0 && col[1] === 0) powers.tristeza = true;
+  else if (col[0] === 255 && col[1] === 0) powers.raiva = true;
+  else if (col[0] === 128) powers.medo = true;
+}
+function onFragmentCollect(player) {
+  onCollide("player", "fragment", (p, f) => {
+    if (f.taken) return;
+    f.taken = true;
+    collectedFragments.push({ color: f.colorArr });
+    grantPower(f.colorArr);
+    SFX.collect(); shake(2);
+    burst(f.pos.x, f.pos.y, f.colorArr, 10);
+    f.destroy();
+    spawnFollower(player, f.colorArr, collectedFragments.length - 1);
+    makeFragHUD();
+  });
+}
+function awardFragment(player, col) {
+  if (collectedFragments.some((f) => f.color[0] === col[0] && f.color[1] === col[1])) return;
+  collectedFragments.push({ color: col });
+  grantPower(col);
+  SFX.collect(); shake(2);
+  spawnFollower(player, col, collectedFragments.length - 1);
+  makeFragHUD();
+  toast("Fragmento absorvido.");
+}
+
+setInterval(() => {
+  if (_camTarget && _camTarget.exists()) {
+    const minX = width() / 2;
+    const maxX = Math.max(minX, _camWorldW - width() / 2);
+    const tx = clamp(_camTarget.pos.x, minX, maxX);
+    const cur = camPos();
+    const nx = camSnap ? tx : cur.x + (tx - cur.x) * 0.15;
+    camPos(nx, height() / 2);
+    camSnap = false;
+    if (_camTarget.pos.y > height() + 140 && !_fallGuard && !transitioning) {
+      _fallGuard = true; shake(12); SFX.hurt();
+      _camTarget.pos.x = _spawn.x; _camTarget.pos.y = _spawn.y;
+      _camTarget.vel.x = 0; _camTarget.vel.y = 0;
+      if (_camTarget._bs) _camTarget.scale = _camTarget._bs.clone();
+      setTimeout(() => { _fallGuard = false; }, 400);
+    }
+  }
+}, 16);
+
+function updateCamera(player, worldW) {
+  _camTarget = player; _camWorldW = worldW; camSnap = true;
+}
+function setupMovement(player, worldW, speed, jump, opts = {}) {
+  player._speed = speed; player._jump = jump;
+  player._blockMove = opts.moveBlocked || null;
+  player._blockJump = opts.jumpBlocked || null;
+  updateCamera(player, worldW);
+  const keys = opts.spaceJump === false ? ["w", "up"] : ["space", "w", "up"];
+  keys.forEach((k) => {
+    onKeyPress(k, () => {
+      if (!(transitioning || dialogueOpen || paused ||
+        (opts.jumpBlocked && opts.jumpBlocked()))) player._jumpBuf = JUMP_BUF;
+    });
+    onKeyRelease(k, () => {
+      if (player.exists() && player.vel.y < -120) player.vel.y *= 0.55;
+    });
+  });
+}
+
+function togglePause() {
+  if (transitioning || dialogueOpen || currentSceneName === "title") return;
+  paused = !paused; updateMaster(); SFX.ui();
+  if (paused) {
+    pauseUI = [
+      add([rect(width(), height()), pos(0, 0), color(0, 0, 0), opacity(0.6), z(150), fixed()]),
+      add([text("PAUSADO", { size: 36 }), pos(width() / 2, height() / 2 - 20), anchor("center"), color(255, 255, 255), z(151), fixed()]),
+      add([text("P — continuar", { size: 14 }), pos(width() / 2, height() / 2 + 24), anchor("center"), color(160, 160, 160), z(151), fixed()]),
+    ];
+  } else { pauseUI.forEach((o) => { if (o.exists()) o.destroy(); }); pauseUI = []; }
+}
+
+["space", "enter", "e"].forEach((k) =>
+  onKeyPress(k, () => { if (dialogueOpen) dlgAdvance(); }));
+onKeyPress("m", () => {
+  muted = !muted;
+  updateMaster();
+  applyMusic();
+  toast(muted ? "SOM: OFF" : "SOM: ON");
+});
+onKeyPress("r", () => {
+  if (transitioning || currentSceneName === "title") return;
+  if (paused) togglePause();
+  closeDialogue(false); stopAudioLoops(); toast("Cena reiniciada");
+  go(currentSceneName);
+});
+onKeyPress("p", togglePause);
+onKeyPress("escape", togglePause);
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function makeEmotionNPC(player, x, y, col, lines, onDone, sitting = false) {
+  const npc = add([
+    sprite("npc"), scale(2, sitting ? 1.75 : 2), pos(x, y), anchor("center"),
+    color(...col), opacity(0.95), z(32),
+    {
+      said: false,
+      update() {
+        this.pos.y = y + Math.sin(time() * 2.2) * (sitting ? 2 : 6);
+        if (!this.said && !dialogueOpen && !transitioning && player.exists() &&
+            Math.abs(this.pos.x - player.pos.x) < 70 &&
+            Math.abs(this.pos.y - (player.pos.y - PLAYER_H / 2)) < 85) {
+          this.said = true;
+          SFX.creep();
+          ring(this.pos.x, this.pos.y, col, 6, 40, 0.5);
+          showDialogue(lines, onDone, col);
+        }
+      },
+    },
+  ]);
+  npc.add([sprite("glowGrad"), scale(0.7), color(...col), opacity(0.28)]);
+  return npc;
+}
+
+function makeVine(x) {
+  return add([sprite("vine"), scale(2, 8), pos(x, 40),
+    area({ width: 20, height: 408 }),
+    body({ isStatic: true }),
+    color(160, 140, 30), opacity(0.95), z(31), "vine", { cut: false }]);
+}
+function scheduleVineRegrow(v) {
+  wait(6, () => {
+    if (!v.exists() || transitioning || !v.cut) return;
+    const pl = get("player")[0];
+    if (pl && pl.exists() && Math.abs(pl.pos.x - v.pos.x) < 100) {
+      wait(1.2, () => scheduleVineRegrow(v));
+      return;
+    }
+    v.cut = false;
+    v.use(body({ isStatic: true }));
+    SFX.reveal();
+    tween(0, 1, 0.5, (vv) => {
+      if (v.exists()) { v.opacity = 0.95 * vv; v.scale = vec2(2, 8 * vv); }
+    });
+    burst(v.pos.x + 10, 300, [220, 190, 60], 8, 90);
+    toast("A vinha brotou de novo...");
+  });
+}
+
+function makeTotem(x, y) {
+  return add([sprite("totem"), scale(2), pos(x, y), anchor("center"),
+    area(), color(90, 90, 90), opacity(0.95), z(32), "totem", { lit: false }]);
+}
+function makeRain(n, worldW) {
+  for (let i = 0; i < n; i++) {
+    add([rect(2, 12), pos(rand(0, worldW), rand(-height(), height() - 40)), color(90, 130, 200), opacity(0.45), z(-1),
+      { update() { this.pos.y += 460 * dt();
+        if (this.pos.y > height() - 10) { this.pos.y = rand(-60, -10); this.pos.x = rand(0, worldW); } } }]);
+  }
+}
+function makeStorm() {
+  (function lightning() {
+    wait(rand(5, 9), () => {
+      if (transitioning) return;
+      const fl = add([rect(width(), height()), pos(0, 0), color(180, 200, 255), opacity(0), z(90), fixed()]);
+      tween(0, 0.28, 0.08, (v) => { if (fl.exists()) fl.opacity = v; })
+        .then(() => tween(0.28, 0, 0.3, (v) => { if (fl.exists()) fl.opacity = v; })
+          .then(() => { if (fl.exists()) fl.destroy(); }));
+      wait(0.4, () => SFX.thunder());
+      lightning();
+    });
+  })();
+}
+function makeHeavyDrops(player, groundY) {
+  (function loop() {
+    wait(rand(2.2, 3.8), () => {
+      if (!transitioning && !dialogueOpen && !paused && player.exists()) {
+        const x = clamp(player.pos.x + rand(-170, 170), 40, width() - 40);
+        add([circle(14), pos(x, groundY - 200), anchor("center"),
+          color(90, 130, 200), opacity(0), z(-2),
+          { t: 0, update() { this.t += dt(); this.opacity = Math.min(0.4, this.t * 1.2); } }]);
+        wait(0.7, () => {
+          if (transitioning) return;
+          add([circle(8), pos(x, -20), color(120, 170, 255), opacity(0.9), z(20),
+            { hit: false,
+              update() {
+                this.pos.y += 900 * dt();
+                if (this.pos.y >= groundY - 6 && !this.hit) {
+                  this.hit = true;
+                  burst(x, groundY, [120, 170, 255], 8, 120);
+                  shake(2);
+                  if (player.exists() && Math.abs(player.pos.x - x) < 36 &&
+                      player.pos.y >= groundY - 56) {
+                    SFX.hurt(); shake(6);
+                    player.vel.x = (player.pos.x < x ? -1 : 1) * 170;
+                    player.vel.y = -170;
+                    toast("Uma lágrima pesada te alcançou!");
+                  }
+                }
+                if (this.pos.y > height() + 20) this.destroy();
+              } }]);
+        });
+      }
+      loop();
+    });
+  })();
+}
+function makeFogBridge(x, w, fogTime = 15) {
+  return add([rect(w, 32), pos(x, 448), area(), color(40, 110, 220), opacity(0), z(1),
+    {
+      revealed: false, timer: 0, warned: false,
+      update() {
+        if (!this.revealed) return;
+        this.timer -= dt();
+        if (this.timer <= 3 && !this.warned) {
+          this.warned = true;
+          toast("ALERTA: a névoa vai se dissipar!");
+          SFX.warn();
+        }
+        if (this.timer <= 3) this.opacity = Math.floor(time() * 6) % 2 === 0 ? 0.55 : 0.2;
+        if (this.timer <= 0) this.dissipate();
+      },
+      reveal() {
+        if (this.revealed || !this.exists()) return;
+        this.revealed = true; this.timer = fogTime; this.warned = false;
+        this.use(body({ isStatic: true }));
+        this.use(opacity(0.85));
+        SFX.reveal();
+        burst(x + w / 2, 464, [120, 180, 255], 10, 110);
+      },
+      dissipate() {
+        this.revealed = false;
+        this.unuse("body");
+        SFX.dissipate();
+        tween(this.opacity, 0, 0.5, (v) => { if (this.exists()) this.opacity = v; });
+      },
+    }]);
+}
+
+function spawnMissile(x, y, worldW, orb = null, onOrbHit = null) {
+  SFX.shot();
+  const targets = Array.isArray(orb) ? orb : (orb ? [{ o: orb, cb: onOrbHit }] : []);
+  return add([circle(6), pos(x, y), anchor("center"), color(255, 60, 90), area(), z(6), "missile",
+    { vx: -150, vy: 0, reflected: false,
+      update() {
+        this.pos.x += this.vx * dt();
+        this.pos.y += this.vy * dt();
+        if (this.pos.x < -20 || this.pos.x > worldW + 20) { this.destroy(); return; }
+        if (this.reflected) {
+          for (const t of targets) {
+            if (t.o && t.o.exists && t.o.exists() && !t.o.hit && this.pos.dist(t.o.pos) < 28) {
+              if (t.cb) t.cb();
+              this.destroy();
+              return;
+            }
+          }
+        }
+      } }]);
+}
+function bindMissileDamage(player, msg = "A angústia te alcançou. Respire.") {
+  onCollide("player", "missile", (p, m) => {
+    if (m.reflected || _sadInvuln || transitioning) return;
+    _sadInvuln = true;
+    SFX.hurt(); shake(8);
+    const flash = add([rect(width(), height()), pos(0, 0), color(0, 60, 120), opacity(0.5), z(100), fixed()]);
+    tween(0.5, 0, 0.35, (v) => { if (flash.exists()) flash.opacity = v; })
+      .then(() => { if (flash.exists()) flash.destroy(); });
+    player.pos.x = _spawn.x; player.pos.y = _spawn.y;
+    player.vel.x = 0; player.vel.y = 0;
+    m.destroy(); toast(msg);
+    wait(1, () => (_sadInvuln = false));
+  });
+}
+function bindSadReflect(player, orb = null) {
+  onKeyPress("e", () => {
+    if (transitioning || dialogueOpen || paused) return;
+    SFX.reflect();
+    const pc = playerCenter(player);
+    makeAura(pc.x, pc.y, [0, 162, 255], 70);
+    let tgt = null;
+    if (Array.isArray(orb)) {
+      const w = orb.find((w) => w.o && w.o.exists && w.o.exists() && !w.o.hit);
+      tgt = w ? w.o : null;
+    } else if (orb && orb.exists && orb.exists() && !orb.hit) {
+      tgt = orb;
+    }
+    get("missile").forEach((m) => {
+      if (m.reflected || !m.exists()) return;
+      if (m.pos.dist(pc) < 80) {
+        m.reflected = true;
+        if (tgt) {
+          const d = tgt.pos.sub(m.pos).unit().scale(300);
+          m.vx = d.x; m.vy = d.y;
+        } else { m.vx = 280; m.vy = 0; }
+        m.use(color(90, 200, 255));
+        toast("Refletido!");
+      }
+    });
+  });
+}
+function bindJoyAbility(player, after = null) {
+  const act = () => {
+    if (transitioning || dialogueOpen || paused) return;
+    SFX.aura();
+    const pc = playerCenter(player);
+    makeAura(pc.x, pc.y, [255, 215, 0], 160);
+    get("hidden").forEach((h) => { if (centerOf(h).dist(pc) < 160) revealPlatform(h); });
+    get("vine").forEach((v) => {
+      if (v.cut || !v.exists()) return;
+      const vc = vec2(v.pos.x + 10, 424);
+      if (vc.dist(pc) < 75) {
+        v.cut = true; v.unuse("body");
+        SFX.cut();
+        burst(vc.x, vc.y, [220, 190, 60], 10, 120);
+        toast("Vinha cortada!");
+        tween(1, 0, 0.35, (vv) => {
+          if (v.exists()) { v.opacity = 0.95 * vv; v.scale = vec2(2, 8 * vv); }
+        });
+        scheduleVineRegrow(v);
+      }
+    });
+    get("totem").forEach((t) => {
+      if (t.lit || !t.exists()) return;
+      if (t.pos.dist(pc) < 150) {
+        t.lit = true; t.use(color(255, 215, 0));
+        SFX.totem();
+        ring(t.pos.x, t.pos.y, [255, 215, 0], 8, 60, 0.5);
+        burst(t.pos.x, t.pos.y, [255, 215, 0], 8, 90);
+      }
+    });
+    if (after) after();
+  };
+  onKeyPress("space", act);
+  onKeyPress("e", act);
+}
+function bindIdleReveal(player, groundY, onIdle) {
+  let t = 0, ind = null;
+  const killInd = () => { if (ind && ind.exists()) ind.destroy(); ind = null; };
+  (function loop() {
+    wait(0.1, () => {
+      if (!player.exists() || transitioning) { killInd(); return; }
+      const noInput = !isKeyDown("left") && !isKeyDown("right") &&
+        !isKeyDown("a") && !isKeyDown("d") &&
+        !isKeyDown("up") && !isKeyDown("w") && !isKeyDown("space");
+      const grounded = player.isGrounded ? player.isGrounded() : player.pos.y >= groundY - 1;
+      const idle = !dialogueOpen && !paused && noInput && grounded;
+      if (idle) {
+        t += 0.1;
+        if (!ind) {
+          ind = add([text("", { size: 11 }), pos(player.pos.x, player.pos.y - PLAYER_H - 10),
+            anchor("bot"), color(140, 190, 255), opacity(0.9), z(35),
+            { update() {
+              if (player.exists()) { this.pos.x = player.pos.x; this.pos.y = player.pos.y - PLAYER_H - 10; }
+            } }]);
+        }
+        ind.text = "PARANDO" + ".".repeat(1 + Math.floor(t / 0.66) % 3);
+        if (t >= 2) { t = 0; killInd(); onIdle(); }
+      } else { t = 0; killInd(); }
+      loop();
+    });
+  })();
+}
+
+// ============================================================
+// SOMBRA — helpers (arenas fechadas)
+// ============================================================
+let WORLDW_SHADOW = 1800;
+let SHADOW_HOOK = null;
+
+function makeSombra(x, y, room, opts = {}) {
+  const xmin = opts.xmin ?? 40;
+  const xmax = opts.xmax ?? (WORLDW_SHADOW - 40);
+  const s = add([circle(14), pos(x, y), anchor("center"), rotate(0),
+    color(24, 16, 34), outline(2, rgb(90, 50, 130)),
+    area(), z(31), "sombra",
+    {
+      room, hp: 2, dead: false,
+      stunned: 0, shoot: opts.shoot || false,
+      shootT: rand(1.5, 3), t: rand(0, 9), dashHit: false,
+      update() {
+        if (transitioning || paused || dialogueOpen || this.dead) return;
+        this.t += dt();
+        if (this._t1 && this._t1.exists()) {
+          this._t1.pos.x = Math.sin(this.t * 3) * 12;
+          this._t1.pos.y = 12 + Math.cos(this.t * 2.4) * 5;
+          this._t2.pos.x = Math.sin(this.t * 3 + 2.1) * 12;
+          this._t2.pos.y = 14 + Math.cos(this.t * 2.4 + 1) * 5;
+          this._t3.pos.x = Math.sin(this.t * 3 + 4.2) * 12;
+          this._t3.pos.y = 16 + Math.cos(this.t * 2.4 + 2) * 5;
+          this._e1.pos.x = -4 + Math.sin(this.t * 1.3) * 1.5;
+          this._e2.pos.x = 4 + Math.sin(this.t * 1.3 + 1) * 1.5;
+        }
+        if (this.stunned > 0) {
+          this.stunned -= dt();
+          this.opacity = Math.floor(time() * 12) % 2 === 0 ? 0.35 : 0.9;
+          return;
+        }
+        this.opacity = 1;
+        const pl = get("player")[0];
+        if (pl && pl.exists()) {
+          const target = pl.pos.sub(vec2(0, 24));
+          const d = target.sub(this.pos);
+          const L = d.len();
+          if (L > 26 && L < 300 && L > 0.001) {
+            this.pos = this.pos.add(d.unit().scale((opts.speed || 62) * dt()));
+          }
+          if (this.shoot) {
+            this.shootT -= dt();
+            if (this.shootT <= 0 && L < 520) {
+              this.shootT = 2.8;
+              fireBolt(this.pos, target);
+            }
+          }
+        }
+        this.pos.x = clamp(this.pos.x, xmin, xmax);
+        this.pos.y = clamp(this.pos.y, 370, 470);
+      },
+    }]);
+  s._t1 = s.add([circle(5), pos(0, 12), color(24, 16, 34)]);
+  s._t2 = s.add([circle(4), pos(0, 14), color(24, 16, 34)]);
+  s._t3 = s.add([circle(3.4), pos(0, 16), color(24, 16, 34)]);
+  s._e1 = s.add([circle(2.2), pos(-4, -3), color(255, 255, 255)]);
+  s._e2 = s.add([circle(2.2), pos(4, -3), color(255, 255, 255)]);
+  return s;
+}
+
+function sombraHit(s, dmg, fromX) {
+  if (!s || !s.exists() || s.dead) return;
+  s.hp -= dmg;
+  SFX.bossHit();
+  burst(s.pos.x, s.pos.y, [180, 120, 255], 8, 130);
+  if (s.hp > 0) {
+    if (!s.isBoss) {
+      s.stunned = 0.5;
+      if (fromX !== undefined) s.pos.x += (s.pos.x < fromX ? -1 : 1) * 22;
+    }
+    if (s.onHit) s.onHit();
+    return;
+  }
+  s.dead = true;
+  if (s.onDeath) { s.onDeath(); return; }
+  burst(s.pos.x, s.pos.y, [220, 190, 255], 14, 170);
+  ring(s.pos.x, s.pos.y, [180, 120, 255], 6, 44, 0.4);
+  if (Math.random() < 0.35) {
+    add([circle(6), pos(s.pos.x, s.pos.y), anchor("center"), color(255, 120, 150),
+      area(), z(33), "heart",
+      { t: rand(0, 9), update() { this.t += dt(); this.pos.y += Math.sin(this.t * 3) * 9 * dt(); } }]);
+  }
+  s.destroy();
+  if (SHADOW_HOOK && SHADOW_HOOK.onDeath) SHADOW_HOOK.onDeath(s);
+}
+
+function fireBolt(from, to) {
+  SFX.shot();
+  const diff = to.sub(from);
+  if (diff.len() < 1) return;
+  const d = diff.unit();
+  const bolts = get("bolt");
+  if (bolts.length > 10 && bolts[0] && bolts[0].exists()) bolts[0].destroy();
+  add([circle(6), pos(from.x, from.y), anchor("center"), color(110, 40, 150),
+    outline(1, rgb(160, 80, 200)), area(), z(32), "bolt",
+    { vx: d.x * 150, vy: d.y * 150, light: false,
+      update() {
+        if (transitioning || paused) return;
+        this.pos.x += this.vx * dt();
+        this.pos.y += this.vy * dt();
+        if (this.pos.x < -30 || this.pos.x > WORLDW_SHADOW + 30 ||
+            this.pos.y < -30 || this.pos.y > height() + 30) {
+          this.destroy(); return;
+        }
+        if (!this.light) {
+          const pl = get("player")[0];
+          if (pl && pl.exists() && this.pos.dist(pl.pos.sub(vec2(0, 24))) < 20) {
+            burst(this.pos.x, this.pos.y, [160, 80, 200], 6, 90);
+            this.destroy();
+            if (SHADOW_HOOK && SHADOW_HOOK.hurtPlayer) SHADOW_HOOK.hurtPlayer(this.pos.x);
+          }
+        } else {
+          const sombras = get("sombra");
+          for (const s of sombras) {
+            if (s.exists() && !s.dead && this.pos.dist(s.pos) < 24) {
+              sombraHit(s, 2, this.pos.x);
+              burst(this.pos.x, this.pos.y, [255, 255, 255], 8, 130);
+              this.destroy();
+              return;
+            }
+          }
+        }
+      } }]);
+}
+
+// ============================================================
+// CENA: TÍTULO (fundo do menu — a abertura HTML comanda o início)
+// ============================================================
+
+scene("title", () => {
+  sceneInit("title");
+  startAmbience([110, 165], { vol: 0.035, attack: 3 });
+  makeSky([26, 26, 34], [5, 5, 8]);
+  makeMoodTint([70, 60, 110]);
+  makeStars(16);
+  makeMotes(12, width(), [90, 90, 110], { op: 0.2 });
+
+  makeTri(width() / 2, 320, 130, [235, 235, 240], 0.9);
+  addGlow(width() / 2, 320, [235, 235, 240], 0.1, 300);
+
+  const beam = add([rect(0, 6), pos(100, 320), anchor("left"), color(255, 255, 255), opacity(0), z(3)]);
+  const orbCols = [[255, 215, 0], [0, 0, 255], [255, 0, 0], [128, 0, 128]];
+  const orbEnds = [vec2(710, 160), vec2(820, 250), vec2(820, 380), vec2(710, 480)];
+  const orbs = orbCols.map((c) =>
+    add([circle(6), pos(width() / 2, 320), anchor("center"), color(...c), opacity(0), z(4)]));
+
+  function prismLoop() {
+    if (!beam.exists()) return;
+    beam.opacity = 1; beam.width = 0;
+    tween(0, width() / 2 - 100, 0.9, (v) => { if (beam.exists()) beam.width = v; }, easings.easeOutQuad)
+      .then(() => {
+        if (!beam.exists()) return;
+        tween(1, 0, 0.25, (v) => { if (beam.exists()) beam.opacity = v; });
+        orbs.forEach((o, i) => {
+          if (!o.exists()) return;
+          o.pos = vec2(width() / 2, 320); o.opacity = 1;
+          const from = o.pos.clone();
+          tween(0, 1, 1.1, (v) => { if (o.exists()) o.pos = from.lerp(orbEnds[i], v); }, easings.easeOutQuad);
+          wait(1.0, () => { if (o.exists()) tween(1, 0, 0.5, (v) => { if (o.exists()) o.opacity = v; }); });
+        });
+      });
+    wait(3.8, prismLoop);
+  }
+  wait(0.8, prismLoop);
+});
+
+// ============================================================
+// CENA: VAZIO
+// ============================================================
+
+scene("void", () => {
+  sceneInit("void");
+  const worldW = 1024;
+  startAmbience([110, 165], { vol: 0.03 });
+  makeSky([46, 46, 58], [10, 10, 14]);
+  makeMoodTint([90, 90, 120]);
+  makeStars(14);
+  makeMotes(16, worldW, [120, 120, 120], { op: 0.3 });
+
+  const R = (c, n) => c.repeat(n);
+  buildMap([
+    R(".", 32), R(".", 32), R(".", 32), R(".", 32),
+    R(".", 32), R(".", 32), R(".", 32), R(".", 32),
+    R(".", 32), R(".", 32), R(".", 32), R(".", 32),
+    R(".", 11) + "PP" + R(".", 7) + "E" + R(".", 11),
+    R(".", 12) + "K" + R(".", 19),
+    R("#", 12) + ".." + R("#", 18),
+  ], {
+    "#": (x, y) => makeGround(x, y, 32, 96),
+    "P": (x, y) => makePlatform(x, y, 32, 32, [200, 200, 212]),
+    "E": (x, y) => makeExit(x + 16, y + 16),
+    "K": (x, y) => makeSpark(x + 16, y + 16),
+  });
+  makeWalls(worldW);
+
+  const player = spawnPlayer(64, 448);
+  makeDarkness(player, 0.5, 560);
+  makePlayerGlow(player, [255, 255, 255], 0.16);
+  setupMovement(player, worldW, MOVE_SPEED, JUMP_FORCE);
+  bindSparks(1);
+
+  titleCard("VAZIO", "mover · pular", [255, 255, 255]);
+  showDialogue([
+    "Não havia nome. Não havia rosto.",
+    "O som dos seus passos era a única prova de que existia.",
+  ]);
+
+  let asked = false;
+  onCollide("player", "exit", () => {
+    if (asked || transitioning) return;
+    asked = true;
+    const q = add([text("...quem é você?", { size: 26 }), pos(width() / 2, height() / 2 - 60),
+      anchor("center"), color(255, 255, 255), opacity(0), z(90), fixed()]);
+    tween(0, 1, 0.7, (v) => { if (q.exists()) q.opacity = v; });
+    wait(1.9, () => { tween(1, 0, 0.6, (v) => { if (q.exists()) q.opacity = v; }); });
+    wait(2.3, () => { SFX.win(); transitionTo("joy1", [255, 215, 0]); });
+  });
+});
+
+// ============================================================
+// ALEGRIA I
+// ============================================================
+
+scene("joy1", () => {
+  sceneInit("joy1");
+  startMusic("musAlegria");
+  const worldW = 1024;
+  startAmbience([220, 277, 330], { type: "triangle", vol: 0.035 });
+  makeSky([84, 64, 14], [18, 14, 4]);
+  makeMoodTint([255, 200, 60]);
+  makeRays(3);
+  makeParallax("pillar", 3, [90, 70, 20], 0.45, [160, 250, 340, 430], 0.25);
+  makeMotes(12, worldW, [255, 220, 120], { op: 0.25 });
+
+  const R = (c, n) => c.repeat(n);
+  buildMap([
+    R(".", 32), R(".", 32), R(".", 32), R(".", 32),
+    R(".", 32), R(".", 32), R(".", 32), R(".", 32),
+    R(".", 32),
+    R(".", 15) + "K" + R(".", 16),
+    R(".", 14) + "HHHHH" + R(".", 13),
+    R(".", 9) + "K" + R(".", 22),
+    R(".", 28) + "E" + R(".", 3),
+    R(".", 32),
+    R("#", 13) + R(".", 7) + R("#", 12),
+  ], {
+    "#": (x, y) => makeGround(x, y, 32, 96, 31),
+    "H": (x, y) => makeHiddenPlatform(x, y, 32, 32),
+    "E": (x, y) => makeExit(x + 16, y + 16),
+    "K": (x, y) => makeSpark(x + 16, y + 16),
+  });
+  makeWalls(worldW);
+
+  const player = spawnPlayer(64, 448);
+  makeDarkness(player, 0.82, 720);
+  makeHalo(player);
+  spawnFollowers(player);
+  makeFragHUD();
+
+  makeEmotionNPC(player, 210, 380, [255, 215, 0], [
+    "Você lembra de mim quando tudo está bem.",
+    "Mas esquece que eu também desapareço.",
+    "Minha luz revela o caminho — mas é fugaz.",
+    "Se ela apagar, traga-a de volta com E.",
+  ]);
+
+  setupMovement(player, worldW, MOVE_SPEED * 1.3, JUMP_FORCE * 0.9, { spaceJump: false });
+  bindJoyAbility(player);
+  bindSparks(2);
+
+  onCollide("player", "exit", () => { if (!transitioning) { SFX.win(); transitionTo("joy2", [255, 255, 240]); } });
+  hudLabel("E revela (fugaz!) · W/↑ pula (2x no ar)", [255, 215, 0]);
+  titleCard("ALEGRIA I", "ILUMINAR", [255, 215, 0]);
+});
+
+// ============================================================
+// ALEGRIA II
+// ============================================================
+
+scene("joy2", () => {
+  sceneInit("joy2");
+  startMusic("musAlegria");
+  const worldW = 1024;
+  startAmbience([220, 277, 330], { type: "triangle", vol: 0.035 });
+  makeSky([84, 64, 14], [18, 14, 4]);
+  makeMoodTint([255, 200, 60]);
+  makeRays(2);
+  makeParallax("pillar", 3, [90, 70, 20], 0.45, [180, 290, 380], 0.25);
+
+  const R = (c, n) => c.repeat(n);
+  buildMap([
+    R(".", 32), R(".", 32), R(".", 32), R(".", 32),
+    R(".", 32), R(".", 32), R(".", 32), R(".", 32),
+    R(".", 32),
+    R(".", 16) + "K" + R(".", 15),
+    R(".", 32),
+    R(".", 32),
+    R(".", 21) + "K" + R(".", 2) + "E" + R(".", 7),
+    R(".", 13) + "V" + R(".", 7) + "V" + R(".", 9),
+    R("#", 32),
+  ], {
+    "#": (x, y) => makeGround(x, y, 32, 96, 31),
+    "V": (x) => makeVine(x + 6),
+    "E": (x, y) => makeExit(x + 16, y + 16),
+    "K": (x, y) => makeSpark(x + 16, y + 16),
+  });
+  makeWalls(worldW);
+
+  const player = spawnPlayer(64, 448);
+  makeDarkness(player, 0.82, 720);
+  makeHalo(player);
+  spawnFollowers(player);
+  makeFragHUD();
+
+  setupMovement(player, worldW, MOVE_SPEED * 1.3, JUMP_FORCE * 0.9, { spaceJump: false });
+  bindJoyAbility(player);
+  bindSparks(2);
+
+  onCollide("player", "exit", () => { if (!transitioning) { SFX.win(); transitionTo("joy3", [255, 255, 240]); } });
+  hudLabel("E corta as vinhas (elas voltam...)", [255, 215, 0]);
+  titleCard("ALEGRIA II", "ILUMINAR", [255, 215, 0]);
+  showDialogue([
+    "Nem tudo que nos prende é invisível.",
+    "Algumas barreiras estão à vista — e ainda assim nos imobilizam.",
+    "Corte as vinhas com E — mas não espere: elas voltam a crescer.",
+  ]);
+});
+
+// ============================================================
+// ALEGRIA III
+// ============================================================
+
+scene("joy3", () => {
+  sceneInit("joy3");
+  startMusic("musAlegria");
+  const worldW = 1024;
+  startAmbience([220, 277, 330], { type: "triangle", vol: 0.035 });
+  makeSky([84, 64, 14], [18, 14, 4]);
+  makeMoodTint([255, 200, 60]);
+  makeRays(3);
+  makeParallax("pillar", 3, [90, 70, 20], 0.45, [150, 260, 370], 0.25);
+
+  const R = (c, n) => c.repeat(n);
+  buildMap([
+    R(".", 32), R(".", 32), R(".", 32), R(".", 32), R(".", 32),
+    R(".", 24) + "K" + R(".", 7),
+    R(".", 32),
+    R(".", 32),
+    R(".", 19) + "T" + R(".", 12),
+    R(".", 17) + "PPP" + R(".", 12),
+    R(".", 32),
+    R(".", 9) + "T" + R(".", 22),
+    R(".", 8) + "PPPP" + R(".", 20),
+    R(".", 3) + "T" + R(".", 20) + "K" + R(".", 7),
+    R("#", 32),
+  ], {
+    "#": (x, y) => makeGround(x, y, 32, 96, 31),
+    "P": (x, y) => makePlatform(x, y, 32, 32, [255, 255, 255], 31),
+    "T": (x, y) => makeTotem(x + 16, y + 16),
+    "K": (x, y) => makeSpark(x + 16, y + 16),
+  });
+  makeWalls(worldW);
+
+  makeMovingPlatform(416, 288, 96, 16, 416, 544, 70, [255, 240, 180]);
+
+  const exit = makeExit(944, 400);
+  exit.use(color(120, 110, 60));
+  exit.locked = true;
+
+  const player = spawnPlayer(64, 448);
+  makeDarkness(player, 0.82, 720);
+  makeHalo(player);
+  spawnFollowers(player);
+  makeFragHUD();
+
+  function unlockCheck() {
+    if (!exit.locked) return;
+    if (get("totem").every((t) => t.lit)) {
+      exit.locked = false;
+      exit.use(color(255, 230, 120));
+      toast("Os três totens acesos — a saída se abriu!");
+      SFX.totem();
+      burst(exit.pos.x, exit.pos.y, [255, 230, 120], 14, 120);
+    }
+  }
+  setupMovement(player, worldW, MOVE_SPEED * 1.3, JUMP_FORCE * 0.9, { spaceJump: false });
+  bindJoyAbility(player, unlockCheck);
+  bindSparks(2);
+
+  let exitHinting = false;
+  onCollide("player", "exit", () => {
+    if (transitioning) return;
+    if (exit.locked) {
+      if (!exitHinting) {
+        exitHinting = true;
+        toast("Selada. Ilumine os 3 totens.");
+        wait(2, () => (exitHinting = false));
+      }
+    } else {
+      awardFragment(player, [255, 215, 0]);
+      SFX.win();
+      transitionTo("sad1");
+    }
+  });
+
+  hudLabel("Acenda os 3 totens", [255, 215, 0]);
+  titleCard("ALEGRIA III", "ILUMINAR", [255, 215, 0]);
+  showDialogue(["Três totems dormem na escuridão.", "Traga-lhes a luz, e o caminho se abrirá."]);
+});
+
+// ============================================================
+// TRISTEZA I
+// ============================================================
+
+scene("sad1", () => {
+  sceneInit("sad1");
+  startMusic("musTristeza");
+  const worldW = 1024;
+  const groundY = 448;
+  startAmbience([98, 147], { vol: 0.04 });
+  startRain(); makeStorm();
+  makeSky([16, 34, 66], [4, 8, 16]);
+  makeMoodTint([40, 90, 200]);
+  makeParallax("tree", 3, [15, 30, 60], 0.85, [200, 300, 400], 0.2, -10, 1.4);
+  makeRain(50, worldW);
+  makeSplashes([[0, 380], [640, 1020]]);
+
+  const R = (c, n) => c.repeat(n);
+  buildMap([
+    R(".", 32), R(".", 32), R(".", 32), R(".", 32), R(".", 32),
+    R(".", 32), R(".", 32), R(".", 32), R(".", 32), R(".", 32),
+    R(".", 10) + "K" + R(".", 21),
+    R(".", 32),
+    R(".", 5) + "K" + R(".", 21) + "E" + R(".", 2),
+    R(".", 2) + "PPP" + R(".", 27),
+    R("#", 12) + R(".", 8) + R("#", 12),
+  ], {
+    "#": (x, y) => makeWaterGround(x, y, 32, 96),
+    "P": (x, y) => makePlatform(x, y, 32, 32, [40, 80, 160]),
+    "E": (x, y) => makeExit(x + 16, y + 16),
+    "K": (x, y) => makeSpark(x + 16, y + 16),
+  });
+  makeWalls(worldW);
+
+  const fog = makeFogBridge(384, 256, 15);
+
+  const player = spawnPlayer(64, groundY);
+  makeReflection(player, groundY);
+  makePlayerGlow(player, [80, 140, 255], 0.22);
+  spawnFollowers(player);
+  makeFragHUD();
+
+  makeHeavyDrops(player, groundY);
+
+  let fogIntroduced = false;
+  bindIdleReveal(player, groundY, () => {
+    if (!fogIntroduced) { toast("Alguém observa, ali no alto."); return; }
+    if (!fog.revealed) { fog.reveal(); toast("Ao parar, a névoa atende."); }
+  });
+
+  makeEmotionNPC(player, 112, 368, [0, 0, 255], [
+    "Você tenta fugir de mim. Mas quando está sozinho... não consegue me deixar.",
+    "Talvez você não precise fugir.",
+    "A névoa atravessa o abismo — mas não espera para sempre.",
+    "E quando a sombra crescer no céu... mova-se.",
+  ], () => {
+    fogIntroduced = true;
+    fog.reveal();
+    toast("A chuva diminuiu.");
+  }, true);
+
+  setupMovement(player, worldW, MOVE_SPEED * 0.5, JUMP_FORCE * 0.7, {});
+  bindSparks(2);
+
+  onCollide("player", "exit", () => { if (!transitioning) { SFX.win(); transitionTo("sad2"); } });
+  hudLabel("Névoa 15s · PARAR reconfia · desvie das sombras", [0, 0, 255]);
+  titleCard("TRISTEZA I", "PARAR", [80, 80, 255]);
+  showDialogue(["O tipo de silêncio que pesa."]);
+});
+
+// ============================================================
+// TRISTEZA II
+// ============================================================
+
+scene("sad2", () => {
+  sceneInit("sad2");
+  startMusic("musTristeza");
+  const worldW = 1024;
+  const groundY = 448;
+  startAmbience([98, 147], { vol: 0.04 });
+  startRain(); makeStorm();
+  makeSky([16, 34, 66], [4, 8, 16]);
+  makeMoodTint([40, 90, 200]);
+  makeParallax("tree", 3, [15, 30, 60], 0.85, [190, 310], 0.2, -10, 1.4);
+  makeRain(50, worldW);
+  makeSplashes([[0, 1020]]);
+  _sadInvuln = false;
+
+  const R = (c, n) => c.repeat(n);
+  buildMap([
+    R(".", 32), R(".", 32), R(".", 32), R(".", 32),
+    R(".", 32), R(".", 32), R(".", 32), R(".", 32),
+    R(".", 15) + "K" + R(".", 16),
+    R(".", 32),
+    R(".", 14) + "PPP" + R(".", 15),
+    R(".", 32),
+    R(".", 28) + "E" + R(".", 3),
+    R(".", 32),
+    R("#", 32),
+  ], {
+    "#": (x, y) => makeWaterGround(x, y, 32, 96),
+    "P": (x, y) => makePlatform(x, y, 32, 32, [40, 80, 160]),
+    "E": (x, y) => makeExit(x + 16, y + 16),
+    "K": (x, y) => makeSpark(x + 16, y + 16),
+  });
+  makeWalls(worldW);
+
+  add([rect(20, 20), pos(860, 372), color(0, 120, 200), opacity(0.9),
+    outline(2, rgb(0, 162, 255)), z(6),
+    { update() { this.opacity = 0.75 + Math.sin(time() * 4) * 0.2; } }]);
+  add([rect(20, 20), pos(604, 344), color(0, 120, 200), opacity(0.9),
+    outline(2, rgb(0, 162, 255)), z(6),
+    { update() { this.opacity = 0.75 + Math.sin(time() * 4 + 2) * 0.2; } }]);
+
+  const player = spawnPlayer(64, groundY);
+  makeReflection(player, groundY);
+  makePlayerGlow(player, [80, 140, 255], 0.22);
+  spawnFollowers(player);
+  makeFragHUD();
+
+  setupMovement(player, worldW, MOVE_SPEED * 0.5, JUMP_FORCE * 0.7, {});
+  bindSadReflect(player);
+  bindMissileDamage(player);
+  bindSparks(1);
+
+  (function shootLoop1() {
+    wait(2.4, () => {
+      if (!transitioning && !paused && !dialogueOpen) spawnMissile(846, 402, worldW);
+      if (!transitioning) shootLoop1();
+    });
+  })();
+  (function shootLoop2() {
+    wait(3.6, () => {
+      if (!transitioning && !paused && !dialogueOpen) spawnMissile(590, 374, worldW);
+      if (!transitioning) shootLoop2();
+    });
+  })();
+
+  onCollide("player", "exit", () => { if (!transitioning) { SFX.win(); transitionTo("sad3"); } });
+  hudLabel("E reflete mísseis · de dois lados agora", [0, 0, 255]);
+  titleCard("TRISTEZA II", "PARAR", [80, 80, 255]);
+  showDialogue([
+    "Mísseis de angústia flutuam por aqui.",
+    "Não desvie de todos — alguns, você devolve.",
+    "Aperte E no momento certo para refleti-los.",
+  ]);
+});
+
+// ============================================================
+// TRISTEZA III
+// ============================================================
+
+scene("sad3", () => {
+  sceneInit("sad3");
+  startMusic("musTristeza");
+  const worldW = 1280;
+  const groundY = 448;
+  startAmbience([98, 147], { vol: 0.04 });
+  startRain(); makeStorm();
+  makeSky([16, 34, 66], [4, 8, 16]);
+  makeMoodTint([40, 90, 200]);
+  makeParallax("tree", 3, [15, 30, 60], 0.85, [210, 330], 0.2, -10, 1.4);
+  makeRain(50, worldW);
+  makeSplashes([[0, 444], [844, 1276]]);
+  _sadInvuln = false;
+
+  const R = (c, n) => c.repeat(n);
+  buildMap([
+    R(".", 40), R(".", 40), R(".", 40), R(".", 40), R(".", 40), R(".", 40),
+    R(".", 40), R(".", 40), R(".", 40), R(".", 40), R(".", 40), R(".", 40),
+    R(".", 20) + "K" + R(".", 16) + "E" + R(".", 2),
+    R(".", 40),
+    R("#", 14) + R(".", 12) + R("#", 14),
+  ], {
+    "#": (x, y) => makeWaterGround(x, y, 32, 96),
+    "E": (x, y) => makeExit(x + 16, y + 16),
+    "K": (x, y) => makeSpark(x + 16, y + 16),
+  });
+  makeWalls(worldW);
+
+  const orb1 = add([circle(13), pos(640, 320), anchor("center"), color(255, 2, 85), opacity(0.95), z(6),
+    { hit: false }]);
+  const orb2 = add([circle(11), pos(790, 230), anchor("center"), color(255, 2, 85), opacity(0.75), z(6),
+    { hit: false }]);
+  add([rect(20, 20), pos(920, 372), color(0, 120, 200), opacity(0.9),
+    outline(2, rgb(0, 162, 255)), z(6),
+    { update() { this.opacity = 0.75 + Math.sin(time() * 4) * 0.2; } }]);
+
+  const player = spawnPlayer(64, groundY);
+  makeReflection(player, groundY);
+  makePlayerGlow(player, [80, 140, 255], 0.22);
+  spawnFollowers(player);
+  makeFragHUD();
+
+  setupMovement(player, worldW, MOVE_SPEED * 0.5, JUMP_FORCE * 0.7, {});
+
+  function buildIce(x, w, full) {
+    const ice = add([rect(w, 32), pos(x, groundY), area(), body({ isStatic: true }),
+      color(150, 210, 255), opacity(0), outline(2, rgb(210, 235, 255)), z(1)]);
+    tween(0, 0.95, 0.6, (v) => { if (ice.exists()) ice.opacity = v; });
+    toast(full ? "A dor refletida virou ponte." : "Metade da ponte... falta outro orbe.");
+  }
+
+  const targets = [
+    { o: orb1, cb: () => { if (!orb1.hit) { orb1.hit = true; orb1.use(color(90, 200, 255)); SFX.reveal(); burst(orb1.pos.x, orb1.pos.y, [150, 210, 255], 12, 130); buildIce(448, 192, false); } } },
+    { o: orb2, cb: () => { if (!orb2.hit) { orb2.hit = true; orb2.use(color(90, 200, 255)); SFX.reveal(); burst(orb2.pos.x, orb2.pos.y, [150, 210, 255], 12, 130); buildIce(640, 200, true); } } },
+  ];
+
+  bindSadReflect(player, targets);
+  bindMissileDamage(player);
+  bindSparks(1);
+
+  (function shootLoop() {
+    wait(2.4, () => {
+      if (!transitioning && !paused && !dialogueOpen) spawnMissile(906, 416, worldW, targets);
+      if (!transitioning) shootLoop();
+    });
+  })();
+
+  onCollide("player", "exit", () => {
+    if (transitioning) return;
+    awardFragment(player, [0, 0, 255]);
+    SFX.win();
+    transitionTo("anger");
+  });
+
+  hudLabel("Reflita nos 2 orbes para fechar a ponte", [0, 0, 255]);
+  titleCard("TRISTEZA III", "PARAR", [80, 80, 255]);
+  showDialogue([
+    "Dois orbes guardam o abismo.",
+    "Reflita um projétil em cada — a dor devolvida vira ponte.",
+  ]);
+});
+
+// ============================================================
+// RAIVA v2 (C=núcleo, D=lajes)
+// ============================================================
+
+scene("anger", () => {
+  sceneInit("anger");
+  startMusic("musRaiva");
+  const worldW = 1536;
+  startAmbience([55, 110, 164], { type: "sawtooth", vol: 0.022, attack: 2.5 });
+  makeSky([92, 12, 16], [18, 2, 4]);
+  makeMoodTint([255, 60, 40]);
+  makeParallax("spire", 3, [60, 15, 18], 0.8, [220, 320, 420], 0.25, -10, 0.8);
+  makeMotes(14, worldW, [255, 120, 60], { op: 0.3 });
+
+  let coreDown = false;
+  let core = null;
+  function makeCore(x, y) {
+    core = add([circle(15), pos(x, y), anchor("center"),
+      color(255, 60, 50), outline(3, rgb(255, 150, 60)),
+      area(), z(33), "core",
+      { hp: 3,
+        update() { const s = 1 + Math.sin(time() * 6) * 0.08; this.scale = vec2(s, s); } }]);
+    core.add([circle(30), color(255, 90, 50), opacity(0.18), anchor("center")]);
+    addGlow(x, y, [255, 90, 50], 0.2, 160);
+    return core;
+  }
+
+  const grid = Array.from({ length: 15 }, () => ".".repeat(48));
+  const put = (r, c, s) => { grid[r] = grid[r].slice(0, c) + s + grid[r].slice(c + s.length); };
+  for (let r = 0; r < 14; r++) put(r, 14, "BB");
+  for (let r = 12; r < 14; r++) put(r, 10, "SS");
+  for (let r = 11; r < 14; r++) put(r, 38, "BBB");
+  put(12, 39, "C");
+  put(12, 24, "K");
+  put(11, 35, "K");
+  put(10, 39, "K");
+  put(13, 34, "DDDD");
+  grid[14] = "#".repeat(22) + "SSSSSS" + "#".repeat(6) + "...." + "#".repeat(10);
+
+  buildMap(grid, {
+    "#": (x, y) => makeGround(x, y, 32, 96),
+    "S": (x, y) => makeBreakable(x, y, true),
+    "B": (x, y) => makeBreakable(x, y, false),
+    "K": (x, y) => makeSpark(x + 16, y + 16),
+    "C": (x, y) => makeCore(x + 16, y + 16),
+    "D": (x, y) => makeCrumble(x, y),
+  });
+  makeWalls(worldW);
+
+  onCollide("player", "crumble", (p, c) => {
+    if (c.trig || transitioning || paused) return;
+    c.trig = true;
+    SFX.warn();
+    const y0 = c.pos.y;
+    wait(0.45, () => {
+      if (!c.exists()) return;
+      c.unuse("body");
+      shake(3);
+      burst(c.pos.x + 16, c.pos.y + 7, [150, 150, 158], 6, 80);
+      tween(0, 1, 0.45, (v) => {
+        if (!c.exists()) return;
+        c.opacity = 1 - v;
+        c.pos.y = y0 + v * 70;
+      }, easings.easeInQuad).then(() => { if (c.exists()) c.destroy(); });
+    });
+  });
+
+  const exit = makeExit(1456, 400);
+  exit.use(color(120, 110, 60));
+  exit.locked = true;
+
+  const player = spawnPlayer(64, 448);
+  makePlayerGlow(player, [255, 90, 60], 0.22);
+  spawnFollowers(player);
+  makeFragHUD();
+
+  makeEmotionNPC(player, 260, 380, [255, 0, 0], [
+    "Você me odeia porque acha que eu só destruo.",
+    "Mas eu apenas mostro aquilo que você insiste em guardar.",
+    "Há coisas que precisam ser enfrentadas.",
+    "Nem tudo, porém. Algumas partes... são só pedra.",
+  ]);
+
+  setupMovement(player, worldW, MOVE_SPEED * 1.8, JUMP_FORCE * 1.1, { spaceJump: false });
+  bindSparks(3);
+
+  function smashBlock(b) {
+    if (b.broken || !b.exists()) return;
+    b.broken = true;
+    b.unuse("body");
+    SFX.break(); shake(4);
+    if (b.is("stone")) {
+      toast(b.pos.y >= 430 ? "Você quebrou o próprio chão!" : "Só pedra. Quebrar por quebrar não abre caminho.");
+    } else toast("A barreira cede.");
+    for (let i = 0; i < 6; i++) {
+      add([rect(rand(4, 8), rand(4, 8)), pos(b.pos.x + rand(4, 26), b.pos.y + rand(4, 26)),
+        color(...(b.is("stone") ? [150, 150, 158] : [255, 70, 50])), opacity(0.9), z(31),
+        { t: 0, vx: rand(-120, 120), vy: rand(-220, -80),
+          update() { this.t += dt(); this.pos.x += this.vx * dt(); this.pos.y += this.vy * dt();
+            this.vy += 600 * dt(); this.opacity = 0.9 * (1 - this.t / 0.6);
+            if (this.t > 0.6) this.destroy(); } }]);
+    }
+    tween(1, 0, 0.15, (v) => { if (b.exists()) { b.opacity = v; b.scale = vec2(1 + (1 - v) * 0.3); } },
+      easings.easeOutQuad).then(() => { if (b.exists()) b.destroy(); });
+    if (!b.is("stone")) {
+      const c0 = centerOf(b);
+      wait(0.12, () => {
+        get("breakable").forEach((nb) => {
+          if (!nb.broken && !nb.is("stone") && nb.exists() && centerOf(nb).dist(c0) <= 36) smashBlock(nb);
+        });
+      });
+    }
+  }
+
+  onKeyPress("space", () => {
+    if (transitioning || dialogueOpen || paused) return;
+    SFX.slam();
+    const pc = playerCenter(player);
+    makeAura(pc.x, pc.y, [255, 0, 0], 90);
+    shake(2);
+    get("breakable").forEach((b) => {
+      if (!b.broken && centerOf(b).dist(pc) < 90) smashBlock(b);
+    });
+    if (!coreDown && core && core.exists() && core.pos.dist(pc) < 90) {
+      core.hp--;
+      shake(6); SFX.crack();
+      burst(core.pos.x, core.pos.y, [255, 120, 50], 10, 160);
+      ring(core.pos.x, core.pos.y, [255, 150, 60], 10, 70, 0.35);
+      if (core.hp <= 0) {
+        coreDown = true;
+        SFX.break(); shake(10);
+        burst(core.pos.x, core.pos.y, [255, 80, 40], 22, 240);
+        makeFragment(core.pos.x, core.pos.y - 10, [255, 0, 0]);
+        core.destroy();
+        exit.locked = false;
+        exit.use(color(255, 255, 255));
+        toast("O núcleo se rompeu — o fragmento é seu.");
+      } else {
+        core.use(color(...(core.hp === 2 ? [255, 140, 60] : [255, 210, 80])));
+        toast(`O núcleo racha! ${core.hp} golpe${core.hp > 1 ? "s" : ""} restante${core.hp > 1 ? "s" : ""}.`);
+      }
+    }
+  });
+
+  onFragmentCollect(player);
+
+  let exitHinting = false;
+  onCollide("player", "exit", () => {
+    if (transitioning) return;
+    if (exit.locked) {
+      if (!exitHinting) {
+        exitHinting = true;
+        toast("A saída só se abre quando o núcleo for enfrentado.");
+        wait(2, () => (exitHinting = false));
+      }
+    } else { SFX.win(); transitionTo("fear"); }
+  });
+
+  hudLabel("ESPAÇO rompe · o chão cede onde você pisa", [255, 0, 0]);
+  titleCard("RAIVA", "ROMPER", [255, 0, 0]);
+});
+
+// ============================================================
+// MEDO v2
+// ============================================================
+
+scene("fear", () => {
+  sceneInit("fear");
+  startMusic("musMedo");
+  const WORLD_W = width();
+  const WORLD_H = height();
+  startAmbience([110, 116.5], { vol: 0.04, attack: 3 });
+  makeWisps(7);
+  makeMoodTint([150, 60, 230]);
+
+  const C_WHITE = rgb(235, 235, 240);
+  const C_DIM = rgb(120, 120, 130);
+  const C_BLACK = rgb(8, 8, 10);
+  const C_PURPLE = rgb(178, 68, 255);
+  const C_PURPLE_SOFT = rgb(140, 40, 220);
+
+  const START = vec2(50, WORLD_H - 60);
+  let checkpoint = START.clone();
+  let levelActive = false, dialogueActive = true, invulnerable = false, finished = false;
+  let perceiveActive = false, perceiveCooldownLeft = 0;
+  const PERCEIVE_DURATION = 3, PERCEIVE_COOLDOWN = 6;
+  let slowWarned = false, homingWarned = false;
+
+  function fogFactor(dist) {
+    const CLEAR = 110, FAR = 300;
+    if (dist <= CLEAR) return 1;
+    if (dist >= FAR) return 0;
+    return 1 - (dist - CLEAR) / (FAR - CLEAR);
+  }
+
+  const heldDir = { up: false, down: false, left: false, right: false };
+  const bindHeld = (keys, prop) => keys.forEach((k) => {
+    onKeyDown(k, () => (heldDir[prop] = true));
+    onKeyRelease(k, () => (heldDir[prop] = false));
+  });
+  bindHeld(["up", "w"], "up");
+  bindHeld(["down", "s"], "down");
+  bindHeld(["left", "a"], "left");
+  bindHeld(["right", "d"], "right");
+
+  const slowFx = add([circle(20), pos(START), anchor("center"),
+    color(C_PURPLE), opacity(0), z(9)]);
+
+  const player = add([circle(11), pos(START), anchor("center"),
+    color(C_BLACK), outline(2, rgb(60, 60, 65)), area(), z(10), "player",
+    { speed: 125, speedMul: 1,
+      update() {
+        if (dialogueActive || dialogueOpen || paused || finished) return;
+        let slowed = false;
+        get("hazard").forEach((h) => {
+          if (h.state === "danger" && this.pos.dist(h.pos) < 115) slowed = true;
+        });
+        if (slowed && !slowWarned) {
+          slowWarned = true;
+          toast("O medo pesa — você ficou mais lento perto do perigo.");
+        }
+        this.speedMul = slowed ? 0.55 : 1;
+        slowFx.pos = this.pos;
+        slowFx.opacity = slowed ? 0.22 : 0;
+
+        let dx = 0, dy = 0;
+        if (heldDir.up) dy -= 1;
+        if (heldDir.down) dy += 1;
+        if (heldDir.left) dx -= 1;
+        if (heldDir.right) dx += 1;
+        if (dx === 0 && dy === 0) return;
+        const v = vec2(dx, dy).unit().scale(this.speed * this.speedMul * dt());
+        this.pos = this.pos.add(v);
+        this.pos.x = Math.max(16, Math.min(WORLD_W - 16, this.pos.x));
+        this.pos.y = Math.max(16, Math.min(WORLD_H - 16, this.pos.y));
+      } }]);
+
+  const fearDark = makeDarkness(player, 0.45, 560);
+  add([sprite("glowGrad"), pos(START), anchor("center"),
+    color(C_PURPLE), opacity(0.06), scale(1.4), z(29),
+    { update() { if (player.exists()) this.pos = player.pos; } }]);
+
+  const decorSpots = [
+    { x: 150, y: 80, w: 34, h: 58 }, { x: 285, y: 450, w: 50, h: 42 },
+    { x: 585, y: 110, w: 25, h: 75 }, { x: 690, y: 400, w: 42, h: 50 },
+    { x: 420, y: 60, w: 75, h: 20 }, { x: 800, y: 100, w: 30, h: 60 },
+    { x: 880, y: 280, w: 40, h: 50 },
+  ];
+  decorSpots.forEach((d) =>
+    add([rect(d.w, d.h), pos(d.x, d.y), color(C_BLACK), opacity(0), z(2),
+      { update() {
+        if (dialogueActive || paused) return;
+        const c = vec2(this.pos.x + this.width / 2, this.pos.y + this.height / 2);
+        this.opacity = fogFactor(player.pos.dist(c)) * 0.5;
+      } }]));
+
+  const beaconPos = vec2(WORLD_W * 0.52, WORLD_H - 90);
+  const beacon = add([circle(12), pos(beaconPos), anchor("center"),
+    color(C_WHITE), opacity(0.35), outline(2, C_WHITE), area(), z(6), "beacon",
+    { used: false,
+      update() {
+        if (this.used) { this.opacity = 0.5 + Math.sin(time() * 4) * 0.2; return; }
+        this.opacity = 0.25 + Math.sin(time() * 3) * 0.12;
+      } }]);
+  addGlow(beaconPos.x, beaconPos.y, [255, 255, 255], 0.08, 120);
+  beacon.onCollide("player", () => {
+    if (beacon.used || !levelActive) return;
+    beacon.used = true;
+    checkpoint = beaconPos.clone();
+    beacon.use(color(C_PURPLE));
+    beacon.use(outline(2, C_PURPLE));
+    SFX.reveal();
+    ring(beaconPos.x, beaconPos.y, asRGB(C_PURPLE), 8, 60, 0.6);
+    toast("Ponto seguro — o medo te devolve para cá.");
+  });
+
+  const exitObj = add([rect(30, 30, { radius: 4 }), pos(WORLD_W - 55, 55), anchor("center"),
+    color(C_WHITE), outline(2, C_WHITE), opacity(0), area(), z(3),
+    { update() {
+      if (dialogueActive || paused) return;
+      const fog = perceiveActive ? 1 : fogFactor(player.pos.dist(this.pos) + 35);
+      this.opacity = Math.max(fog, finished ? 1 : 0);
+    } }]);
+
+  const medo = add([circle(13), pos(START.add(vec2(60, -10))), anchor("center"),
+    color(C_PURPLE), outline(3, C_PURPLE_SOFT), opacity(0), z(9)]);
+
+  function flickerMedo(x, y, showTime = 1) {
+    medo.pos = vec2(x, y);
+    SFX.creep();
+    tween(medo.opacity, 0.85, 0.35, (v) => { if (medo.exists()) medo.opacity = v; });
+    wait(showTime, () => {
+      if (medo.exists()) tween(medo.opacity, 0, 0.5, (v) => { if (medo.exists()) medo.opacity = v; });
+    });
+  }
+  (function ambientMedoLoop() {
+    wait(rand(4, 7), () => {
+      if (!finished && !transitioning) {
+        flickerMedo(rand(70, WORLD_W - 70), rand(70, WORLD_H - 70), rand(0.6, 1.1));
+      }
+      if (!transitioning) ambientMedoLoop();
+    });
+  })();
+
+  wait(0.6, () => {
+    flickerMedo(START.x + 60, START.y - 10, 8);
+    showDialogue([
+      "Você acha que eu existo para impedir você.",
+      "Mas às vezes...",
+      "Sou eu quem avisa que existe algo à frente.",
+      "E depois de mim... resta o que você escondeu. Ele espera.",
+    ], () => {
+      if (medo.exists()) tween(medo.opacity, 0, 0.6, (v) => { if (medo.exists()) medo.opacity = v; });
+      dialogueActive = false; levelActive = true;
+    }, asRGB(C_PURPLE));
+  });
+
+  const hazardDefs = [
+    { x: 200, y: 440 }, { x: 350, y: 300, mv: { axis: "y", amp: 60, sp: 1.2 } },
+    { x: 500, y: 430, hm: true }, { x: 430, y: 170, mv: { axis: "x", amp: 90, sp: 0.8 } },
+    { x: 640, y: 270, mv: { axis: "y", amp: 80, sp: 1.0 } },
+    { x: 760, y: 360 }, { x: 860, y: 470, hm: true }, { x: 880, y: 160 },
+  ];
+  const hazards = hazardDefs.map((h) =>
+    add([circle(17), pos(h.x, h.y), anchor("center"), scale(1),
+      color(C_WHITE), outline(2, C_WHITE), opacity(0), area(), z(5), "hazard",
+      { state: "hidden", timer: rand(1.5, 3), pulseT: 0, bx: h.x, by: h.y, mv: h.mv || null, hm: h.hm || false,
+        update() {
+          if (dialogueActive || dialogueOpen || paused) return;
+          if (this.mv) {
+            const off = Math.sin(time() * this.mv.sp) * this.mv.amp;
+            if (this.mv.axis === "y") this.pos.y = this.by + off;
+            else this.pos.x = this.bx + off;
+          }
+          if (this.hm && this.state === "danger" && player.exists()) {
+            const d = player.pos.sub(this.pos);
+            if (d.len() < 260 && d.len() > 1) {
+              this.pos = this.pos.add(d.unit().scale(34 * dt()));
+              if (!homingWarned) {
+                homingWarned = true;
+                toast("Esse medo te persegue — fuja até ele se apagar!");
+              }
+            }
+          }
+          this.pulseT += dt();
+          this.timer -= dt();
+          if (this.timer <= 0) {
+            if (this.state === "hidden") { this.state = "warning"; this.timer = 1.1; shake(2); SFX.warn(); }
+            else if (this.state === "warning") { this.state = "danger"; this.timer = 1.3; }
+            else { this.state = "hidden"; this.timer = rand(2.5, 4.5); }
+          }
+          const fog = fogFactor(player.pos.dist(this.pos));
+          let baseOpacity = 0, pulseScale = 1;
+          if (this.state === "warning") {
+            baseOpacity = 0.2 + Math.abs(Math.sin(this.pulseT * 8)) * 0.35;
+            pulseScale = 1 + Math.sin(this.pulseT * 10) * 0.06;
+          } else if (this.state === "danger") {
+            baseOpacity = 0.95;
+            pulseScale = 1 + Math.sin(this.pulseT * 20) * 0.03;
+          }
+          if (perceiveActive) { this.opacity = Math.max(baseOpacity, 0.4); this.color = C_PURPLE; }
+          else { this.opacity = baseOpacity * fog; this.color = C_WHITE; }
+          this.scale = vec2(pulseScale);
+        } }]));
+
+  hazards.forEach((hz) =>
+    hz.onCollide("player", () => {
+      if (hz.state === "danger" && !invulnerable && !finished && !paused) hitPlayer();
+    }));
+
+  function hitPlayer() {
+    invulnerable = true;
+    SFX.hurt(); shake(8);
+    const flash = add([rect(WORLD_W, WORLD_H), pos(0, 0), color(C_WHITE), opacity(0.55), z(100)]);
+    tween(flash.opacity, 0, 0.35, (v) => { if (flash.exists()) flash.opacity = v; })
+      .then(() => { if (flash.exists()) destroy(flash); });
+    player.pos = checkpoint.clone();
+    wait(1, () => (invulnerable = false));
+  }
+
+  const abilityLabel = add([text("PERCEBER: pronta", { size: 14 }), pos(16, 14),
+    color(C_DIM), opacity(0.9), z(60),
+    { update() {
+      if (perceiveActive) { this.text = "PERCEBENDO..."; this.color = C_PURPLE; }
+      else if (perceiveCooldownLeft > 0) {
+        this.text = `PERCEBER: ${Math.max(0, perceiveCooldownLeft).toFixed(1)}s`;
+        this.color = C_DIM;
+      } else { this.text = "PERCEBER: pronta"; this.color = C_DIM; }
+    } }]);
+
+  onKeyPress("space", () => {
+    if (dialogueActive || dialogueOpen || paused || finished) return;
+    if (perceiveActive || perceiveCooldownLeft > 0) return;
+    SFX.perceive();
+    makeAura(player.pos.x, player.pos.y, [128, 0, 128], 150);
+    perceiveActive = true;
+    fearDark.setOp(0.12);
+    wait(PERCEIVE_DURATION, () => {
+      perceiveActive = false;
+      perceiveCooldownLeft = PERCEIVE_COOLDOWN;
+      fearDark.setOp(0.45);
+    });
+  });
+
+  spawnFollowers(player, 0);
+  makeFragHUD();
+
+  exitObj.onCollide("player", () => {
+    if (!finished && levelActive && !transitioning) winSequence();
+  });
+
+  function winSequence() {
+    finished = true;
+    dialogueActive = true;
+    perceiveActive = false;
+    fearDark.setOp(0);
+    hazards.forEach((hz) => { hz.state = "hidden"; hz.opacity = 0; });
+    if (medo.exists()) tween(medo.opacity, 0, 0.6, (v) => { if (medo.exists()) medo.opacity = v; });
+    awardFragment(player, [128, 0, 128]);
+
+    wait(1.4, () => {
+      SFX.win();
+      const whiteOut = add([rect(WORLD_W, WORLD_H), pos(0, 0), color(C_WHITE), opacity(0), z(200)]);
+      tween(0, 1, 2, (v) => { if (whiteOut.exists()) whiteOut.opacity = v; }, easings.easeInOutQuad)
+        .then(() => {
+          add([text(
+            "O medo me avisou antes que acontecesse.\n\nMas depois de mim... resta o que você guardou.\nEle espera.",
+            { size: 18, width: WORLD_W - 120, align: "center" }),
+            pos(WORLD_W / 2, WORLD_H / 2), anchor("center"), color(C_BLACK), z(201)]);
+          wait(3.4, () => go("shadow"));
+        });
+    });
+  }
+});
+
+// ============================================================
+// CENA: SOMBRA — boss "O Guardado" (música do Medo continua)
+// ============================================================
+
+scene("shadow", () => {
+  sceneInit("shadow");
+  startMusic("musMedo");
+  const worldW = 1800;
+  WORLDW_SHADOW = worldW;
+  startBattle();
+  makeSky([10, 6, 18], [2, 1, 5]);
+  makeMoodTint([120, 40, 190]);
+  makeMotes(16, worldW, [150, 80, 220], { op: 0.2 });
+  makeStars(10);
+
+  const PURPLE = [178, 68, 255];
+
+  const player = spawnPlayer(80, 448);
+  makeDarkness(player, 0.3, 640);
+  makePlayerGlow(player, [200, 160, 255], 0.2);
+  spawnFollowers(player);
+  makeFragHUD();
+
+  makeGround(0, 448, worldW, 96);
+  makeWalls(worldW);
+  makePlatform(500, 360, 96, 14, [70, 50, 110], 31);
+  makePlatform(1000, 360, 96, 14, [70, 50, 110], 31);
+  makePlatform(1500, 340, 96, 14, [70, 50, 110], 31);
+
+  let levelActive = false;
+  let hearts = 3, invul = false;
+
+  const ROOM_START = [96, 700, 1330];
+  const GATES = [608, 1248];
+  function makeGate(x) {
+    return add([rect(16, height()), pos(x, 0), area(), body({ isStatic: true }),
+      color(60, 30, 100), outline(2, rgb(140, 70, 210)), opacity(0.9), z(29), "gate"]);
+  }
+  const gate1 = makeGate(GATES[0]);
+  const gate2 = makeGate(GATES[1]);
+
+  const heartsHud = [0, 1, 2].map((i) =>
+    add([circle(7), pos(24 + i * 24, 44), color(255, 120, 150), fixed(), z(20)]));
+  function drawHearts() {
+    heartsHud.forEach((h, i) =>
+      h.use(color(...(i < hearts ? [255, 120, 150] : [70, 50, 60]))));
+  }
+  drawHearts();
+
+  function hurtPlayer(fromX) {
+    if (invul || transitioning || dialogueOpen) return;
+    invul = true;
+    hearts--;
+    drawHearts();
+    SFX.hurt(); shake(8);
+    const flash = add([rect(width(), height()), pos(0, 0), color(180, 40, 120), opacity(0.4), z(100), fixed()]);
+    tween(0.4, 0, 0.35, (v) => { if (flash.exists()) flash.opacity = v; })
+      .then(() => { if (flash.exists()) flash.destroy(); });
+    player.vel.x = (player.pos.x < fromX ? -1 : 1) * 220;
+    player.vel.y = -160;
+    if (hearts <= 0) {
+      hearts = 3;
+      drawHearts();
+      const room = player.pos.x < GATES[0] ? 0 : (player.pos.x < GATES[1] ? 1 : 2);
+      player.pos.x = ROOM_START[room];
+      player.pos.y = 448;
+      player.vel.x = 0; player.vel.y = 0;
+      toast("As sombras te dobraram... mas você volta.");
+    }
+    wait(1.1, () => (invul = false));
+  }
+
+  const cd = { atq: 0, pulso: 0, escudo: 0, dash: 0 };
+  const POWER_DEFS = [
+    { key: "atq", col: [255, 70, 50], letter: "SPC" },
+    { key: "pulso", col: [255, 215, 0], letter: "E" },
+    { key: "escudo", col: [0, 140, 255], letter: "Q" },
+    { key: "dash", col: [178, 68, 255], letter: "F" },
+  ];
+  const pipsHud = POWER_DEFS.map((d, i) => {
+    const x = width() / 2 - 135 + i * 90;
+    const o = add([circle(9), pos(x, 30), anchor("center"), color(...d.col), fixed(), z(20)]);
+    o.add([text(d.letter, { size: 9 }), pos(0, 16), anchor("center"), color(160, 160, 170), fixed()]);
+    return o;
+  });
+  pipsHud[0].add([rect(1, 1), opacity(0),
+    { update() {
+      if (paused) return;
+      cd.atq = Math.max(0, cd.atq - dt());
+      cd.pulso = Math.max(0, cd.pulso - dt());
+      cd.escudo = Math.max(0, cd.escudo - dt());
+      cd.dash = Math.max(0, cd.dash - dt());
+      pipsHud.forEach((p, i) => {
+        p.opacity = cd[POWER_DEFS[i].key] <= 0 ? 0.95 : 0.3;
+      });
+    } }]);
+
+  let shieldOn = false;
+  const shieldFx = add([circle(28), pos(player.pos), anchor("center"),
+    color(0, 140, 255), opacity(0), outline(3, rgb(90, 200, 255)), z(33),
+    { update() { if (player.exists()) this.pos = player.pos.sub(vec2(0, 24)); } }]);
+
+  function shockwave() {
+    SFX.atk();
+    shake(4);
+    const pc = playerCenter(player);
+    makeAura(pc.x, pc.y, [255, 70, 50], 110);
+    for (const s of get("sombra")) {
+      if (s.exists() && !s.dead && s.pos.dist(pc) < 110) sombraHit(s, 1, pc.x);
+    }
+    get("bolt").forEach((b) => {
+      if (b.exists() && !b.light && b.pos.dist(pc) < 110) {
+        burst(b.pos.x, b.pos.y, [160, 80, 200], 5, 80);
+        b.destroy();
+      }
+    });
+  }
+  function lightPulse() {
+    SFX.pulse();
+    const fl = add([rect(width(), height()), pos(0, 0), color(255, 250, 220), opacity(0), z(95), fixed()]);
+    tween(0, 0.5, 0.12, (v) => { if (fl.exists()) fl.opacity = v; })
+      .then(() => tween(0.5, 0, 0.5, (v) => { if (fl.exists()) fl.opacity = v; })
+        .then(() => { if (fl.exists()) fl.destroy(); }));
+    get("sombra").forEach((s) => {
+      if (s.exists() && !s.dead) s.stunned = s.isBoss ? 1 : 2.5;
+    });
+  }
+  function useShield() {
+    SFX.shield();
+    shieldOn = true;
+    shieldFx.opacity = 0.5;
+    wait(1.6, () => {
+      shieldOn = false;
+      tween(0.5, 0, 0.2, (v) => { if (shieldFx.exists()) shieldFx.opacity = v; });
+    });
+  }
+  function dash() {
+    SFX.dash();
+    player._noGrav = true;
+    player.vel.y = 0;
+    player.vel.x = player._face * 540;
+    dust(player.pos.x, player.pos.y, 10, [190, 130, 255]);
+    for (const s of get("sombra")) {
+      if (s.exists() && !s.dead && !s.dashHit && s.pos.dist(player.pos) < 34) {
+        s.dashHit = true;
+        sombraHit(s, 1, player.pos.x);
+      }
+    }
+    wait(0.2, () => {
+      player._noGrav = false;
+      player.vel.x *= 0.3;
+      get("sombra").forEach((s) => { if (s.exists()) s.dashHit = false; });
+    });
+  }
+
+  onKeyPress("space", () => {
+    if (dialogueOpen || paused || transitioning || !levelActive || cd.atq > 0) return;
+    cd.atq = 0.7;
+    shockwave();
+  });
+  onKeyPress("e", () => {
+    if (dialogueOpen || paused || transitioning || !levelActive || cd.pulso > 0) return;
+    cd.pulso = 7;
+    lightPulse();
+  });
+  onKeyPress("q", () => {
+    if (dialogueOpen || paused || transitioning || !levelActive || cd.escudo > 0) return;
+    cd.escudo = 6;
+    useShield();
+  });
+  ["f", "shift"].forEach((k) => onKeyPress(k, () => {
+    if (dialogueOpen || paused || transitioning || !levelActive || cd.dash > 0) return;
+    cd.dash = 1.8;
+    dash();
+  }));
+
+  (function shieldLoop() {
+    wait(0.06, () => {
+      if (!transitioning) {
+        if (shieldOn && player.exists()) {
+          get("bolt").forEach((b) => {
+            if (b.exists() && !b.light && b.pos.dist(player.pos.sub(vec2(0, 24))) < 34) {
+              b.light = true;
+              b.use(color(190, 240, 255));
+              SFX.reflect();
+              const tgt = get("sombra").find((s) => s.exists() && !s.dead);
+              if (tgt) {
+                const d = tgt.pos.sub(b.pos);
+                if (d.len() > 1) {
+                  const u = d.unit().scale(380);
+                  b.vx = u.x; b.vy = u.y;
+                } else { b.vx = player._face * 380; b.vy = 0; }
+              } else { b.vx = player._face * 380; b.vy = 0; }
+            }
+          });
+        }
+        shieldLoop();
+      }
+    });
+  })();
+
+  onCollide("player", "sombra", (p, s) => {
+    if (s.dead || invul || transitioning || dialogueOpen) return;
+    hurtPlayer(s.pos.x);
+  });
+  onCollide("player", "heart", (p, h) => {
+    if (hearts >= 3 || transitioning) return;
+    hearts++;
+    drawHearts();
+    SFX.spark();
+    burst(h.pos.x, h.pos.y, [255, 120, 150], 8, 100);
+    h.destroy();
+  });
+
+  let boss = null;
+  let bossDead = false;
+  const bossPips = [0, 1, 2, 3, 4, 5, 6, 7].map((i) =>
+    add([rect(10, 10, { radius: 2 }), rotate(45), pos(width() / 2 - 70 + i * 20, 60),
+      color(255, 70, 90), opacity(0), fixed(), z(20)]));
+  function drawBossPips(hp) {
+    bossPips.forEach((p, i) => {
+      if (p.exists()) {
+        p.opacity = 1;
+        p.use(color(...(i < hp ? [255, 70, 90] : [60, 30, 40])));
+      }
+    });
+  }
+
+  function makeBoss(x, y) {
+    const b = add([circle(34), pos(x, y), anchor("center"), rotate(0),
+      color(18, 10, 28), outline(3, rgb(150, 60, 220)),
+      area(), z(31), "sombra",
+      { room: 3, hp: 8, isBoss: true, dead: false,
+        t: 0, spawnT: 4, fireT: 3,
+        onHit: null, onDeath: null,
+        update() {
+          if (transitioning || paused || dialogueOpen || this.dead || bossDead) return;
+          this.t += dt();
+          if (this._c) {
+            this._c.forEach((sh, i) => {
+              const a = this.t * 0.8 + i * (Math.PI * 2 / this._c.length);
+              sh.pos.x = Math.cos(a) * 44;
+              sh.pos.y = Math.sin(a) * 44 - 10;
+              sh.angle = a * 57.3;
+            });
+          }
+          const pl = get("player")[0];
+          if (!pl || !pl.exists()) return;
+          const spd = this.hp <= 2 ? 40 : 28;
+          const d = pl.pos.sub(vec2(0, 24)).sub(this.pos);
+          const L = d.len();
+          if (L > 60 && L > 0.001) {
+            this.pos = this.pos.add(d.unit().scale(spd * dt()));
+          }
+          this.pos.x = clamp(this.pos.x, 1290, worldW - 60);
+          this.pos.y = clamp(this.pos.y, 300, 440);
+          this.spawnT -= dt();
+          let adds = 0;
+          get("sombra").forEach((s) => {
+            if (s.exists() && !s.dead && !s.isBoss) adds++;
+          });
+          if (this.spawnT <= 0 && adds < 2) {
+            this.spawnT = 4.5;
+            makeSombra(this.pos.x + rand(-60, 60), clamp(this.pos.y, 370, 440), 3,
+              { speed: 55, xmin: 1320, xmax: 1760 });
+          }
+          if (this.hp <= 4) {
+            this.fireT -= dt();
+            if (this.fireT <= 0) {
+              this.fireT = this.hp <= 2 ? 2.4 : 3.2;
+              const base = pl.pos.sub(vec2(0, 24)).sub(this.pos);
+              if (base.len() > 1) {
+                const u = base.unit();
+                [-0.3, 0, 0.3].forEach((ang) => {
+                  const rot = vec2(
+                    u.x * Math.cos(ang) - u.y * Math.sin(ang),
+                    u.x * Math.sin(ang) + u.y * Math.cos(ang));
+                  fireBolt(this.pos, this.pos.add(rot.scale(100)));
+                });
+              }
+            }
+          }
+        },
+      }]);
+    b._c = [0, 1, 2, 3, 4].map(() => b.add([rect(4, 12), pos(0, -40), rotate(0), color(150, 60, 220)]));
+    b._e1 = b.add([circle(4), pos(-10, -6), color(255, 255, 255)]);
+    b._e2 = b.add([circle(4), pos(10, -6), color(255, 255, 255)]);
+    addGlow(x, y, [150, 60, 220], 0.25, 220);
+    return b;
+  }
+
+  let phase = 0;
+  const need = { 1: 3, 2: 5 };
+  const killed = { 1: 0, 2: 0 };
+
+  SHADOW_HOOK = {
+    hurtPlayer,
+    onDeath(s) {
+      if (s.room === 1 || s.room === 2) killed[s.room]++;
+    },
+  };
+
+  function spawnBossNow() {
+    boss = makeBoss(1620, 380);
+    drawBossPips(boss.hp);
+    showDialogue([
+      "EU SOU O QUE VOCÊ GUARDOU.",
+      "Toda a dor — numa forma só.",
+      "RAIVA fere. LUZ me prende. BARREIRA devolve. FENDA atravessa.",
+    ], () => {}, [255, 90, 120]);
+    boss.onHit = () => drawBossPips(boss.hp);
+    boss.onDeath = () => {
+      if (bossDead) return;
+      bossDead = true;
+      stopBattle();
+      SFX.bossDie();
+      shake(12);
+      get("sombra").forEach((s) => {
+        if (s.exists() && !s.isBoss) {
+          burst(s.pos.x, s.pos.y, [220, 190, 255], 8, 120);
+          s.destroy();
+        }
+      });
+      burst(boss.pos.x, boss.pos.y, [255, 255, 255], 30, 260);
+      ring(boss.pos.x, boss.pos.y, [255, 255, 255], 10, 320, 1.6);
+      bossPips.forEach((p) => { if (p.exists()) p.destroy(); });
+      wait(1.2, () => {
+        if (boss && boss.exists()) {
+          tween(1, 0, 2.2, (v) => {
+            if (boss.exists()) {
+              boss.opacity = v;
+              boss.scale = vec2(1 + (1 - v) * 0.4);
+            }
+          }, easings.easeInOutQuad).then(() => {
+            if (boss.exists()) boss.destroy();
+            showDialogue([
+              "...obrigado por me olhar.",
+              "Nem a escuridão que guardamos deixa de ser luz.",
+            ], () => {
+              SHADOW_HOOK = null;
+              SFX.win();
+              transitionTo("integration", [255, 255, 255]);
+            }, [235, 235, 240]);
+          });
+        }
+      });
+    };
+  }
+
+  (function masterTick() {
+    wait(0.3, () => {
+      if (transitioning) return;
+      if (levelActive) {
+        if (phase === 0 && killed[1] >= need[1]) {
+          phase = 1;
+          if (gate1.exists()) gate1.destroy();
+          hearts = Math.min(3, hearts + 1);
+          drawHearts();
+          toast("O portão se dissolveu.");
+        } else if (phase === 1 && killed[2] >= need[2]) {
+          phase = 2;
+          if (gate2.exists()) gate2.destroy();
+          hearts = Math.min(3, hearts + 1);
+          drawHearts();
+          toast("Ele desperta.");
+          spawnBossNow();
+        }
+      }
+      masterTick();
+    });
+  })();
+
+  titleCard("SOMBRA", "enfrente o que guardou", [150, 60, 220]);
+  wait(0.8, () => {
+    showDialogue([
+      "Depois do medo, só resta um lugar.",
+      "Aqui mora o que você guardou.",
+      "Toda raiva engolida. Todo choro tragado. Todo medo fingido.",
+      "Eles não vão embora sozinhos. Enfrente — uma por uma.",
+    ], () => { levelActive = true; }, PURPLE);
+  });
+
+  makeSombra(300, 430, 1, { xmin: 40, xmax: 576 });
+  makeSombra(430, 440, 1, { xmin: 40, xmax: 576 });
+  makeSombra(520, 425, 1, { xmin: 40, xmax: 576 });
+
+  makeSombra(700, 430, 2, { xmin: 640, xmax: 1216 });
+  makeSombra(820, 440, 2, { xmin: 640, xmax: 1216 });
+  makeSombra(950, 420, 2, { speed: 75, xmin: 640, xmax: 1216 });
+  makeSombra(1080, 435, 2, { xmin: 640, xmax: 1216 });
+  makeSombra(1150, 400, 2, { shoot: true, speed: 20, xmin: 900, xmax: 1216 });
+
+  setupMovement(player, worldW, MOVE_SPEED * 1.15, JUMP_FORCE, { spaceJump: false });
+
+  makeExit(1740, 400);
+  onCollide("player", "exit", () => {
+    if (transitioning || !bossDead) return;
+    SHADOW_HOOK = null;
+    SFX.win();
+    transitionTo("integration", [255, 255, 255]);
+  });
+
+  hudLabel("FÚRIA espaço · LUZ E · BARREIRA Q · FENDA F", [190, 120, 255]);
+});
+
+// ============================================================
+// CENA: INTEGRAÇÃO
+// ============================================================
+
+scene("integration", () => {
+  sceneInit("integration");
+  const worldW = 960;
+  startAmbience([261, 329, 392, 523], { vol: 0.04, attack: 2.5 });
+  makeMoodTint([230, 230, 240]);
+
+  add([rect(width(), height()), pos(0, 0), color(255, 255, 255), z(-100)]);
+  makeGround(0, 448, worldW, 96);
+  makeWalls(worldW);
+  add([rect(worldW, 2), pos(0, 446), color(0, 0, 0), opacity(0.15)]);
+
+  addGlow(width() / 2, 380, [200, 205, 225], 0.1, 320);
+  add([sprite("mirror"), scale(3), pos(width() / 2, 448), anchor("bot"), color(235, 235, 245), z(1)]);
+  makeTri(width() / 2, 220, 90, [0, 0, 0], 0.25);
+
+  const shine = add([rect(5, 84, { radius: 3 }), rotate(10),
+    pos(width() / 2 - 30, 360), color(255, 255, 255), opacity(0), z(2)]);
+  (function sweep() {
+    wait(rand(2.5, 4.5), () => {
+      if (!transitioning) {
+        tween(width() / 2 - 34, width() / 2 + 24, 1.1, (v) => {
+          if (!shine.exists()) return;
+          shine.pos.x = v;
+          shine.opacity = Math.sin(((v - (width() / 2 - 34)) / 58) * Math.PI) * 0.5;
+        }, easings.easeInOutQuad);
+      }
+      sweep();
+    });
+  })();
+
+  makeMotes(8, worldW, [190, 195, 210], { op: 0.25 });
+
+  add([rect(80, 140), pos(width() / 2 - 40, 300), area(), "mirrorZone"]);
+
+  const player = spawnPlayer(140, 448);
+  const followers = collectedFragments.map((f, i) => spawnFollower(player, f.color, i));
+
+  let cinematic = false;
+  setupMovement(player, worldW, MOVE_SPEED, JUMP_FORCE, {
+    moveBlocked: () => cinematic,
+    jumpBlocked: () => cinematic,
+  });
+
+  let finaleStarted = false, finaleDone = false, msg = null;
+
+  const say = (txt, size, col = [0, 0, 0]) => {
+    if (msg && msg.exists()) msg.destroy();
+    msg = add([text(txt, { size, width: width() - 80, align: "center" }),
+      pos(width() / 2, height() / 2 - 20), anchor("center"), color(...col),
+      opacity(0), z(60), fixed()]);
+    const m = msg;
+    tween(0, 1, 0.8, (v) => { if (m.exists()) m.opacity = v; }, easings.easeOutQuad);
+  };
+
+  const startFinale = () => {
+    if (finaleStarted) return;
+    finaleStarted = true;
+    cinematic = true;
+    player.vel.x = 0; player.vel.y = 0;
+    stopAudioLoops();
+    startAmbience([261, 329, 392, 523], { vol: 0.05, attack: 1.5 });
+
+    squash(player, 0.9, 1.14);
+
+    const target = vec2(width() / 2, 380);
+    followers.forEach((f, i) => {
+      f.merging = true;
+      wait(i * 0.18, () => {
+        const from = f.pos.clone();
+        tween(0, 1, 0.9, (v) => { if (f.exists()) f.pos = from.lerp(target, v); }, easings.easeInOutQuad)
+          .then(() => SFX.ui());
+      });
+    });
+
+    const t1 = followers.length * 0.18 + 1.1;
+    wait(t1, () => {
+      const cols = [[255, 215, 0], [0, 0, 255], [255, 0, 0], [128, 0, 128]];
+      cols.forEach((c, i) => ring(width() / 2, 380, c, 10, 300, 1.1, i * 0.15));
+      followers.forEach((f) => {
+        const c0 = { r: f.color.r, g: f.color.g, b: f.color.b };
+        tween(0, 1, 1.2, (v) => {
+          if (!f.exists()) return;
+          f.color.r = lerp(c0.r, 255, v);
+          f.color.g = lerp(c0.g, 255, v);
+          f.color.b = lerp(c0.b, 255, v);
+        }, easings.easeInOutQuad);
+      });
+    });
+
+    wait(t1 + 1.6, () => {
+      SFX.chord();
+      const flash = add([rect(width(), height()), pos(0, 0), color(255, 255, 255), opacity(0), z(50), fixed()]);
+      tween(0, 1, 1.5, (v) => { if (flash.exists()) flash.opacity = v; }, easings.easeInOutQuad)
+        .then(() => {
+          followers.forEach((f) => { if (f.exists()) f.destroy(); });
+          say("Você nunca foi apenas um.", 20);
+          wait(2.6, () => {
+            say("UM", 72);
+            wait(2.4, () => {
+              say("INfragmentado", 30);
+              wait(2.2, () => {
+                say("Como a luz que atravessa o prisma — muitas cores, uma só luz.", 14, [120, 120, 130]);
+                wait(2.0, () => {
+                  say("[ENTER] voltar ao início", 13, [150, 150, 150]);
+                  finaleDone = true;
+                });
+              });
+            });
+          });
+        });
+    });
+  };
+
+  onCollide("player", "mirrorZone", startFinale);
+
+  onKeyPress("enter", () => {
+    if (finaleDone) {
+      if (window.__showStartScreen) window.__showStartScreen();
+      else go("title");
+    }
+  });
+
+  titleCard("INTEGRAÇÃO", "", [0, 0, 0]);
+  showDialogue(["Você enfrentou o que guardou.", "Não restou nada a temer. Só olhar."]);
+});
+
+go("title");
+
+// ============================================================
+// CONTROLES TOUCH
+// ============================================================
+(function mobileControls() {
+  const isTouch = window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
+  if (!isTouch) return;
+
+  const css = `
+    #pad-layer{position:fixed;inset:0;z-index:500;pointer-events:none;font-family:monospace}
+    .pzone{position:absolute;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+    #stick{left:calc(14px + env(safe-area-inset-left,0px));
+      bottom:calc(20px + env(safe-area-inset-bottom,0px));
+      width:150px;height:150px;border-radius:50%;
+      border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.28)}
+    #knob{position:absolute;left:50%;top:50%;width:56px;height:56px;border-radius:50%;
+      background:rgba(255,255,255,.35);transform:translate(-50%,-50%);pointer-events:none}
+    .pbtn{width:70px;height:70px;border-radius:50%;
+      background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.35);color:#fff;
+      display:flex;align-items:center;justify-content:center;font-size:10px;letter-spacing:1px}
+    .pbtn.big{width:82px;height:82px;font-size:11px}
+    #btnJump{right:calc(110px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));background:rgba(255,255,255,.22)}
+    #btnAct{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));background:rgba(255,80,60,.35)}
+    #btnPulse{right:calc(112px + env(safe-area-inset-right,0px));bottom:calc(112px + env(safe-area-inset-bottom,0px));background:rgba(255,215,0,.25)}
+    #btnShield{right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(112px + env(safe-area-inset-bottom,0px));background:rgba(0,140,255,.25)}
+    #btnDash{right:calc(68px + env(safe-area-inset-right,0px));bottom:calc(196px + env(safe-area-inset-bottom,0px));background:rgba(178,68,255,.28)}
+  `;
+  const st = document.createElement("style");
+  st.textContent = css;
+  document.head.appendChild(st);
+  document.body.style.touchAction = "none";
+  document.body.style.overscrollBehavior = "none";
+
+  const layer = document.createElement("div");
+  layer.id = "pad-layer";
+  document.body.appendChild(layer);
+
+  const down = {};
+  const send = (code, isDown) => {
+    if (down[code] === isDown) return;
+    down[code] = isDown;
+    window.dispatchEvent(new KeyboardEvent(isDown ? "keydown" : "keyup",
+      { code, key: code, bubbles: true }));
+  };
+
+  const stick = document.createElement("div");
+  stick.className = "pzone"; stick.id = "stick";
+  stick.innerHTML = '<div id="knob"></div>';
+  layer.appendChild(stick);
+  const knob = stick.querySelector("#knob");
+  let sid = null;
+
+  const setStick = (e) => {
+    const r = stick.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    let dx = (e.clientX - cx) / (r.width / 2);
+    let dy = (e.clientY - cy) / (r.height / 2);
+    const m = Math.hypot(dx, dy);
+    if (m > 1) { dx /= m; dy /= m; }
+    knob.style.transform = `translate(calc(-50% + ${dx * 30}%), calc(-50% + ${dy * 30}%))`;
+    send("ArrowLeft",  dx < -0.3);
+    send("ArrowRight", dx >  0.3);
+    send("ArrowUp",    dy < -0.3);
+    send("ArrowDown",  dy >  0.3);
+  };
+  const relStick = () => {
+    sid = null;
+    knob.style.transform = "translate(-50%,-50%)";
+    ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].forEach((c) => send(c, false));
+  };
+  stick.addEventListener("pointerdown", (e) => {
+    sid = e.pointerId;
+    stick.setPointerCapture(sid);
+    setStick(e);
+    e.preventDefault();
+  });
+  stick.addEventListener("pointermove", (e) => { if (e.pointerId === sid) setStick(e); });
+  stick.addEventListener("pointerup", relStick);
+  stick.addEventListener("pointercancel", relStick);
+
+  const mkBtn = (id, label, codes, big = false) => {
+    const b = document.createElement("div");
+    b.className = "pzone pbtn" + (big ? " big" : ""); b.id = id; b.textContent = label;
+    layer.appendChild(b);
+    b.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      codes.forEach((c) => send(c, true));
+      b.style.filter = "brightness(1.8)";
+    });
+    const up = () => { codes.forEach((c) => send(c, false)); b.style.filter = ""; };
+    b.addEventListener("pointerup", up);
+    b.addEventListener("pointercancel", up);
+  };
+  mkBtn("btnJump", "PULO", ["KeyW"], true);
+  mkBtn("btnAct", "FÚRIA", ["Space"], true);
+  mkBtn("btnPulse", "LUZ", ["KeyE"]);
+  mkBtn("btnShield", "ESCUDO", ["KeyQ"]);
+  mkBtn("btnDash", "FENDA", ["KeyF"]);
+})();
+
+// ============================================================
+// GLUE — abertura, restart, preventDefault
+// ============================================================
+(function shell() {
+  const ss = document.getElementById("start-screen");
+  const flash = document.getElementById("flash");
+  const restartBtn = document.getElementById("restart");
+  let started = false;
+
+  window.__resetIntro = () => { started = false; };
+
+  function begin() {
+    if (started) return;
+    started = true;
+    flash.classList.add("on");
+    setTimeout(() => {
+      ss.classList.add("hidden");
+      if (window.__startGame) window.__startGame();
+    }, 250);
+  }
+  ss.addEventListener("pointerdown", begin);
+  window.addEventListener("keydown", (e) => {
+    if ((e.code === "Space" || e.code === "Enter") && !ss.classList.contains("hidden")) begin();
+  });
+
+  restartBtn.addEventListener("click", () => {
+    restartBtn.blur();
+    if (transitioning || currentSceneName === "title") return;
+    if (paused) togglePause();
+    closeDialogue(false);
+    stopAudioLoops();
+    go(currentSceneName);
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(e.code)) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+})();

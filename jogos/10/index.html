@@ -1,0 +1,4167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width,
+    initial-scale=1.0,
+    maximum-scale=1.0,
+    user-scalable=no"
+>
+
+<title>A Última Chance</title>
+
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.js"></script>
+
+<style>
+
+html,
+body {
+
+    margin: 0;
+    padding: 0;
+
+    width: 100%;
+    height: 100%;
+
+    overflow: hidden;
+
+    background: #050608;
+}
+
+#game {
+
+    width: 100%;
+    height: 100%;
+}
+
+canvas {
+
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<div id="game"></div>
+
+
+<script>
+
+
+/*
+========================================================
+                    A ÚLTIMA CHANCE
+========================================================
+
+ESTRUTURA:
+
+MENU
+  ↓
+PRÓLOGO
+  ↓
+BATALHA
+  ↓
+DESFECHO
+
+CONTROLES DA BATALHA:
+
+Z = ATAQUE
+X = DEFESA
+F = TELA CHEIA
+R = REINICIAR APÓS O FIM
+
+========================================================
+*/
+
+
+const W = 1280;
+
+const H = 720;
+
+const GROUND_Y = 585;
+
+
+/*
+========================================================
+                    ÁUDIO
+========================================================
+
+Criamos sons simples usando Web Audio.
+
+Assim não precisamos de arquivos .mp3 ou .wav.
+========================================================
+*/
+
+let audioContext = null;
+let musicaBatalha = null;
+let musicaSuspense = null;
+let musicaVitoria = null;
+let efeitoAtaqueArquivo = null;
+let musicaGameOver = null;
+
+
+function iniciarAudio() {
+
+    if (!audioContext) {
+
+        audioContext =
+            new (
+                window.AudioContext ||
+                window.webkitAudioContext
+            )();
+
+    }
+
+    if (
+        audioContext.state === "suspended"
+    ) {
+
+        audioContext.resume();
+
+    }
+
+}
+
+
+function tocarSom(
+    frequencia,
+    duracao = 0.12,
+    tipo = "square",
+    volume = 0.08
+) {
+
+    iniciarAudio();
+
+    const oscilador =
+        audioContext.createOscillator();
+
+    const ganho =
+        audioContext.createGain();
+
+
+    oscilador.type = tipo;
+
+    oscilador.frequency.setValueAtTime(
+        frequencia,
+        audioContext.currentTime
+    );
+
+
+    ganho.gain.setValueAtTime(
+        volume,
+        audioContext.currentTime
+    );
+
+
+    ganho.gain.exponentialRampToValueAtTime(
+        0.001,
+        audioContext.currentTime + duracao
+    );
+
+
+    oscilador.connect(ganho);
+
+    ganho.connect(
+        audioContext.destination
+    );
+
+
+    oscilador.start();
+
+    oscilador.stop(
+        audioContext.currentTime + duracao
+    );
+
+}
+
+
+/*
+========================================================
+                    SONS DO JOGO
+========================================================
+*/
+
+function somMenu() {
+
+    tocarSom(
+        330,
+        0.10,
+        "sine",
+        0.05
+    );
+
+    setTimeout(() => {
+
+        tocarSom(
+            440,
+            0.14,
+            "sine",
+            0.05
+        );
+
+    }, 100);
+
+}
+
+
+function somAtaque() {
+
+    tocarSom(
+        120,
+        0.08,
+        "sawtooth",
+        0.10
+    );
+
+    setTimeout(() => {
+
+        tocarSom(
+            70,
+            0.12,
+            "square",
+            0.08
+        );
+
+    }, 50);
+
+}
+
+
+function somEsquiva() {
+
+    tocarSom(
+        650,
+        0.08,
+        "sine",
+        0.07
+    );
+
+    setTimeout(() => {
+
+        tocarSom(
+            900,
+            0.12,
+            "sine",
+            0.05
+        );
+
+    }, 70);
+
+}
+
+
+function somBloqueio() {
+
+    tocarSom(
+        180,
+        0.12,
+        "square",
+        0.09
+    );
+
+    setTimeout(() => {
+
+        tocarSom(
+            420,
+            0.10,
+            "triangle",
+            0.07
+        );
+
+    }, 70);
+
+}
+
+
+function somAcerto() {
+
+    tocarSom(
+        90,
+        0.18,
+        "sawtooth",
+        0.13
+    );
+
+}
+
+
+function somVitoria() {
+
+    tocarSom(
+        523,
+        0.16,
+        "sine",
+        0.07
+    );
+
+    setTimeout(() => {
+
+        tocarSom(
+            659,
+            0.16,
+            "sine",
+            0.07
+        );
+
+    }, 150);
+
+    setTimeout(() => {
+
+        tocarSom(
+            784,
+            0.30,
+            "sine",
+            0.08
+        );
+
+    }, 300);
+
+}
+
+
+function somDerrota() {
+
+    tocarSom(
+        220,
+        0.20,
+        "sawtooth",
+        0.08
+    );
+
+    setTimeout(() => {
+
+        tocarSom(
+            150,
+            0.25,
+            "sawtooth",
+            0.07
+        );
+
+    }, 180);
+
+    setTimeout(() => {
+
+        tocarSom(
+            90,
+            0.40,
+            "sawtooth",
+            0.06
+        );
+
+    }, 360);
+
+}
+
+
+function somTempo() {
+
+    tocarSom(
+        100,
+        0.25,
+        "square",
+        0.08
+    );
+
+}
+
+
+function tocarEfeitoAtaqueArquivo() {
+    if (!efeitoAtaqueArquivo) return;
+    efeitoAtaqueArquivo.stop();
+    efeitoAtaqueArquivo.play();
+}
+
+function iniciarMusicaBatalha(scene) {
+    if (!musicaBatalha) {
+        musicaBatalha = scene.sound.add("musica_batalha", { loop: true, volume: 0.35 });
+    }
+    if (!musicaBatalha.isPlaying) musicaBatalha.play();
+}
+
+function pararMusicaBatalha() {
+    if (musicaBatalha && musicaBatalha.isPlaying) musicaBatalha.stop();
+}
+
+function iniciarMusicaSuspense(scene) {
+    if (!musicaSuspense) {
+        musicaSuspense = scene.sound.add("musica_suspense", { loop: true, volume: 0.32 });
+    }
+    if (!musicaSuspense.isPlaying) musicaSuspense.play();
+}
+
+function pararMusicaSuspense() {
+    if (musicaSuspense && musicaSuspense.isPlaying) musicaSuspense.stop();
+}
+
+function iniciarMusicaVitoria(scene) {
+    if (!musicaVitoria) {
+        musicaVitoria = scene.sound.add("musica_vitoria", { loop: false, volume: 0.65 });
+    }
+    musicaVitoria.stop();
+    musicaVitoria.play();
+}
+
+function pararMusicaVitoria() {
+    if (musicaVitoria && musicaVitoria.isPlaying) musicaVitoria.stop();
+}
+
+function iniciarMusicaGameOver(scene) {
+    if (!musicaGameOver) {
+        musicaGameOver = scene.sound.add("musica_game_over", { loop: false, volume: 0.55 });
+    }
+    musicaGameOver.stop();
+    musicaGameOver.play();
+}
+
+
+/*
+========================================================
+                    CONFIGURAÇÃO
+========================================================
+*/
+
+const config = {
+
+    type: Phaser.AUTO,
+
+    parent: "game",
+
+    width: W,
+
+    height: H,
+
+    backgroundColor: "#08090b",
+
+    pixelArt: true,
+
+    antialias: false,
+
+    roundPixels: true,
+
+    resolution: Math.min(window.devicePixelRatio || 1, 2),
+
+    scale: {
+
+        mode: Phaser.Scale.FIT,
+
+        autoCenter:
+            Phaser.Scale.CENTER_BOTH,
+
+        width: W,
+
+        height: H
+
+    },
+
+    physics: {
+
+        default: "arcade",
+
+        arcade: {
+
+            debug: false
+
+        }
+
+    },
+
+    scene: [
+
+        MenuScene,
+
+        PrologoScene,
+
+        BattleScene,
+
+        FinalScene
+
+    ]
+
+};
+
+
+new Phaser.Game(config);
+
+
+/*
+========================================================
+                    MENU
+========================================================
+*/
+
+function MenuScene() {
+
+    Phaser.Scene.call(
+        this,
+        {
+            key: "MenuScene"
+        }
+    );
+
+}
+
+
+MenuScene.prototype =
+    Object.create(
+        Phaser.Scene.prototype
+    );
+
+
+MenuScene.prototype.constructor =
+    MenuScene;
+
+
+MenuScene.prototype.preload =
+function () {
+    this.load.audio("musica_suspense", "SONS E MUSICAS/uttamkumar_r-horror-suspense-189369.mp3");
+    this.load.audio("musica_vitoria", "SONS E MUSICAS/emand_edroff-victory-bell-success-fanfare-576275.mp3");
+};
+
+
+MenuScene.prototype.create =
+function () {
+
+    const scene = this;
+
+    iniciarAudio();
+    pararMusicaBatalha();
+    pararMusicaSuspense();
+    pararMusicaVitoria();
+    if (musicaGameOver && musicaGameOver.isPlaying) musicaGameOver.stop();
+    iniciarMusicaSuspense(scene);
+
+
+    /*
+    ====================================================
+                        FUNDO
+    ====================================================
+    */
+
+    scene.add.rectangle(
+
+        W / 2,
+        H / 2,
+
+        W,
+        H,
+
+        0x07090d
+
+    );
+
+
+    /*
+        Brilho central
+    */
+
+    scene.add.circle(
+
+        W / 2,
+        H / 2 - 40,
+
+        300,
+
+        0x25070b,
+
+        0.25
+
+    );
+
+
+    /*
+    ====================================================
+                        TÍTULO
+    ====================================================
+    */
+
+    scene.add.text(
+
+        W / 2,
+
+        235,
+
+        "A ÚLTIMA CHANCE",
+
+        {
+
+            fontFamily:
+                "Georgia, serif",
+
+            fontSize:
+                "58px",
+
+            fontStyle:
+                "bold",
+
+            color:
+                "#b51f2e",
+
+            stroke:
+                "#260308",
+
+            strokeThickness:
+                8,
+
+            shadow: {
+
+                offsetX: 0,
+
+                offsetY: 4,
+
+                color: "#000000",
+
+                blur: 10,
+
+                stroke: true,
+
+                fill: true
+
+            }
+
+        }
+
+    )
+
+    .setOrigin(0.5);
+
+
+    /*
+    ====================================================
+                        SUBTÍTULO
+    ====================================================
+    */
+
+    scene.add.text(
+
+        W / 2,
+
+        330,
+
+        "Iniciar a última batalha?",
+
+        {
+
+            fontFamily:
+                "monospace",
+
+            fontSize:
+                "24px",
+
+            color:
+                "#eeeeee"
+
+        }
+
+    )
+
+    .setOrigin(0.5);
+
+
+    /*
+    ====================================================
+                        BOTÃO
+    ====================================================
+    */
+
+    const botao =
+
+        scene.add.rectangle(
+
+            W / 2,
+
+            420,
+
+            260,
+
+            78,
+
+            0x278a43
+
+        )
+
+        .setStrokeStyle(
+
+            3,
+
+            0x70e58c
+
+        )
+
+        .setInteractive({
+
+            useHandCursor: true
+
+        });
+
+
+    const textoBotao =
+
+        scene.add.text(
+
+            W / 2,
+
+            420,
+
+            "INICIAR",
+
+            {
+
+                fontFamily:
+                    "monospace",
+
+                fontSize:
+                    "28px",
+
+                fontStyle:
+                    "bold",
+
+                color:
+                    "#ffffff"
+
+            }
+
+        )
+
+        .setOrigin(0.5);
+
+
+    botao.on(
+
+        "pointerover",
+
+        () => {
+
+            botao.setFillStyle(
+                0x36ad5a
+            );
+
+            textoBotao.setScale(
+                1.08
+            );
+
+        }
+
+    );
+
+
+    botao.on(
+
+        "pointerout",
+
+        () => {
+
+            botao.setFillStyle(
+                0x278a43
+            );
+
+            textoBotao.setScale(
+                1
+            );
+
+        }
+
+    );
+
+
+    botao.on(
+
+        "pointerdown",
+
+        () => {
+
+            iniciarAudio();
+
+            somMenu();
+
+            scene.cameras.main.fadeOut(
+                350,
+                0,
+                0,
+                0
+            );
+
+            scene.time.delayedCall(
+
+                350,
+
+                () => {
+
+                    scene.scene.start(
+                        "PrologoScene"
+                    );
+
+                }
+
+            );
+
+        }
+
+    );
+
+
+    /*
+    ====================================================
+                    TELA CHEIA
+    ====================================================
+    */
+
+    scene.add.text(
+
+        W / 2,
+
+        565,
+
+        "Pressione F para tela cheia",
+
+        {
+
+            fontFamily:
+                "monospace",
+
+            fontSize:
+                "15px",
+
+            color:
+                "#777d86"
+
+        }
+
+    )
+
+    .setOrigin(0.5);
+
+
+    scene.input.keyboard.on(
+
+        "keydown-F",
+
+        () => {
+
+            if (
+                scene.scale.isFullscreen
+            ) {
+
+                scene.scale.stopFullscreen();
+
+            }
+
+            else {
+
+                scene.scale.startFullscreen();
+
+            }
+
+        }
+
+    );
+
+};
+
+
+/*
+========================================================
+                    PRÓLOGO
+========================================================
+*/
+
+function PrologoScene() {
+
+    Phaser.Scene.call(
+
+        this,
+
+        {
+
+            key:
+                "PrologoScene"
+
+        }
+
+    );
+
+}
+
+
+PrologoScene.prototype =
+    Object.create(
+        Phaser.Scene.prototype
+    );
+
+
+PrologoScene.prototype.constructor =
+    PrologoScene;
+
+
+/*
+========================================================
+                    TEXTO DO PRÓLOGO
+========================================================
+*/
+
+const textoPrologo =
+
+"Em um mundo sucumbido pela fúria de uma rainha que surgiu misteriosamente, uma força de combatentes poderosos são invocados para deter o mal.\n\n" +
+
+"Infelizmente todo o esquadrão foi brutalmente assassinado... Com exceção de um único homem: Raiden.\n\n" +
+
+"Ele vaga em busca de treinar mais para conseguir derrotar a Rainha que um dia tirou tudo dele...\n\n" +
+
+"9 meses se passam. A Rainha implantou várias de suas sementes orgânicas em todo o mundo, querendo que ele exploda.\n\n" +
+
+"Mas o nosso herói enfim aparece para derrotá-la.\n\n" +
+
+"Mas ele tem apenas 1 minuto antes que tudo acabe.\n\n" +
+
+"E chegou o dia...\n\n";
+
+const textoBatalhaFinal = "DA BATALHA FINAL!";
+
+
+PrologoScene.prototype.create =
+function () {
+
+    const scene = this;
+
+    iniciarAudio();
+    iniciarMusicaSuspense(scene);
+
+    scene.add.rectangle(W / 2, H / 2, W, H, 0x050609);
+
+    scene.add.circle(1000, 150, 250, 0x460912, 0.16);
+
+    scene.add.text(W / 2, 75, "PRÓLOGO", {
+        fontFamily: "monospace",
+        fontSize: "28px",
+        fontStyle: "bold",
+        color: "#b51f2e",
+        stroke: "#000000",
+        strokeThickness: 5
+    }).setOrigin(0.5);
+
+    scene.add.rectangle(
+        W / 2, 370, 1120, 520,
+        0x0d1015, 0.94
+    ).setStrokeStyle(2, 0x6c2029, 0.75);
+
+    /* Texto principal do prólogo */
+    const texto = scene.add.text(
+        95, 135, "", {
+            fontFamily: "Garamond, Georgia, serif",
+            fontSize: "20px",
+            color: "#eeeeee",
+            lineSpacing: 6,
+            wordWrap: { width: 1090 }
+        }
+    );
+
+    /* A frase final fica separada para ficar vermelha. */
+    const textoFinal = scene.add.text(
+        95, 135, "", {
+            fontFamily: "Garamond, Georgia, serif",
+            fontSize: "20px",
+            fontStyle: "bold",
+            color: "#d3263d",
+            lineSpacing: 6,
+            wordWrap: { width: 1090 }
+        }
+    );
+
+    textoFinal.setVisible(false);
+
+    let indice = 0;
+    let terminou = false;
+    let pulou = false;
+
+    const continuar = scene.add.rectangle(
+        W / 2, 665, 240, 48, 0x7a1d29
+    )
+    .setStrokeStyle(2, 0xc94b5a)
+    .setInteractive({ useHandCursor: true })
+    .setAlpha(0);
+
+    const textoContinuar = scene.add.text(
+        W / 2, 665, "CONTINUAR", {
+            fontFamily: "monospace",
+            fontSize: "20px",
+            fontStyle: "bold",
+            color: "#ffffff"
+        }
+    ).setOrigin(0.5).setAlpha(0);
+
+    /* Botão para pular o texto imediatamente. */
+    const pular = scene.add.rectangle(
+        W - 145, 665, 190, 48, 0x3b1118
+    )
+    .setStrokeStyle(2, 0xd3263d)
+    .setInteractive({ useHandCursor: true });
+
+    const textoPular = scene.add.text(
+        W - 145, 665, "PULAR >>", {
+            fontFamily: "monospace",
+            fontSize: "18px",
+            fontStyle: "bold",
+            color: "#ff6675"
+        }
+    ).setOrigin(0.5);
+
+    function liberarContinuar(){
+        if(terminou) return;
+        terminou = true;
+        continuar.setAlpha(1);
+        textoContinuar.setAlpha(1);
+        pular.setAlpha(0);
+        textoPular.setAlpha(0);
+        somMenu();
+    }
+
+    function mostrarBatalhaFinal(){
+        textoFinal.setText(textoBatalhaFinal);
+        textoFinal.setPosition(95, texto.y + texto.height + 4);
+        textoFinal.setVisible(true);
+        liberarContinuar();
+    }
+
+    const eventoTexto = scene.time.addEvent({
+        delay: 18,
+        repeat: textoPrologo.length - 1,
+        callback: () => {
+            if(pulou) return;
+            texto.text += textoPrologo[indice];
+            indice++;
+        }
+    });
+
+    /* Depois do texto principal, mostra a frase vermelha. */
+    scene.time.delayedCall(
+        textoPrologo.length * 18 + 100,
+        () => {
+            if(!pulou) mostrarBatalhaFinal();
+        }
+    );
+
+    function pularPrologo(){
+        if(terminou) return;
+        pulou = true;
+        eventoTexto.remove(false);
+        texto.setText(textoPrologo);
+        mostrarBatalhaFinal();
+    }
+
+    pular.on("pointerover", () => {
+        pular.setFillStyle(0x601923);
+        textoPular.setColor("#ffffff");
+    });
+
+    pular.on("pointerout", () => {
+        pular.setFillStyle(0x3b1118);
+        textoPular.setColor("#ff6675");
+    });
+
+    pular.on("pointerdown", pularPrologo);
+
+    continuar.on("pointerover", () => {
+        continuar.setFillStyle(0xa62b3a);
+    });
+
+    continuar.on("pointerout", () => {
+        continuar.setFillStyle(0x7a1d29);
+    });
+
+    continuar.on("pointerdown", () => {
+        iniciarAudio();
+        somMenu();
+        pararMusicaSuspense();
+        scene.cameras.main.fadeOut(350, 0, 0, 0);
+        scene.time.delayedCall(350, () => {
+            scene.scene.start("BattleScene");
+        });
+    });
+
+    scene.input.keyboard.on("keydown-SPACE", pularPrologo);
+
+    scene.input.keyboard.on("keydown-F", () => {
+        if(scene.scale.isFullscreen){
+            scene.scale.stopFullscreen();
+        }else{
+            scene.scale.startFullscreen();
+        }
+    });
+
+};
+
+
+/*
+========================================================
+                    BATALHA
+========================================================
+*/
+
+function BattleScene() {
+
+    Phaser.Scene.call(
+
+        this,
+
+        {
+
+            key:
+                "BattleScene"
+
+        }
+
+    );
+
+}
+
+
+BattleScene.prototype =
+    Object.create(
+        Phaser.Scene.prototype
+    );
+
+
+BattleScene.prototype.constructor =
+    BattleScene;
+
+
+/*
+========================================================
+                    VARIÁVEIS DA BATALHA
+========================================================
+*/
+
+BattleScene.prototype.init =
+function () {
+
+    this.jogador = null;
+
+    this.chefe = null;
+
+    this.teclas = null;
+
+    this.textoTurno = null;
+
+    this.textoMensagem = null;
+
+    this.textoTempo = null;
+
+    this.textoControles = null;
+
+    this.coracaoJogador = null;
+
+    this.coracaoChefe = null;
+
+    this.jogoAcabou = false;
+
+    this.turnoJogador = true;
+
+    this.defendendo = false;
+
+    this.actionLocked = false;
+
+    this.ataquesDoJogador = 0;
+
+    this.tempoRestante = 60;
+
+};
+
+
+/*
+========================================================
+                    PRELOAD DA BATALHA
+========================================================
+*/
+
+BattleScene.prototype.preload =
+function () {
+
+    this.load.audio("musica_batalha", "SONS E MUSICAS/nastelbom-epic-epic-music-602437.mp3");
+    this.load.audio("efeito_ataque", "SONS E MUSICAS/u_nwdx76su56-impacto-flesh-448972.mp3");
+    this.load.audio("musica_game_over", "SONS E MUSICAS/calango_fx_official-game-over-401236.mp3");
+
+
+    /*
+    ====================================================
+                        CENÁRIO
+    ====================================================
+    */
+
+    this.load.image(
+
+        "sky",
+
+        "CENARIOS/War2/Bright/sky.png"
+
+    );
+
+
+    this.load.image(
+
+        "war2",
+
+        "CENARIOS/War2/Bright/War2.png"
+
+    );
+
+
+    this.load.image(
+
+        "wall",
+
+        "CENARIOS/War2/Bright/wall.png"
+
+    );
+
+
+    this.load.image(
+
+        "road",
+
+        "CENARIOS/War2/Bright/road.png"
+
+    );
+
+
+    this.load.image(
+
+        "cracks1",
+
+        "CENARIOS/War2/Bright/cracks1.png"
+
+    );
+
+
+    this.load.image(
+
+        "cracks2",
+
+        "CENARIOS/War2/Bright/cracks2.png"
+
+    );
+
+
+    /*
+    ====================================================
+                        RAIDEN
+    ====================================================
+    */
+
+    carregarSpriteSheet(
+
+        this,
+
+        "ninja_idle",
+
+        "PERSONAGENS/Ninja_Peasant/Idle.png",
+
+        96,
+        96
+
+    );
+
+
+    carregarSpriteSheet(
+
+        this,
+
+        "ninja_walk",
+
+        "PERSONAGENS/Ninja_Peasant/Walk.png",
+
+        96,
+        96
+
+    );
+
+
+    carregarSpriteSheet(
+
+        this,
+
+        "ninja_run",
+
+        "PERSONAGENS/Ninja_Peasant/Run.png",
+
+        96,
+        96
+
+    );
+
+
+    carregarSpriteSheet(
+
+        this,
+
+        "ninja_attack1",
+
+        "PERSONAGENS/Ninja_Peasant/Attack_1.png",
+
+        96,
+        96
+
+    );
+
+
+    carregarSpriteSheet(
+
+        this,
+
+        "ninja_attack2",
+
+        "PERSONAGENS/Ninja_Peasant/Attack_2.png",
+
+        96,
+        96
+
+    );
+
+
+    carregarSpriteSheet(
+
+        this,
+
+        "ninja_hurt",
+
+        "PERSONAGENS/Ninja_Peasant/Hurt.png",
+
+        96,
+        96
+
+    );
+
+
+    carregarSpriteSheet(
+
+        this,
+
+        "ninja_dead",
+
+        "PERSONAGENS/Ninja_Peasant/Dead.png",
+
+        96,
+        96
+
+    );
+
+
+    carregarSpriteSheet(
+
+        this,
+
+        "ninja_disguise",
+
+        "PERSONAGENS/Ninja_Peasant/Disguise.png",
+
+        96,
+        96
+
+    );
+
+
+    /*
+    ====================================================
+                    RAINHA KITSUNE
+    ====================================================
+    */
+
+    carregarSpriteSheet(
+
+        this,
+
+        "kitsune_idle",
+
+        "PERSONAGENS/Kitsune/Idle.png",
+
+        128,
+        128
+
+    );
+
+
+    carregarSpriteSheet(
+
+        this,
+
+        "kitsune_idle2",
+
+        "PERSONAGENS/Kitsune/Idle_2.png",
+
+        128,
+        128
+
+    );
+
+
+    carregarSpriteSheet(
+
+        this,
+
+        "kitsune_run",
+
+        "PERSONAGENS/Kitsune/Run.png",
+
+        128,
+        128
+
+    );
+
+
+    carregarSpriteSheet(
+
+        this,
+
+        "kitsune_attack1",
+
+        "PERSONAGENS/Kitsune/Attack_1.png",
+
+        128,
+        128
+
+    );
+
+
+    carregarSpriteSheet(
+
+        this,
+
+        "kitsune_attack2",
+
+        "PERSONAGENS/Kitsune/Attack_2.png",
+
+        128,
+        128
+
+    );
+
+
+    carregarSpriteSheet(
+
+        this,
+
+        "kitsune_attack3",
+
+        "PERSONAGENS/Kitsune/Attack_3.png",
+
+        128,
+        128
+
+    );
+
+
+    carregarSpriteSheet(
+
+        this,
+
+        "kitsune_hurt",
+
+        "PERSONAGENS/Kitsune/Hurt.png",
+
+        128,
+        128
+
+    );
+
+
+    carregarSpriteSheet(
+
+        this,
+
+        "kitsune_dead",
+
+        "PERSONAGENS/Kitsune/Dead.png",
+
+        128,
+        128
+
+    );
+
+};
+
+
+/*
+========================================================
+                SPRITESHEET
+========================================================
+*/
+
+function carregarSpriteSheet(
+
+    scene,
+    key,
+    path,
+    frameWidth,
+    frameHeight
+
+) {
+
+    scene.load.spritesheet(
+
+        key,
+
+        path,
+
+        {
+
+            frameWidth:
+                frameWidth,
+
+            frameHeight:
+                frameHeight
+
+        }
+
+    );
+
+}
+
+
+/*
+========================================================
+                    CREATE BATALHA
+========================================================
+*/
+
+BattleScene.prototype.create =
+function () {
+
+    const scene = this;
+
+
+    iniciarAudio();
+    iniciarMusicaBatalha(scene);
+    efeitoAtaqueArquivo = scene.sound.add("efeito_ataque", { volume: 0.65 });
+
+
+    /*
+    ====================================================
+                        CENÁRIO
+    ====================================================
+    */
+
+    scene.add.image(
+
+        W / 2,
+        H / 2,
+
+        "sky"
+
+    )
+
+    .setDisplaySize(W, H)
+
+    .setDepth(0);
+
+
+    scene.add.image(
+
+        W / 2,
+        H / 2,
+
+        "war2"
+
+    )
+
+    .setDisplaySize(W, H)
+
+    .setDepth(1);
+
+
+    scene.add.rectangle(
+
+        W / 2,
+        H / 2,
+
+        W,
+        H,
+
+        0x10151b,
+
+        0.08
+
+    )
+
+    .setDepth(2);
+
+
+    scene.add.image(
+
+        W / 2,
+        H / 2,
+
+        "wall"
+
+    )
+
+    .setDisplaySize(W, H)
+
+    .setDepth(3);
+
+
+    scene.add.image(
+
+        W / 2,
+        H / 2,
+
+        "road"
+
+    )
+
+    .setDisplaySize(W, H)
+
+    .setDepth(4);
+
+
+    scene.add.image(
+
+        W / 2,
+        H / 2,
+
+        "cracks1"
+
+    )
+
+    .setDisplaySize(W, H)
+
+    .setAlpha(0.5)
+
+    .setDepth(5);
+
+
+    scene.add.image(
+
+        W / 2,
+        H / 2,
+
+        "cracks2"
+
+    )
+
+    .setDisplaySize(W, H)
+
+    .setAlpha(0.4)
+
+    .setDepth(5);
+
+
+    /*
+    ====================================================
+                    CHÃO
+    ====================================================
+    */
+
+    scene.add.rectangle(
+
+        W / 2,
+
+        GROUND_Y + 3,
+
+        W,
+
+        4,
+
+        0x080808,
+
+        0.65
+
+    )
+
+    .setDepth(6);
+
+
+    /*
+    ====================================================
+                    PAINÉIS
+    ====================================================
+    */
+
+    scene.add.rectangle(
+
+        W / 2,
+
+        0,
+
+        W,
+
+        110,
+
+        0x080a0d,
+
+        0.72
+
+    )
+
+    .setOrigin(0.5, 0)
+
+    .setDepth(20);
+
+
+    scene.add.rectangle(
+
+        W / 2,
+
+        H - 96,
+
+        W,
+
+        96,
+
+        0x07080a,
+
+        0.88
+
+    )
+
+    .setOrigin(0.5, 0)
+
+    .setDepth(20);
+
+
+    criarAnimacoesBattle(scene);
+
+    criarInterfaceBattle(scene);
+
+    criarPersonagensBattle(scene);
+
+    criarControlesBattle(scene);
+
+    criarBotaoFullscreen(scene);
+
+
+    scene.jogador.play(
+        "raiden_idle"
+    );
+
+
+    scene.chefe.play(
+        "kitsune_idle"
+    );
+
+
+    /*
+        Som de início da batalha.
+    */
+
+    scene.time.delayedCall(
+
+        300,
+
+        () => {
+
+            tocarSom(
+                220,
+                0.12,
+                "square",
+                0.05
+            );
+
+        }
+
+    );
+
+};
+
+
+/*
+========================================================
+                    ANIMAÇÕES
+========================================================
+*/
+
+function criarAnimacoesBattle(scene) {
+
+
+    function criar(
+
+        nome,
+        sheet,
+        ultimoFrame,
+        velocidade,
+        repetir
+
+    ) {
+
+
+        if (
+            scene.anims.exists(nome)
+        )
+
+            return;
+
+
+        scene.anims.create({
+
+            key:
+                nome,
+
+            frames:
+                scene.anims.generateFrameNumbers(
+
+                    sheet,
+
+                    {
+
+                        start: 0,
+
+                        end:
+                            ultimoFrame
+
+                    }
+
+                ),
+
+            frameRate:
+                velocidade,
+
+            repeat:
+                repetir
+
+        });
+
+    }
+
+
+    criar(
+        "raiden_idle",
+        "ninja_idle",
+        5,
+        8,
+        -1
+    );
+
+
+    criar(
+        "raiden_walk",
+        "ninja_walk",
+        7,
+        10,
+        -1
+    );
+
+
+    criar(
+        "raiden_run",
+        "ninja_run",
+        5,
+        12,
+        -1
+    );
+
+
+    criar(
+        "raiden_attack1",
+        "ninja_attack1",
+        5,
+        14,
+        0
+    );
+
+
+    criar(
+        "raiden_attack2",
+        "ninja_attack2",
+        3,
+        14,
+        0
+    );
+
+
+    criar(
+        "raiden_hurt",
+        "ninja_hurt",
+        1,
+        8,
+        0
+    );
+
+
+    criar(
+        "raiden_dead",
+        "ninja_dead",
+        3,
+        8,
+        0
+    );
+
+
+    criar(
+        "raiden_defesa",
+        "ninja_disguise",
+        8,
+        10,
+        0
+    );
+
+
+    criar(
+        "kitsune_idle",
+        "kitsune_idle",
+        7,
+        8,
+        -1
+    );
+
+
+    criar(
+        "kitsune_idle2",
+        "kitsune_idle2",
+        5,
+        8,
+        -1
+    );
+
+
+    criar(
+        "kitsune_run",
+        "kitsune_run",
+        7,
+        10,
+        -1
+    );
+
+
+    criar(
+        "kitsune_attack1",
+        "kitsune_attack1",
+        9,
+        12,
+        0
+    );
+
+
+    criar(
+        "kitsune_attack2",
+        "kitsune_attack2",
+        9,
+        12,
+        0
+    );
+
+
+    criar(
+        "kitsune_attack3",
+        "kitsune_attack3",
+        6,
+        12,
+        0
+    );
+
+
+    criar(
+        "kitsune_hurt",
+        "kitsune_hurt",
+        1,
+        8,
+        0
+    );
+
+
+    criar(
+        "kitsune_dead",
+        "kitsune_dead",
+        9,
+        10,
+        0
+    );
+
+}
+
+
+/*
+========================================================
+                    INTERFACE
+========================================================
+*/
+
+function criarInterfaceBattle(scene) {
+
+
+    scene.add.text(
+
+        150,
+        24,
+
+        "RAIDEN",
+
+        {
+
+            fontFamily:
+                "monospace",
+
+            fontSize:
+                "24px",
+
+            fontStyle:
+                "bold",
+
+            color:
+                "#ffffff",
+
+            stroke:
+                "#000000",
+
+            strokeThickness:
+                5
+
+        }
+
+    )
+
+    .setDepth(30);
+
+
+    scene.coracaoJogador =
+
+        scene.add.text(
+
+            155,
+            53,
+
+            "♥",
+
+            {
+
+                fontFamily:
+                    "Arial",
+
+                fontSize:
+                    "48px",
+
+                fontStyle:
+                    "bold",
+
+                color:
+                    "#ff304f",
+
+                stroke:
+                    "#000000",
+
+                strokeThickness:
+                    6
+
+            }
+
+        )
+
+        .setDepth(31);
+
+
+    scene.add.text(
+
+        1130,
+        24,
+
+        "RAINHA KITSUNE",
+
+        {
+
+            fontFamily:
+                "monospace",
+
+            fontSize:
+                "22px",
+
+            fontStyle:
+                "bold",
+
+            color:
+                "#ffffff",
+
+            stroke:
+                "#000000",
+
+            strokeThickness:
+                5
+
+        }
+
+    )
+
+    .setOrigin(1, 0)
+
+    .setDepth(30);
+
+
+    scene.coracaoChefe =
+
+        scene.add.text(
+
+            1125,
+            53,
+
+            "♥",
+
+            {
+
+                fontFamily:
+                    "Arial",
+
+                fontSize:
+                    "48px",
+
+                fontStyle:
+                    "bold",
+
+                color:
+                    "#ff304f",
+
+                stroke:
+                    "#000000",
+
+                strokeThickness:
+                    6
+
+            }
+
+        )
+
+        .setOrigin(1, 0)
+
+        .setDepth(31);
+
+
+    scene.textoTempo =
+
+        scene.add.text(
+
+            W / 2,
+            33,
+
+            "60",
+
+            {
+
+                fontFamily:
+                    "monospace",
+
+                fontSize:
+                    "42px",
+
+                fontStyle:
+                    "bold",
+
+                color:
+                    "#ffffff",
+
+                stroke:
+                    "#000000",
+
+                strokeThickness:
+                    6
+
+            }
+
+        )
+
+        .setOrigin(0.5)
+
+        .setDepth(31);
+
+
+    scene.add.text(
+
+        W / 2,
+        75,
+
+        "TEMPO",
+
+        {
+
+            fontFamily:
+                "monospace",
+
+            fontSize:
+                "13px",
+
+            fontStyle:
+                "bold",
+
+            color:
+                "#bfc5cc"
+
+        }
+
+    )
+
+    .setOrigin(0.5)
+
+    .setDepth(31);
+
+
+    scene.textoTurno =
+
+        scene.add.text(
+
+            W / 2,
+            123,
+
+            "SUA VEZ!",
+
+            {
+
+                fontFamily:
+                    "monospace",
+
+                fontSize:
+                    "30px",
+
+                fontStyle:
+                    "bold",
+
+                color:
+                    "#ffffff",
+
+                stroke:
+                    "#000000",
+
+                strokeThickness:
+                    6
+
+            }
+
+        )
+
+        .setOrigin(0.5)
+
+        .setDepth(31);
+
+
+    scene.textoMensagem =
+
+        scene.add.text(
+
+            W / 2,
+            158,
+
+            "Ataque ou defenda-se.",
+
+            {
+
+                fontFamily:
+                    "monospace",
+
+                fontSize:
+                    "17px",
+
+                color:
+                    "#e8e8e8",
+
+                stroke:
+                    "#000000",
+
+                strokeThickness:
+                    4
+
+            }
+
+        )
+
+        .setOrigin(0.5)
+
+        .setDepth(31);
+
+
+    scene.add.rectangle(
+
+        W / 2,
+
+        H - 48,
+
+        650,
+
+        62,
+
+        0x11151b,
+
+        0.90
+
+    )
+
+    .setStrokeStyle(
+
+        2,
+
+        0x7d8792,
+
+        0.55
+
+    )
+
+    .setDepth(30);
+
+
+    scene.textoControles =
+
+        scene.add.text(
+
+            W / 2,
+
+            H - 48,
+
+            "[ Z ]  ATAQUE       [ X ]  DEFENDER",
+
+            {
+
+                fontFamily:
+                    "monospace",
+
+                fontSize:
+                    "20px",
+
+                fontStyle:
+                    "bold",
+
+                color:
+                    "#ffffff",
+
+                stroke:
+                    "#000000",
+
+                strokeThickness:
+                    3
+
+            }
+
+        )
+
+        .setOrigin(0.5)
+
+        .setDepth(31);
+
+}
+
+
+/*
+========================================================
+                    PERSONAGENS
+========================================================
+*/
+
+function criarPersonagensBattle(scene) {
+
+
+    scene.jogador =
+
+        scene.physics.add.sprite(
+
+            330,
+            GROUND_Y,
+
+            "ninja_idle"
+
+        )
+
+        .setDepth(12);
+
+
+    scene.jogador.setDisplaySize(
+        150,
+        150
+    );
+
+
+    scene.jogador.setOrigin(
+        0.5,
+        1
+    );
+
+
+    scene.jogador.body.setSize(
+        46,
+        92,
+        true
+    );
+
+
+    scene.jogador.setImmovable(true);
+
+
+    scene.chefe =
+
+        scene.physics.add.sprite(
+
+            950,
+            GROUND_Y,
+
+            "kitsune_idle"
+
+        )
+
+        .setDepth(12);
+
+
+    scene.chefe.setDisplaySize(
+        230,
+        230
+    );
+
+
+    scene.chefe.setOrigin(
+        0.5,
+        1
+    );
+
+
+    /*
+        Vira para a esquerda.
+    */
+
+    scene.chefe.setFlipX(true);
+
+
+    scene.chefe.body.setSize(
+        72,
+        120,
+        true
+    );
+
+
+    scene.chefe.setImmovable(true);
+
+
+    /*
+    ====================================================
+                        SOMBRAS
+    ====================================================
+    */
+
+    scene.add.ellipse(
+
+        330,
+        GROUND_Y + 2,
+
+        120,
+        22,
+
+        0x000000,
+        0.45
+
+    )
+
+    .setDepth(10);
+
+
+    scene.add.ellipse(
+
+        950,
+        GROUND_Y + 2,
+
+        190,
+        30,
+
+        0x000000,
+        0.50
+
+    )
+
+    .setDepth(10);
+
+}
+
+
+/*
+========================================================
+                    CONTROLES
+========================================================
+*/
+
+function criarControlesBattle(scene) {
+
+
+    scene.teclas =
+
+        scene.input.keyboard.addKeys({
+
+            ataque:
+                Phaser.Input.Keyboard.KeyCodes.Z,
+
+            defesa:
+                Phaser.Input.Keyboard.KeyCodes.X,
+
+            esquerda:
+                Phaser.Input.Keyboard.KeyCodes.LEFT,
+
+            reiniciar:
+                Phaser.Input.Keyboard.KeyCodes.R,
+
+            fullscreen:
+                Phaser.Input.Keyboard.KeyCodes.F
+
+        });
+
+
+    scene.input.keyboard.on(
+
+        "keydown-F",
+
+        () => {
+
+            if (
+                scene.scale.isFullscreen
+            ) {
+
+                scene.scale.stopFullscreen();
+
+            }
+
+            else {
+
+                scene.scale.startFullscreen();
+
+            }
+
+        }
+
+    );
+
+
+    scene.time.addEvent({
+
+        delay: 1000,
+
+        callback: () => {
+
+            diminuirTempoBattle(scene);
+
+        },
+
+        loop: true
+
+    });
+
+}
+
+
+/*
+========================================================
+                    BOTÃO FULLSCREEN
+========================================================
+*/
+
+function criarBotaoFullscreen(scene) {
+
+
+    const fundo =
+
+        scene.add.rectangle(
+
+            W - 42,
+            30,
+
+            48,
+            36,
+
+            0x10151b,
+            0.92
+
+        )
+
+        .setStrokeStyle(
+            2,
+            0xffffff,
+            0.45
+        )
+
+        .setDepth(40)
+
+        .setInteractive({
+
+            useHandCursor:
+                true
+
+        });
+
+
+    const simbolo =
+
+        scene.add.text(
+
+            W - 42,
+            30,
+
+            "⛶",
+
+            {
+
+                fontSize:
+                    "24px",
+
+                color:
+                    "#ffffff"
+
+            }
+
+        )
+
+        .setOrigin(0.5)
+
+        .setDepth(41);
+
+
+    fundo.on(
+        "pointerdown",
+        () => {
+
+            if (
+                scene.scale.isFullscreen
+            ) {
+
+                scene.scale.stopFullscreen();
+
+            }
+
+            else {
+
+                scene.scale.startFullscreen();
+
+            }
+
+        }
+    );
+
+
+    simbolo.on(
+        "pointerdown",
+        () => {
+
+            if (
+                scene.scale.isFullscreen
+            ) {
+
+                scene.scale.stopFullscreen();
+
+            }
+
+            else {
+
+                scene.scale.startFullscreen();
+
+            }
+
+        }
+    );
+
+}
+
+
+/*
+========================================================
+                    UPDATE
+========================================================
+*/
+
+BattleScene.prototype.update =
+function () {
+
+    const scene = this;
+
+
+    if (
+        scene.jogoAcabou
+    ) {
+
+
+        if (
+
+            Phaser.Input.Keyboard.JustDown(
+
+                scene.teclas.reiniciar
+
+            )
+
+        ) {
+
+            scene.scene.restart();
+
+        }
+
+
+        return;
+
+    }
+
+
+    if (
+
+        scene.turnoJogador &&
+
+        !scene.actionLocked
+
+    ) {
+
+
+        if (
+
+            Phaser.Input.Keyboard.JustDown(
+
+                scene.teclas.ataque
+
+            )
+
+        ) {
+
+            atacarBattle(scene);
+
+        }
+
+
+
+        if (
+
+            Phaser.Input.Keyboard.JustDown(
+
+                scene.teclas.defesa
+
+            )
+
+        ) {
+
+            defenderBattle(scene);
+
+        }
+
+    }
+
+};
+
+
+/*
+========================================================
+                    TIMER
+========================================================
+*/
+
+function diminuirTempoBattle(scene) {
+
+
+    if (
+        scene.jogoAcabou
+    )
+
+        return;
+
+
+    scene.tempoRestante--;
+
+
+    scene.textoTempo.setText(
+
+        scene.tempoRestante
+
+    );
+
+
+    if (
+
+        scene.tempoRestante <= 10
+
+    ) {
+
+        scene.textoTempo.setColor(
+            "#ff4757"
+        );
+
+
+        if (
+            scene.tempoRestante > 0
+        ) {
+
+            somTempo();
+
+        }
+
+    }
+
+
+    if (
+
+        scene.tempoRestante <= 0
+
+    ) {
+
+        scene.tempoRestante = 0;
+
+        finalizarBattle(
+            scene,
+            "tempo"
+        );
+
+    }
+
+}
+
+
+/*
+========================================================
+                        ATAQUE
+========================================================
+*/
+
+function atacarBattle(scene) {
+
+    if (scene.actionLocked || !scene.turnoJogador) return;
+
+    scene.actionLocked = true;
+    scene.turnoJogador = false;
+    scene.ataquesDoJogador++;
+
+    tocarEfeitoAtaqueArquivo();
+
+    scene.textoTurno.setText("ATAQUE!");
+    scene.textoMensagem.setText("Raiden atacando...");
+
+    const baseScaleX = scene.jogador.scaleX;
+    const baseScaleY = scene.jogador.scaleY;
+
+    scene.jogador.play("raiden_run");
+
+    scene.tweens.add({
+        targets: scene.jogador,
+        x: 455,
+        duration: 220,
+        ease: "Quad.easeOut",
+        onComplete: () => {
+            if (scene.jogoAcabou) return;
+
+            scene.jogador.anims.stop();
+            const animacaoAtaque = (scene.ataquesDoJogador % 2 === 0)
+                ? "raiden_attack2"
+                : "raiden_attack1";
+
+            scene.jogador.play(animacaoAtaque);
+            scene.jogador.setScale(baseScaleX, baseScaleY);
+
+            efeitoGolpeBattle(scene, 540, GROUND_Y - 105, 1);
+
+            scene.time.delayedCall(300, () => {
+                resolverAtaqueBattle(scene);
+            });
+        }
+    });
+}
+
+
+/*
+========================================================
+                RESOLVER ATAQUE
+========================================================
+*/
+
+function resolverAtaqueBattle(scene) {
+
+
+    if (
+        scene.jogoAcabou
+    )
+
+        return;
+
+
+    let chanceDesvio;
+
+
+    /*
+        PRIMEIRO ATAQUE = 70%
+    */
+
+    if (
+        scene.ataquesDoJogador === 1
+    ) {
+
+        chanceDesvio = 70;
+
+    }
+
+    else if (
+        scene.ataquesDoJogador === 2
+    ) {
+
+        chanceDesvio = 60;
+
+    }
+
+    else {
+
+        chanceDesvio = 30;
+
+    }
+
+
+    const sorteio =
+        Phaser.Math.Between(
+            1,
+            100
+        );
+
+
+    if (
+        sorteio <= chanceDesvio
+    ) {
+
+
+        somEsquiva();
+
+
+        scene.textoMensagem.setText(
+            "A Rainha Kitsune desviou!"
+        );
+
+
+        scene.chefe.play(
+            "kitsune_run"
+        );
+
+
+        efeitoDash(
+            scene,
+            scene.chefe.x,
+            scene.chefe.y - 110,
+            -1
+        );
+
+
+        scene.tweens.add({
+
+            targets:
+                scene.chefe,
+
+            x:
+                1025,
+
+            duration:
+                160,
+
+            yoyo:
+                true,
+
+            onComplete: () => {
+
+                scene.chefe.x = 950;
+
+                scene.chefe.play(
+                    "kitsune_idle"
+                );
+
+                turnoBossBattle(scene);
+
+            }
+
+        });
+
+    }
+
+    else {
+
+
+        somAcerto();
+
+
+        scene.coracaoChefe.setText("");
+
+
+        scene.textoMensagem.setText(
+            "Golpe certeiro!"
+        );
+
+
+        scene.chefe.play(
+            "kitsune_hurt"
+        );
+
+
+        efeitoAcertoBattle(
+            scene,
+            scene.chefe.x,
+            scene.chefe.y - 115
+        );
+
+
+        scene.time.delayedCall(
+
+            260,
+
+            () => {
+
+                scene.chefe.play(
+                    "kitsune_dead"
+                );
+
+
+                scene.time.delayedCall(
+
+                    850,
+
+                    () => {
+
+                        finalizarBattle(
+                            scene,
+                            "vitoria"
+                        );
+
+                    }
+
+                );
+
+            }
+
+        );
+
+    }
+
+}
+
+
+/*
+========================================================
+                        DEFESA
+========================================================
+*/
+
+function defenderBattle(scene) {
+
+    if (scene.actionLocked || !scene.turnoJogador) return;
+
+    scene.actionLocked = true;
+    scene.turnoJogador = false;
+    scene.defendendo = true;
+
+    somBloqueio();
+
+    scene.textoTurno.setText("DEFESA!");
+    scene.textoMensagem.setText("Raiden se encolheu para se defender...");
+
+    const baseScaleX = scene.jogador.scaleX;
+    const baseScaleY = scene.jogador.scaleY;
+
+    scene.jogador.play("raiden_defesa");
+
+    scene.tweens.add({
+        targets: scene.jogador,
+        scaleX: baseScaleX * 0.78,
+        scaleY: baseScaleY * 0.78,
+        duration: 160,
+        ease: "Quad.easeOut",
+        onComplete: () => {
+            scene.time.delayedCall(350, () => {
+                turnoBossBattle(scene);
+            });
+        }
+    });
+}
+
+
+/*
+========================================================
+                    TURNO DA RAINHA
+========================================================
+*/
+
+function turnoBossBattle(scene) {
+
+    scene.textoTurno.setText("VEZ DA RAINHA KITSUNE");
+    scene.textoMensagem.setText("A Rainha Kitsune está atacando...");
+
+    scene.time.delayedCall(550, () => {
+
+        if (scene.jogoAcabou) return;
+
+        tocarEfeitoAtaqueArquivo();
+
+        const ataqueKitsune = Phaser.Math.Between(1, 3);
+        scene.chefe.play(`kitsune_attack${ataqueKitsune}`);
+
+        scene.tweens.add({
+            targets: scene.chefe,
+            x: 900,
+            duration: 180,
+            ease: "Quad.easeOut",
+            yoyo: true
+        });
+
+        scene.time.delayedCall(320, () => {
+            resolverAtaqueBossBattle(scene);
+        });
+    });
+}
+
+
+/*
+========================================================
+                ATAQUE DA RAINHA
+========================================================
+*/
+
+function resolverAtaqueBossBattle(scene) {
+
+
+    if (
+        scene.jogoAcabou
+    )
+
+        return;
+
+
+    /* restaura a escala normal depois da defesa */
+    scene.jogador.setScale(150 / 96, 150 / 96);
+
+
+    /*
+    ====================================================
+                        BLOQUEIO
+    ====================================================
+    */
+
+    if (
+        scene.defendendo
+    ) {
+
+
+        scene.defendendo = false;
+
+
+        somBloqueio();
+
+
+        scene.textoMensagem.setText(
+            "Raiden bloqueou o ataque!"
+        );
+
+
+        efeitoBloqueioBattle(
+            scene,
+            scene.jogador.x,
+            scene.jogador.y - 80
+        );
+
+
+        scene.time.delayedCall(
+
+            500,
+
+            () => {
+
+                voltarTurnoJogador(
+                    scene
+                );
+
+            }
+
+        );
+
+
+        return;
+
+    }
+
+
+    /*
+    ====================================================
+                        ESQUIVA
+    ====================================================
+    */
+
+    const chanceDesvio =
+
+        scene.ataquesDoJogador <= 1
+
+            ? 70
+
+            : 55;
+
+
+    const sorteio =
+        Phaser.Math.Between(
+            1,
+            100
+        );
+
+
+    if (
+        sorteio <= chanceDesvio
+    ) {
+
+
+        somEsquiva();
+
+
+        scene.textoMensagem.setText(
+            "Raiden desviou!"
+        );
+
+
+        scene.jogador.play(
+            "raiden_run"
+        );
+
+
+        efeitoDash(
+            scene,
+            scene.jogador.x,
+            scene.jogador.y - 80,
+            1
+        );
+
+
+        scene.tweens.add({
+
+            targets:
+                scene.jogador,
+
+            x:
+                260,
+
+            duration:
+                180,
+
+            yoyo:
+                true,
+
+            onComplete: () => {
+
+                scene.jogador.x = 330;
+
+                scene.jogador.play(
+                    "raiden_idle"
+                );
+
+
+                scene.time.delayedCall(
+
+                    450,
+
+                    () => {
+
+                        voltarTurnoJogador(
+                            scene
+                        );
+
+                    }
+
+                );
+
+            }
+
+        });
+
+    }
+
+    else {
+
+
+        somAcerto();
+
+
+        scene.coracaoJogador.setText("");
+
+
+        scene.textoMensagem.setText(
+            "A Rainha Kitsune acertou Raiden!"
+        );
+
+
+        scene.jogador.play(
+            "raiden_hurt"
+        );
+
+
+        efeitoAcertoBattle(
+            scene,
+            scene.jogador.x,
+            scene.jogador.y - 70
+        );
+
+
+        scene.time.delayedCall(
+
+            280,
+
+            () => {
+
+                scene.jogador.play(
+                    "raiden_dead"
+                );
+
+
+                scene.time.delayedCall(
+
+                    700,
+
+                    () => {
+
+                        finalizarBattle(
+                            scene,
+                            "derrota"
+                        );
+
+                    }
+
+                );
+
+            }
+
+        );
+
+    }
+
+}
+
+
+/*
+========================================================
+            VOLTAR PARA O RAIDEN
+========================================================
+*/
+
+function voltarTurnoJogador(scene) {
+
+
+    if (
+        scene.jogoAcabou
+    )
+
+        return;
+
+
+    scene.jogador.x = 330;
+
+    scene.jogador.setScale(150 / 96, 150 / 96);
+
+    scene.chefe.x = 950;
+
+
+    scene.jogador.play(
+        "raiden_idle"
+    );
+
+
+    scene.chefe.play(
+        "kitsune_idle"
+    );
+
+
+    scene.chefe.setFlipX(true);
+
+
+    scene.turnoJogador = true;
+
+    scene.actionLocked = false;
+
+
+    scene.textoTurno.setText(
+        "SUA VEZ!"
+    );
+
+
+    scene.textoMensagem.setText(
+        "Ataque ou defenda-se."
+    );
+
+}
+
+
+/*
+========================================================
+                FINAL DA BATALHA
+========================================================
+*/
+
+function finalizarBattle(
+    scene,
+    resultado
+) {
+
+
+    if (
+        scene.jogoAcabou
+    )
+
+        return;
+
+
+    scene.jogoAcabou = true;
+
+    scene.actionLocked = true;
+    pararMusicaBatalha();
+
+
+    /*
+        R aparece somente agora.
+    */
+
+    scene.textoControles.setText(
+        "[ R ]  REINICIAR"
+    );
+
+
+    if (
+        resultado === "vitoria"
+    ) {
+
+
+        scene.scene.start(
+
+            "FinalScene",
+
+            {
+
+                resultado:
+                    "vitoria"
+
+            }
+
+        );
+
+    }
+
+
+    else if (
+        resultado === "derrota"
+    ) {
+
+
+        scene.scene.start(
+
+            "FinalScene",
+
+            {
+
+                resultado:
+                    "derrota"
+
+            }
+
+        );
+
+    }
+
+
+    else {
+
+
+        scene.scene.start(
+
+            "FinalScene",
+
+            {
+
+                resultado:
+                    "tempo"
+
+            }
+
+        );
+
+    }
+
+}
+
+
+/*
+========================================================
+                    EFEITOS
+========================================================
+*/
+
+function efeitoGolpeBattle(
+    scene,
+    x,
+    y,
+    direcao
+) {
+
+
+    for (
+        let i = 0;
+        i < 4;
+        i++
+    ) {
+
+
+        const linha =
+
+            scene.add.line(
+
+                x + i * 12 * direcao,
+
+                y + i * 6,
+
+                0,
+                0,
+
+                65,
+                0,
+
+                0xffffff,
+
+                0.9 - i * 0.15
+
+            )
+
+            .setDepth(25);
+
+
+        linha.setAngle(
+
+            -18 +
+            Math.random() * 36
+
+        );
+
+
+        scene.tweens.add({
+
+            targets:
+                linha,
+
+            alpha:
+                0,
+
+            scaleX:
+                1.7,
+
+            duration:
+                180 + i * 25,
+
+            onComplete: () => {
+
+                linha.destroy();
+
+            }
+
+        });
+
+    }
+
+}
+
+
+function efeitoDash(
+    scene,
+    x,
+    y,
+    direcao
+) {
+
+
+    for (
+        let i = 0;
+        i < 6;
+        i++
+    ) {
+
+
+        const rastro =
+
+            scene.add.rectangle(
+
+                x -
+                direcao * i * 18,
+
+                y +
+                i * 5,
+
+                60 -
+                i * 6,
+
+                4,
+
+                0xffffff,
+
+                0.75 -
+                i * 0.09
+
+            )
+
+            .setDepth(25);
+
+
+        rastro.setAngle(
+
+            direcao > 0
+                ? 8
+                : -8
+
+        );
+
+
+        scene.tweens.add({
+
+            targets:
+                rastro,
+
+            alpha:
+                0,
+
+            x:
+                rastro.x -
+                direcao * 55,
+
+            duration:
+                200,
+
+            onComplete: () => {
+
+                rastro.destroy();
+
+            }
+
+        });
+
+    }
+
+}
+
+
+function efeitoAcertoBattle(
+    scene,
+    x,
+    y
+) {
+
+
+    const circulo =
+
+        scene.add.circle(
+
+            x,
+            y,
+
+            45,
+
+            0xffffff,
+
+            0.75
+
+        )
+
+        .setDepth(30);
+
+
+    scene.tweens.add({
+
+        targets:
+            circulo,
+
+        alpha:
+            0,
+
+        scale:
+            2.2,
+
+        duration:
+            220,
+
+        onComplete: () => {
+
+            circulo.destroy();
+
+        }
+
+    });
+
+}
+
+
+function efeitoBloqueioBattle(
+    scene,
+    x,
+    y
+) {
+
+
+    const escudo =
+
+        scene.add.circle(
+
+            x,
+            y,
+
+            40,
+
+            0x8ee7ff,
+
+            0.22
+
+        )
+
+        .setStrokeStyle(
+
+            6,
+
+            0xdff8ff,
+
+            0.95
+
+        )
+
+        .setDepth(30);
+
+
+    scene.tweens.add({
+
+        targets:
+            escudo,
+
+        scale:
+            1.5,
+
+        alpha:
+            0,
+
+        duration:
+            300,
+
+        onComplete: () => {
+
+            escudo.destroy();
+
+        }
+
+    });
+
+}
+
+
+/*
+========================================================
+                    DESFECHO
+========================================================
+*/
+
+function FinalScene() {
+
+    Phaser.Scene.call(
+
+        this,
+
+        {
+
+            key:
+                "FinalScene"
+
+        }
+
+    );
+
+}
+
+
+FinalScene.prototype =
+    Object.create(
+        Phaser.Scene.prototype
+    );
+
+
+FinalScene.prototype.constructor =
+    FinalScene;
+
+
+/*
+========================================================
+                    CREATE FINAL
+========================================================
+*/
+
+FinalScene.prototype.create =
+function (data) {
+
+    const scene = this;
+
+    pararMusicaSuspense();
+    pararMusicaBatalha();
+    pararMusicaVitoria();
+    if (musicaGameOver && musicaGameOver.isPlaying) musicaGameOver.stop();
+
+
+    let titulo = "";
+
+    let mensagem = "";
+
+    let cor = "#ffffff";
+
+
+    /*
+    ====================================================
+                        VITÓRIA
+    ====================================================
+    */
+
+    if (
+        data.resultado === "vitoria"
+    ) {
+
+
+        titulo =
+            "VITÓRIA";
+
+
+        mensagem =
+            "Parabéns! O Mundo foi salvo e o herói enfim descansará.";
+
+
+        cor =
+            "#55d66b";
+
+
+        iniciarMusicaVitoria(scene);
+
+    }
+
+
+    /*
+    ====================================================
+                        DERROTA
+    ====================================================
+    */
+
+    else if (
+        data.resultado === "derrota"
+    ) {
+
+
+        titulo =
+            "GAMER OVER";
+
+
+        mensagem =
+            "A Rainha destruiu o mundo que tanto almejava.";
+
+
+        cor =
+            "#d63143";
+
+
+        iniciarMusicaGameOver(scene);
+
+    }
+
+
+    /*
+    ====================================================
+                        TEMPO
+    ====================================================
+    */
+
+    else {
+
+
+        titulo =
+            "FIM DA JORNADA";
+
+
+        mensagem =
+            "Infelizmente a jornada do herói acabou e o mundo foi destruído...";
+
+
+        cor =
+            "#a4a8ad";
+
+
+        iniciarMusicaGameOver(scene);
+
+    }
+
+
+    /*
+    ====================================================
+                        FUNDO
+    ====================================================
+    */
+
+    scene.add.rectangle(
+
+        W / 2,
+        H / 2,
+
+        W,
+        H,
+
+        0x050609
+
+    );
+
+
+    /*
+        Mancha de luz.
+    */
+
+    scene.add.circle(
+
+        W / 2,
+        300,
+
+        280,
+
+        data.resultado === "vitoria"
+            ? 0x145a25
+            : 0x5a1018,
+
+        0.18
+
+    );
+
+
+    /*
+    ====================================================
+                        TÍTULO
+    ====================================================
+    */
+
+    scene.add.text(
+
+        W / 2,
+
+        225,
+
+        titulo,
+
+        {
+
+            fontFamily:
+                "Georgia, serif",
+
+            fontSize:
+                "58px",
+
+            fontStyle:
+                "bold",
+
+            color:
+                cor,
+
+            stroke:
+                "#000000",
+
+            strokeThickness:
+                8
+
+        }
+
+    )
+
+    .setOrigin(0.5);
+
+
+    /*
+    ====================================================
+                        MENSAGEM
+    ====================================================
+    */
+
+    scene.add.text(
+
+        W / 2,
+
+        340,
+
+        mensagem,
+
+        {
+
+            fontFamily:
+                "Georgia, serif",
+
+            fontSize:
+                "27px",
+
+            color:
+                "#eeeeee",
+
+            align:
+                "center",
+
+            wordWrap: {
+
+                width:
+                    800
+
+            },
+
+            lineSpacing:
+                10
+
+        }
+
+    )
+
+    .setOrigin(0.5);
+
+
+    /*
+    ====================================================
+                    BOTÃO REINICIAR
+    ====================================================
+    */
+
+    const botao =
+
+        scene.add.rectangle(
+
+            W / 2,
+
+            485,
+
+            270,
+
+            70,
+
+            0x7a1d29
+
+        )
+
+        .setStrokeStyle(
+
+            2,
+
+            0xc94b5a
+
+        )
+
+        .setInteractive({
+
+            useHandCursor:
+                true
+
+        });
+
+
+    scene.add.text(
+
+        W / 2,
+
+        485,
+
+        "R  •  REINICIAR",
+
+        {
+
+            fontFamily:
+                "monospace",
+
+            fontSize:
+                "22px",
+
+            fontStyle:
+                "bold",
+
+            color:
+                "#ffffff"
+
+        }
+
+    )
+
+    .setOrigin(0.5);
+
+
+    botao.on(
+
+        "pointerover",
+
+        () => {
+
+            botao.setFillStyle(
+                0xa62b3a
+            );
+
+        }
+
+    );
+
+
+    botao.on(
+
+        "pointerout",
+
+        () => {
+
+            botao.setFillStyle(
+                0x7a1d29
+            );
+
+        }
+
+    );
+
+
+    botao.on(
+
+        "pointerdown",
+
+        () => {
+
+            iniciarAudio();
+
+            somMenu();
+
+            scene.scene.start(
+                "MenuScene"
+            );
+
+        }
+
+    );
+
+
+    /*
+        R também reinicia.
+    */
+
+    scene.input.keyboard.on(
+
+        "keydown-R",
+
+        () => {
+
+            scene.scene.start(
+                "MenuScene"
+            );
+
+        }
+
+    );
+
+
+    /*
+        F = fullscreen.
+    */
+
+    scene.input.keyboard.on(
+
+        "keydown-F",
+
+        () => {
+
+            if (
+                scene.scale.isFullscreen
+            ) {
+
+                scene.scale.stopFullscreen();
+
+            }
+
+            else {
+
+                scene.scale.startFullscreen();
+
+            }
+
+        }
+
+    );
+
+};
+</script>
+
+</body>
+
+</html>

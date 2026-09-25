@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>INFRAGMENTADO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#050308;
+    --bg2:#0b0714;
+    --fg:#e8e6f0;
+    --dim:#6a6280;
+    --r:#ff3b5c;
+    --o:#ff9e3b;
+    --y:#ffe93b;
+    --g:#3bff8e;
+    --c:#3bd0ff;
+    --b:#4d6bff;
+    --p:#b23bff;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    height:100%;
+    margin:0;
+    background:var(--bg);
+    overflow:hidden;
+    font-family:'Press Start 2P',monospace;
+    -webkit-font-smoothing:none;
+  }
+  body{
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  #stage{
+    position:relative;
+    width:100%;
+    height:100vh;
+    height:100dvh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(ellipse at 50% 40%, #140d24 0%, var(--bg2) 45%, var(--bg) 100%);
+    cursor:pointer;
+  }
+
+  /* stars */
+  #stars{
+    position:absolute; inset:0;
+    background-image:
+      radial-gradient(1px 1px at 10% 20%, var(--dim) 50%, transparent 51%),
+      radial-gradient(1px 1px at 80% 15%, var(--dim) 50%, transparent 51%),
+      radial-gradient(1px 1px at 30% 70%, var(--dim) 50%, transparent 51%),
+      radial-gradient(1px 1px at 60% 85%, var(--dim) 50%, transparent 51%),
+      radial-gradient(1px 1px at 90% 60%, var(--dim) 50%, transparent 51%),
+      radial-gradient(1px 1px at 45% 30%, var(--dim) 50%, transparent 51%),
+      radial-gradient(1px 1px at 20% 90%, var(--dim) 50%, transparent 51%),
+      radial-gradient(1px 1px at 70% 40%, var(--dim) 50%, transparent 51%);
+    opacity:.5;
+    animation:twinkle 3s steps(2) infinite;
+  }
+  @keyframes twinkle{50%{opacity:.15;}}
+
+  /* scanlines / CRT */
+  #scan{
+    position:absolute; inset:0;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,.25) 3px,
+      rgba(0,0,0,.25) 4px
+    );
+    mix-blend-mode:multiply;
+    z-index:20;
+  }
+  #vignette{
+    position:absolute; inset:0;
+    pointer-events:none;
+    box-shadow: inset 0 0 18vw 4vw #000;
+    z-index:19;
+  }
+
+  #content{
+    position:relative;
+    z-index:5;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:min(6vh,40px);
+    width:100%;
+    padding:20px;
+  }
+
+  /* PRISM */
+  #prismWrap{
+    position:relative;
+    width:min(46vw,220px);
+    height:min(46vw,220px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .beam{
+    position:absolute;
+    left:50%;
+    top:8%;
+    width:6px;
+    height:36%;
+    background:#fff;
+    box-shadow:0 0 8px 2px #fff;
+    transform:translateX(-50%);
+    opacity:0;
+    animation:beamIn 4s ease-in-out infinite;
+  }
+  @keyframes beamIn{
+    0%,10%{opacity:0; height:0%;}
+    20%,45%{opacity:1; height:36%;}
+    55%,100%{opacity:0; height:36%;}
+  }
+  .prism{
+    width:0; height:0;
+    border-left:46px solid transparent;
+    border-right:46px solid transparent;
+    border-bottom:80px solid #cfd6ff;
+    filter: drop-shadow(0 0 10px #cfd6ff) drop-shadow(0 0 22px #8f9bff);
+    position:relative;
+    z-index:3;
+    animation:pulse 4s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,15%{filter:drop-shadow(0 0 4px #9aa3d9) drop-shadow(0 0 8px #6b74a8);}
+    30%,45%{filter:drop-shadow(0 0 14px #ffffff) drop-shadow(0 0 30px #cfd6ff);}
+    60%,100%{filter:drop-shadow(0 0 4px #9aa3d9) drop-shadow(0 0 8px #6b74a8);}
+  }
+  .ray{
+    position:absolute;
+    top:52%;
+    left:50%;
+    width:2px;
+    height:2px;
+    transform-origin:0 50%;
+    opacity:0;
+  }
+  .ray span{
+    position:absolute;
+    left:0; top:-1.5px;
+    width:min(22vw,120px);
+    height:3px;
+    display:block;
+  }
+  .ray:nth-child(1){transform:translate(-50%,-50%) rotate(-26deg);}
+  .ray:nth-child(2){transform:translate(-50%,-50%) rotate(-15deg);}
+  .ray:nth-child(3){transform:translate(-50%,-50%) rotate(-5deg);}
+  .ray:nth-child(4){transform:translate(-50%,-50%) rotate(5deg);}
+  .ray:nth-child(5){transform:translate(-50%,-50%) rotate(15deg);}
+  .ray:nth-child(6){transform:translate(-50%,-50%) rotate(26deg);}
+  .ray:nth-child(1) span{background:var(--r); box-shadow:0 0 6px var(--r);}
+  .ray:nth-child(2) span{background:var(--o); box-shadow:0 0 6px var(--o);}
+  .ray:nth-child(3) span{background:var(--y); box-shadow:0 0 6px var(--y);}
+  .ray:nth-child(4) span{background:var(--g); box-shadow:0 0 6px var(--g);}
+  .ray:nth-child(5) span{background:var(--c); box-shadow:0 0 6px var(--c);}
+  .ray:nth-child(6) span{background:var(--p); box-shadow:0 0 6px var(--p);}
+  .rays .ray{animation:rayFire 4s ease-in-out infinite;}
+  @keyframes rayFire{
+    0%,42%{opacity:0;}
+    46%{opacity:1;}
+    70%{opacity:.9;}
+    85%,100%{opacity:0;}
+  }
+
+  /* title */
+  #title{
+    display:flex;
+    gap:.35em;
+    flex-wrap:wrap;
+    justify-content:center;
+    font-size:clamp(16px,5.4vw,34px);
+    letter-spacing:.06em;
+    text-align:center;
+    color:var(--fg);
+  }
+  #title span{
+    display:inline-block;
+    animation:frag 3.6s ease-in-out infinite;
+    text-shadow:
+      0 0 6px rgba(232,230,240,.35);
+  }
+  #title span:nth-child(1){color:var(--r); animation-delay:.0s;}
+  #title span:nth-child(2){color:var(--o); animation-delay:.05s;}
+  #title span:nth-child(3){color:var(--y); animation-delay:.10s;}
+  #title span:nth-child(4){color:var(--g); animation-delay:.15s;}
+  #title span:nth-child(5){color:var(--c); animation-delay:.20s;}
+  #title span:nth-child(6){color:var(--b); animation-delay:.25s;}
+  #title span:nth-child(7){color:var(--p); animation-delay:.30s;}
+  #title span:nth-child(8){color:var(--fg); animation-delay:.35s;}
+  #title span:nth-child(9){color:var(--r); animation-delay:.40s;}
+  #title span:nth-child(10){color:var(--o); animation-delay:.45s;}
+  #title span:nth-child(11){color:var(--y); animation-delay:.50s;}
+  #title span:nth-child(12){color:var(--g); animation-delay:.55s;}
+  #title span:nth-child(13){color:var(--fg); animation-delay:.60s;}
+  @keyframes frag{
+    0%,100%{ transform:translate(0,0); opacity:1; }
+    46%{ transform:translate(0,0); opacity:1; }
+    48%{ transform:translate(calc(var(--jx,1) * 3px), calc(var(--jy,1) * -2px)); opacity:.6; }
+    50%{ transform:translate(calc(var(--jx,1) * -4px), calc(var(--jy,1) * 3px)); opacity:1; }
+    52%{ transform:translate(0,0); opacity:1; }
+  }
+  #title span:nth-child(odd){--jx:1;--jy:-1;}
+  #title span:nth-child(even){--jx:-1;--jy:1;}
+
+  #subtitle{
+    color:var(--dim);
+    font-size:clamp(7px,2vw,10px);
+    letter-spacing:.25em;
+    text-align:center;
+  }
+
+  #startText{
+    color:var(--fg);
+    font-size:clamp(9px,2.6vw,14px);
+    letter-spacing:.15em;
+    animation:blink 1.1s steps(1) infinite;
+  }
+  @keyframes blink{50%{opacity:0;}}
+
+  /* flash transition */
+  #flash{
+    position:fixed; inset:0;
+    background:#fff;
+    opacity:0;
+    pointer-events:none;
+    z-index:50;
+  }
+  #flash.on{
+    animation:flashOut .6s ease-out forwards;
+  }
+  @keyframes flashOut{
+    0%{opacity:1;}
+    100%{opacity:0; visibility:hidden;}
+  }
+
+  #next{
+    position:fixed; inset:0;
+    background:var(--bg);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--fg);
+    font-size:clamp(10px,3vw,16px);
+    letter-spacing:.15em;
+    opacity:0;
+    pointer-events:none;
+    z-index:10;
+    text-align:center;
+    padding:20px;
+  }
+  #next.show{
+    opacity:1;
+    pointer-events:auto;
+    transition:opacity .8s ease .3s;
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="stars"></div>
+
+  <div id="content">
+    <div id="prismWrap">
+      <div class="beam"></div>
+      <div class="rays">
+        <div class="ray"><span></span></div>
+        <div class="ray"><span></span></div>
+        <div class="ray"><span></span></div>
+        <div class="ray"><span></span></div>
+        <div class="ray"><span></span></div>
+        <div class="ray"><span></span></div>
+      </div>
+      <div class="prism"></div>
+    </div>
+
+    <div id="title">
+      <span>I</span><span>N</span><span>F</span><span>R</span><span>A</span><span>G</span><span>M</span><span>E</span><span>N</span><span>T</span><span>A</span><span>D</span><span>O</span>
+    </div>
+    <div id="subtitle">CADA CACO GUARDA UMA VERDADE</div>
+    <div id="startText">PRESSIONE PARA COMEÇAR</div>
+  </div>
+
+  <div id="vignette"></div>
+  <div id="scan"></div>
+</div>
+
+<div id="flash"></div>
+<div id="next">
+  CARREGANDO CAPÍTULO 1...
+</div>
+
+<script>
+  const stage = document.getElementById('stage');
+  const flash = document.getElementById('flash');
+  const next = document.getElementById('next');
+  let started = false;
+
+  function startGame(){
+    if(started) return;
+    started = true;
+    flash.classList.add('on');
+    setTimeout(()=>{ next.classList.add('show'); }, 150);
+  }
+
+  stage.addEventListener('click', startGame);
+  window.addEventListener('keydown', (e)=>{
+    if(e.code === 'Space' || e.code === 'Enter'){
+      startGame();
+    }
+  });
+</script>
+</body>
+</html>

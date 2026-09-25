@@ -1,0 +1,34 @@
+/* One evolution, expanding energy pulses and visibly telegraphed electromagnetic attacks. */
+const Resonance={install(Sector){const p=Sector.prototype,old={};for(const k of ['reset','attack','enemyAI','update','updateHUD','drawEffects','renderActors','retire','hit'])old[k]=p[k];
+ p.reset=function(){this.empLock=0;this.pulses=[];old.reset.call(this)};
+ p.attack=function(a){const before=a.attack;old.attack.call(this,a);if(a.controlled&&before<=0&&a.attack>0)a.attack*=1-.04*R.upgradeLevel(this,'haste')};
+ p.hit=function(a,damage,killer){const before=this.player;old.hit.call(this,a,damage,killer);if(before!==this.player){this.player.empCharge=0;this.player.hp=Math.min(this.player.maxHp,this.player.hp+5*R.upgradeLevel(this,'repair'))}};
+ p.applyEMP=function(owner,damage=8){const a=this.player;if(this.state!=='play'||!a.alive||a.invuln>0||(['gume','prisma'].includes(a.type)&&a.dashTime>0))return false;this.empLock=Math.max(this.empLock,4*(1-.15*R.upgradeLevel(this,'insulation')));this.say('SINAL BLOQUEADO · EMP impede a posse. Sobreviva até o contador zerar.',4);this.hit(a,damage,owner);return true};
+ p.emitPulse=function(owner,emp=false){this.pulses.push({owner,x:owner.x,y:owner.y-40,r:0,max:emp?280:330,speed:emp?235:260,emp,hit:false})};
+ p.enemyAI=function(a,dt){if(a.type==='prisma'&&!a.controlled){a.empCooldown=(a.empCooldown??6)-dt;if(a.empCharge>0){a.vx=0;a.empCharge-=dt;if(a.empCharge<=0){this.emitPulse(a,true);a.empCooldown=9;a.aiCooldown=1.5}return}if(a.empCooldown<=0&&Math.hypot(a.x-this.player.x,a.y-this.player.y)<330&&SNavigation.clear(this,a,this.player)){a.empCharge=1.2;a.vx=0;this.say('PRISMA · EMP em carga! Afaste-se do círculo violeta.',2);return}}old.enemyAI.call(this,a,dt)};
+ p.tickPulses=function(dt){for(const pulse of this.pulses){if(!pulse.owner.alive||pulse.owner.controlled){pulse.r=pulse.max+1;continue}const prev=pulse.r;pulse.r+=pulse.speed*dt;const q=this.player,dist=Math.hypot(q.x-pulse.x,q.y-28-pulse.y);if(!pulse.hit&&dist>=prev-20&&dist<=pulse.r+20&&SNavigation.clear(this,{x:pulse.x,y:pulse.y+28},q)){pulse.hit=true;if(pulse.emp)this.applyEMP(pulse.owner);else this.hit(q,18,pulse.owner)}}this.pulses=this.pulses.filter(x=>x.r<x.max)};
+ p.update=function(time,delta){if(this.state==='play'){const dt=Math.min(delta/1000,.035);this.empLock=Math.max(0,this.empLock-dt);this.tickPulses(dt)}old.update.call(this,time,delta)};
+ p.retire=function(a){old.retire.call(this,a);if(a.type==='eco'){this.pulses=[];this.empLock=0}};
+ p.updateHUD=function(){old.updateHUD.call(this);const choice=R.upgrades.find(u=>u.id===this.upgrades[0]);if(this.empLock>0)this.hudStatus.setText('CORPO ATUAL        EMP · SEM POSSE '+this.empLock.toFixed(1)+' s');else if(choice)this.hudStatus.setText('CORPO ATUAL       '+(this.reactor>0?'RECARGA '+this.reactor.toFixed(1)+' s':'NÚCLEO PRONTO')+'\n'+choice.label.toUpperCase()+' '+(this.upgradeTier||1)+'/5 · '+choice.effect(this.upgradeTier||1));};
+ p.resolveECOAttack=function(){const f=this.finalEncounter,b=this.boss,q=this.player;
+  if(f.kind==='slam'){if(Math.abs(q.x-b.x)<150&&q.y>452)this.hit(q,28,b);for(const dir of [-1,1])this.waves.push({x:b.x,y:500,dir,life:1.8,owner:b,team:false,hit:new Set(),damage:18});this.burst(b.x,494,0xffb38e,26);this.cameras.main.flash(85,90,45,25,false);f.slamFlash=.4;}
+  else if(f.kind==='pulse'||f.kind==='emp')this.emitPulse(b,f.kind==='emp');
+  else if(f.kind==='sweep'){if(q.y>466&&q.x>1840&&q.x<3400)this.hit(q,24,b);f.flash=.25}
+  else{const count=f.stage==='duel'?5:3,angle=Math.atan2(f.aimY-(b.y-55),f.aimX-b.x);for(let i=0;i<count;i++){const ang=angle+(i-(count-1)/2)*.14;this.shots.push({x:b.x,y:b.y-55,vx:Math.cos(ang)*290,vy:Math.sin(ang)*290,life:4,owner:b,team:false,damage:f.stage==='duel'?17:12})}}
+  f.cooldown=f.kind==='slam'?2.1:f.stage==='duel'?(b.hp<b.maxHp*.5?1.4:1.9):2.4;f.cycle++;
+ };
+ p.tickECO=function(dt){const f=this.finalEncounter,b=this.boss;if(!f)return;f.time+=dt;f.flash=Math.max(0,(f.flash||0)-dt);f.slamFlash=Math.max(0,(f.slamFlash||0)-dt);
+  if(f.stage==='chase'){f.wall+=65*dt;if(this.player.x<f.wall+26)this.hit(this.player,18,b);if(this.player.x>=1830){f.stage='containment';f.wall=1750;this.finalCheckpoint=true;this.player.hp=Math.min(this.player.maxHp,this.player.hp+25);this.say('CHECKPOINT · '+this.keyLabel('interact')+' rompe condutores. Desvie dos avisos de ECO e preserve corpos para posse.',8)}return}
+  if(f.stage==='defeated'){f.defeatTime+=dt;return}
+  f.spawnTime-=dt;const minions=this.actors.filter(a=>a.alive&&!a.controlled&&a.type!=='eco'&&a.x>1800);if(f.spawnTime<=0&&minions.length<3){const a=this.spawn(['gume','vigia','prisma'][f.cycle%3],this.player.x<2600?3040:1990,500);a.alert=10;a.aiCooldown=1.5;a.invuln=.5;f.spawnTime=f.stage==='duel'?12:9;this.burst(a.x,465,0xd79ea4,18)}
+  if(f.attackTime>0){f.attackTime-=dt;if(f.attackTime<=0)this.resolveECOAttack();return}
+  f.cooldown-=dt;const dx=this.player.x-b.x;b.face=dx<0?-1:1;f.walking=false;if(f.stage==='duel'&&Math.abs(dx)>105){b.x=Math.max(2050,Math.min(3320,b.x+Math.sign(dx)*75*dt));f.walking=true}
+  if(f.cooldown<=0){const sequence=f.stage==='duel'?['fan','slam','pulse','sweep','emp']:['fan','pulse','fan'];f.kind=sequence[f.cycle%sequence.length];f.aimX=this.player.x;f.aimY=this.player.y-25;f.attackTime={fan:1,slam:1.2,pulse:1.15,sweep:1.25,emp:1.4}[f.kind];this.say({fan:'ECO · RAJADA — saia da linha marcada.',slam:'ECO · IMPACTO — afaste-se do punho e salte as ondas.',pulse:'ECO · PULSO DE ENERGIA — recue além do círculo.',sweep:'ECO · VARREDURA BAIXA — salte ou suba.',emp:'ECO · EMP — o círculo violeta bloqueia a posse por 4 s.'}[f.kind],2.5)}
+ };
+ p.renderActors=function(dt){old.renderActors.call(this,dt);const b=this.boss,f=this.finalEncounter;if(b?.alive&&f){const frame=f.slamFlash>0?9:f.attackTime>0?({slam:8,pulse:10,emp:10,fan:11,sweep:11}[f.kind]??10):f.walking?4+Math.floor(this.clock*8)%4:Math.floor(this.clock*3)%4;b.sprite.setFrame(frame)}for(const a of this.actors)if(a.alive&&a.empCharge>0&&!a.controlled)a.sprite.setTint(0xd89bff)};
+ p.drawEffects=function(dt){old.drawEffects.call(this,dt);const g=this.effects;for(const a of this.actors)if(a.alive&&!a.controlled&&a.empCharge>0){g.lineStyle(2,0xc89cff,.65);g.strokeEllipse(a.x,a.y-40,560,560);g.strokeRect(a.x-9,a.y-85,18,12)}
+  for(const pulse of this.pulses){g.lineStyle(5,pulse.emp?0xc89cff:0xffb681,.9);g.strokeEllipse(pulse.x,pulse.y,pulse.r*2,pulse.r*2);g.lineStyle(1,pulse.emp?0xf0d7ff:0xffead0,.5);g.strokeEllipse(pulse.x,pulse.y,Math.max(0,pulse.r-8)*2,Math.max(0,pulse.r-8)*2)}
+  if(this.empLock>0){g.lineStyle(2,0xd5a2ff);g.strokeRect(this.player.x-20,this.player.y-67,40,56)}
+  const f=this.finalEncounter,b=this.boss;if(!f||f.attackTime<=0)return;if(f.kind==='slam'){g.lineStyle(3,0xffb681,.8);g.strokeRect(b.x-150,452,300,46)}else if(['emp','pulse'].includes(f.kind)){g.lineStyle(2,f.kind==='emp'?0xc89cff:0xffb681,.6);const r=f.kind==='emp'?280:330;g.strokeEllipse(b.x,b.y-40,r*2,r*2)}
+ };
+}};
