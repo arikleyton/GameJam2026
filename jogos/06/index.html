@@ -212,6 +212,88 @@ body::after {
 }
 
 
+
+/* =========================================================
+   CRÉDITOS E DICAS
+========================================================= */
+#creditsPanel{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:200;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.94);
+    padding:20px;
+    box-sizing:border-box;
+}
+#creditsPanel.open{display:flex}
+#creditsBox{
+    position:relative;
+    width:min(680px,92vw);
+    max-height:88vh;
+    overflow:auto;
+    padding:34px 38px 30px;
+    background:radial-gradient(ellipse at center,#111 0%,#080808 65%,#030303 100%);
+    border:1px solid #444;
+    box-shadow:0 0 35px rgba(0,0,0,.9),inset 0 0 30px rgba(255,255,255,.025);
+    text-align:center;
+}
+#creditsTitle{
+    margin-bottom:28px;
+    color:#ddd;
+    font-size:24px;
+    letter-spacing:6px;
+    text-shadow:0 0 12px #777;
+}
+.credits-section{
+    margin:24px 0;
+    padding:18px 20px;
+    border:1px solid #292929;
+    background:rgba(0,0,0,.35);
+    text-align:left;
+}
+.credits-section-title{
+    margin-bottom:14px;
+    color:#aaa;
+    font-size:13px;
+    letter-spacing:3px;
+    text-align:center;
+}
+.credits-control{
+    color:#777;
+    font-size:12px;
+    line-height:1.9;
+}
+.credits-control strong{color:#ccc}
+.credits-tip{
+    color:#999;
+    font-size:13px;
+    line-height:1.8;
+    text-align:center;
+}
+.credits-developer{
+    color:#aaa;
+    font-size:13px;
+    line-height:2;
+    text-align:center;
+}
+.credits-developer span{
+    color:#777;
+    margin-right:7px;
+}
+#creditsClose{
+    margin-top:8px;
+    padding:9px 22px;
+    background:#090909;
+    border:1px solid #444;
+    color:#888;
+    font-family:monospace;
+    letter-spacing:2px;
+    cursor:pointer;
+}
+#creditsClose:hover{color:#fff;border-color:#aaa;background:#151515}
+
 /* =========================================================
    HUD
 ========================================================= */
@@ -413,6 +495,21 @@ body::after {
 #cameraMessage.visible {
     opacity: 1;
 }
+
+#lookBackPrompt {
+    display: none;
+    padding: 6px 10px;
+    color: #777;
+    background: #111;
+    border: 1px solid #444;
+    font: 10px monospace;
+    letter-spacing: 1px;
+    cursor: pointer;
+    user-select: none;
+    vertical-align: middle;
+}
+#lookBackPrompt.visible { display: inline-block; }
+#lookBackPrompt:hover { color: #aaa; border-color: #666; }
 
 #cameraMessage.glitch {
     color: #d22;
@@ -680,6 +777,23 @@ body::after {
     font-size: 13px;
     letter-spacing: 2px;
 }
+
+#cameraBackRoom02 {
+    display: inline-block;
+    margin-right: 18px;
+    padding: 6px 10px;
+    background: #111;
+    border: 1px solid #444;
+    color: #777;
+    font: 10px monospace;
+    cursor: pointer;
+}
+
+#cameraBackRoom02:hover {
+    color: #aaa;
+    border-color: #666;
+}
+
 
 
 /* =========================================================
@@ -1034,6 +1148,40 @@ body::after {
     }
 }
 
+
+/* =========================================================
+   PUZZLE DAS PÁGINAS
+========================================================= */
+#pagePuzzle{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.94);color:#d8d8d8;font-family:monospace;align-items:center;justify-content:center}
+#pagePuzzle.open{display:flex}
+#pagePuzzlePanel{width:min(1040px,94vw);max-height:92vh;overflow:auto;box-sizing:border-box;padding:24px;border:1px solid #444;background:#080808;box-shadow:0 0 35px rgba(0,0,0,.8);text-align:center}
+#pagePuzzleTitle{font-size:22px;letter-spacing:4px;margin-bottom:8px}
+#pagePuzzleHint{font-size:13px;color:#777;margin-bottom:6px}
+#pagePuzzleProgress{font-size:12px;color:#aaa;margin-bottom:18px}
+#pagePuzzleBoard{width:min(850px,100%);height:250px;margin:0 auto 18px;display:grid;grid-template-columns:repeat(5,1fr);gap:5px;align-items:stretch}
+.page-slot{position:relative;min-width:0;border:1px dashed #3d3d3d;background:#111}
+.page-slot::after{content:attr(data-slot);position:absolute;top:7px;left:9px;color:#333;font-size:10px}
+.page-slot.filled{border-color:#777;background:#d2d0c7}
+.page-piece{position:absolute;width:155px;min-height:205px;padding:18px 14px;box-sizing:border-box;background:#d5d2c8;color:#171717;border:1px solid #777;box-shadow:3px 5px 12px rgba(0,0,0,.5);cursor:grab;user-select:none;touch-action:none;z-index:10;text-align:left;font-size:11px;line-height:1.45}
+.page-piece:active{cursor:grabbing}
+.page-piece::before,.page-piece::after{content:"";position:absolute;width:12px;height:12px;border-radius:50%;background:#080808;opacity:.12}
+.page-piece::before{top:7px;right:9px}.page-piece::after{bottom:8px;left:8px}
+.page-piece.locked{cursor:default;position:relative;width:100%;height:100%;min-height:0;padding:15px 12px;background:#d2d0c7;border:0;z-index:2}
+#pagePuzzlePieces{position:relative;width:min(850px,100%);height:250px;margin:0 auto}
+#pagePuzzlePieces .page-piece:nth-child(1){left:2%;top:12px;transform:rotate(-2deg)}
+#pagePuzzlePieces .page-piece:nth-child(2){left:21%;top:25px;transform:rotate(2deg)}
+#pagePuzzlePieces .page-piece:nth-child(3){left:40%;top:4px;transform:rotate(-1deg)}
+#pagePuzzlePieces .page-piece:nth-child(4){left:59%;top:30px;transform:rotate(2deg)}
+#pagePuzzlePieces .page-piece:nth-child(5){left:78%;top:10px;transform:rotate(-2deg)}
+#pagePuzzleText{display:none;width:min(850px,100%);margin:20px auto 0;padding:28px 24px;box-sizing:border-box;background:#d5d2c8;color:#171717;border:1px solid #777;text-align:left;font-size:15px;line-height:1.8;white-space:pre-wrap;min-height:300px}
+#pagePuzzleText.visible{display:block}
+#pagePuzzleCloseHint{display:none;margin-top:15px;color:#666;font-size:11px}
+#pagePuzzleEscHint{display:block;margin-top:8px;color:#555;font-size:10px;letter-spacing:.4px}
+#pageReviewHint{display:none;position:fixed;right:18px;bottom:18px;z-index:8999;padding:7px 10px;background:rgba(0,0,0,.75);border:1px solid #333;color:#777;font:10px monospace;cursor:pointer;user-select:none}
+#pageReviewHint.visible{display:block}
+#pageReviewHint:hover{color:#aaa;border-color:#555}
+@media(max-width:700px){#pagePuzzlePanel{padding:14px}#pagePuzzleBoard{height:190px}#pagePuzzlePieces{height:210px}.page-piece{width:115px;min-height:170px;font-size:9px;padding:12px 9px}}
+
 </style>
 
 </head>
@@ -1077,6 +1225,14 @@ body::after {
 
         </button>
 
+        <button
+            class="menu-button"
+            id="creditsButton">
+
+            CRÉDITOS E DICAS
+
+        </button>
+
         <div id="controls">
 
             <div>
@@ -1114,6 +1270,46 @@ body::after {
             </div>
 
         </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     CRÉDITOS E DICAS
+===================================================== -->
+
+<div id="creditsPanel">
+
+    <div id="creditsBox">
+
+        <div id="creditsTitle">
+            CRÉDITOS E DICAS
+        </div>
+
+        <div class="credits-section">
+            <div class="credits-section-title">DICAS</div>
+            <div class="credits-tip">
+                Veja as paredes. Nem tudo que está escondido quer ser encontrado.
+            </div>
+            <div class="credits-tip">
+                Algumas coisas só aparecem quando você decide olhar com mais atenção.
+            </div>
+            <div class="credits-tip">
+                Você tem certeza de que esta é a primeira vez que está aqui?
+            </div>
+        </div>
+
+        <div class="credits-section">
+            <div class="credits-section-title">- DESENVOLVEDORES -</div>
+            <div class="credits-developer"><span>+</span>Nauana Vitória Andrade da Silva</div>
+            <div class="credits-developer"><span>+</span>Rhianna Gonçalves Franco</div>
+            <div class="credits-developer"><span>+</span>Carlos Arthur Castro Lima</div>
+            <div class="credits-developer"><span>+</span>Luan Ferreira Lima</div>
+        </div>
+
+        <button id="creditsClose">VOLTAR</button>
 
     </div>
 
@@ -1388,10 +1584,13 @@ body::after {
 
     <div id="cameraMessage"></div>
 
-
     <div class="camera-footer">
 
-        ESC — SAIR DAS CÂMERAS
+        <button id="cameraBackRoom02" type="button">VOLTAR À OFICINA</button>
+
+        <div id="lookBackPrompt">E — OLHAR PARA TRÁS</div>
+
+        <span>ESC — SAIR DAS CÂMERAS</span>
 
     </div>
 
@@ -1558,11 +1757,24 @@ body::after {
 </audio>
 
 
+<audio id="normalDoorSound" preload="auto"><source src="sons/freesound_community-door-open-close-45475.mp3" type="audio/mpeg"></audio>
+<audio id="finalDoorSound" preload="auto"><source src="sons/litupsubway-door-open-2-518624.mp3" type="audio/mpeg"></audio>
+<audio id="lookBackStepsSound" preload="auto"><source src="sons/freesound_community-passos-101430.mp3" type="audio/mpeg"></audio>
+<audio id="cameraOffSound" preload="auto"><source src="sons/yodguard-short-energy-beam-shot-3-482517.mp3" type="audio/mpeg"></audio>
+<audio id="silhouetteSound" preload="auto"><source src="sons/freesound_community-fuzzy-jumpscare-80560.mp3" type="audio/mpeg"></audio>
+
 <!-- =====================================================
      PHASER
 ===================================================== -->
 
-<script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js" onerror="window.phaserLoadFailed=true"></script>
+<script>
+if (typeof Phaser === "undefined") {
+    var phaserFallback = document.createElement("script");
+    phaserFallback.src = "https://cdnjs.cloudflare.com/ajax/libs/phaser/3.90.0/phaser.min.js";
+    document.head.appendChild(phaserFallback);
+}
+</script>
 
 
 <script>
@@ -1596,6 +1808,20 @@ const errorSound =
         "errorSound"
     );
 
+const normalDoorSound =
+    document.getElementById(
+        "normalDoorSound"
+    );
+
+const finalDoorSound =
+    document.getElementById(
+        "finalDoorSound"
+    );
+
+const lookBackStepsSound = document.getElementById("lookBackStepsSound");
+const cameraOffSound = document.getElementById("cameraOffSound");
+const silhouetteSound = document.getElementById("silhouetteSound");
+
 
 /*
     Tenta preparar o áudio depois
@@ -1604,21 +1830,40 @@ const errorSound =
 
 function unlockAudio() {
 
-    if (heartbeatSound) {
+    /*
+        O navegador pode bloquear a primeira reprodução de áudio
+        se ela acontecer depois de um setTimeout/transição.
+        Como esta função é chamada diretamente pelo clique em JOGAR,
+        usamos esse momento para liberar todos os áudios.
+    */
+    [heartbeatSound, errorSound, normalDoorSound, finalDoorSound, lookBackStepsSound, cameraOffSound, silhouetteSound].forEach(sound => {
+        if (!sound) return;
 
-        heartbeatSound.volume = 0.55;
+        sound.load();
+        sound.volume = 0;
 
-        heartbeatSound.load();
+        const promise = sound.play();
 
-    }
+        if (promise && typeof promise.then === "function") {
+            promise.then(() => {
+                sound.pause();
+                sound.currentTime = 0;
+                sound.volume = 1;
+            }).catch(() => {
+                sound.volume = 1;
+            });
+        } else {
+            sound.volume = 1;
+        }
+    });
 
-    if (errorSound) {
-
-        errorSound.volume = 0.75;
-
-        errorSound.load();
-
-    }
+    if (heartbeatSound) heartbeatSound.volume = 0.55;
+    if (errorSound) errorSound.volume = 0.75;
+    if (normalDoorSound) normalDoorSound.volume = 0.65;
+    if (finalDoorSound) finalDoorSound.volume = 0.75;
+    if (lookBackStepsSound) lookBackStepsSound.volume = 0.8;
+    if (cameraOffSound) cameraOffSound.volume = 0.65;
+    if (silhouetteSound) silhouetteSound.volume = 0.9;
 
 }
 
@@ -1736,6 +1981,24 @@ let roomIsDark = false;
 let cameraMode = false;
 
 let cameraVisited = false;
+let lookBackAvailable = false;
+let lookBackSequenceActive = false;
+let lookBackEventSeen = false;
+let cameraScreensOff = false;
+let pagePuzzleOpen = false;
+let pagesCompleted = false;
+const pageTotal = 5;
+let collectedPages = new Set();
+let assembledPages = new Set();
+let pageDragState = null;
+
+const pageFragments = [
+    "TESTE 13\n\nSe você está lendo isso...\n\nentão provavelmente já fez tudo o que eu fiz.",
+    "Eu já passei por essas salas milhares de vezes.\n\nOu pelo menos acho que passei.\n\nNão consigo me lembrar.",
+    "Às vezes tenho pequenos lapsos de memória.\n\nVejo lugares que parecem familiares.\n\nMas tudo desaparece.\n\nE então começa novamente.",
+    "Eles me tratam como um animal.\n\nDia e noite.\n\nObservam.\n\nTestam.\n\nEsperam.\n\nE eu nem sei quem eles são.",
+    "Eu não sei quem sou.\n\nNão sei como vim parar nesse maldito experimento.\n\nSe você está lendo isso, saiba que eu não resisti.\n\nNão sei mais quanto tempo consigo continuar vivendo nesse limbo infernal.\n\nEstou pensando em tentar tirar minha própria vida.\n\nTalvez seja a única coisa que ainda posso decidir por mim mesmo.\n\nVou tentar pela última vez.\n\nSe você encontrou estas páginas...\n\npor favor, termine o que eu comecei.\n\nMas tenha cuidado.\n\nPorque talvez...\n\nVOCÊ JÁ TENHA FEITO ISSO ANTES TAMBÉM."
+];
 
 
 /* =========================================================
@@ -1777,6 +2040,21 @@ const controls =
         "controls"
     );
 
+const creditsButton =
+    document.getElementById(
+        "creditsButton"
+    );
+
+const creditsPanel =
+    document.getElementById(
+        "creditsPanel"
+    );
+
+const creditsClose =
+    document.getElementById(
+        "creditsClose"
+    );
+
 const cameraPanel =
     document.getElementById(
         "cameraPanel"
@@ -1785,6 +2063,13 @@ const cameraPanel =
 const cameraMessage =
     document.getElementById(
         "cameraMessage"
+    );
+
+const lookBackPrompt = document.getElementById("lookBackPrompt");
+
+const cameraBackRoom02 =
+    document.getElementById(
+        "cameraBackRoom02"
     );
 
 const codePanel =
@@ -1796,6 +2081,34 @@ const codeStatus =
     document.getElementById(
         "codeStatus"
     );
+
+
+cameraBackRoom02.addEventListener(
+    "click",
+    () => {
+
+        if (!cameraMode)
+            return;
+
+        cameraMode = false;
+        lookBackAvailable = false;
+        lookBackSequenceActive = false;
+        cameraPanel.style.display = "none";
+        hideCameraMessage();
+        hideLookBackPrompt();
+        stopHeartbeat();
+
+        transitionToRoom(createRoom02);
+
+        setTimeout(() => {
+            showMessage(
+                "VOCÊ DEIXA A CENTRAL E VOLTA PARA A OFICINA.",
+                3500
+            );
+        }, 750);
+
+    }
+);
 
 
 /* =========================================================
@@ -1812,6 +2125,30 @@ controlButton.addEventListener(
                 ? "none"
                 : "block";
 
+    }
+);
+
+
+creditsButton.addEventListener(
+    "click",
+    () => {
+        creditsPanel.classList.add("open");
+    }
+);
+
+creditsClose.addEventListener(
+    "click",
+    () => {
+        creditsPanel.classList.remove("open");
+    }
+);
+
+creditsPanel.addEventListener(
+    "click",
+    event => {
+        if (event.target === creditsPanel) {
+            creditsPanel.classList.remove("open");
+        }
     }
 );
 
@@ -2070,6 +2407,9 @@ const config = {
             if (cameraMode)
                 return;
 
+            if (pagePuzzleOpen)
+                return;
+
 
             if (!player)
                 return;
@@ -2156,17 +2496,24 @@ window.addEventListener(
     "keydown",
     event => {
 
+        if (pagePuzzleOpen && event.key === "Escape") {
+            closePagePuzzle();
+            event.preventDefault();
+            return;
+        }
+
         if (cameraMode) {
 
-            if (
-                event.key ===
-                "Escape"
-            ) {
-
+            if (event.key === "Escape") {
                 closeCameraMenu();
-
                 event.preventDefault();
+                return;
+            }
 
+            if ((event.key === "e" || event.key === "E") && lookBackAvailable && !lookBackSequenceActive) {
+                triggerLookBack();
+                event.preventDefault();
+                return;
             }
 
             return;
@@ -2202,6 +2549,14 @@ window.addEventListener(
 
 function openCameraMenu() {
 
+    const returningToCameras = cameraVisited;
+
+    resetCameraScreens();
+
+    lookBackAvailable = false;
+    lookBackSequenceActive = false;
+    hideLookBackPrompt();
+
     cameraMode =
         true;
 
@@ -2236,11 +2591,33 @@ function openCameraMenu() {
         Primeira mensagem da central.
     */
 
-    showCameraInteractionMessage(
-        "VOCÊ LEMBRA QUE JÁ PASSOU POR AQUI.",
-        false,
-        4000
-    );
+    if (returningToCameras) {
+
+        showCameraInteractionMessage(
+            "VOCÊ SE LEMBRA DE ESTAR AQUI?",
+            false,
+            2600
+        );
+
+        setTimeout(() => {
+            if (!cameraMode) return;
+
+            showCameraInteractionMessage(
+                "QUANTO TEMPO FAZ DESDE A ÚLTIMA VEZ QUE VOCÊ ESTEVE AQUI?",
+                false,
+                3600
+            );
+        }, 2800);
+
+    } else {
+
+        showCameraInteractionMessage(
+            "VOCÊ LEMBRA QUE JÁ PASSOU POR AQUI.",
+            false,
+            4000
+        );
+
+    }
 
 
     updateCamera06();
@@ -2259,6 +2636,9 @@ function closeCameraMenu() {
 
 
     hideCameraMessage();
+    hideLookBackPrompt();
+    lookBackAvailable = false;
+    lookBackSequenceActive = false;
 
 
     cameraPanel.style.display =
@@ -2285,7 +2665,12 @@ function closeCameraMenu() {
     ) {
 
         transitionToRoom(
-            createRoom04
+            () => createRoom04(100, 350),
+            {
+                text: "VOCÊ DEIXA A CENTRAL.\n\nALGUMA COISA PARECE TER MUDADO.",
+                duration: 4000,
+                delay: 250
+            }
         );
 
         return;
@@ -2412,6 +2797,9 @@ function cameraInteraction(
     if (!cameraMode)
         return;
 
+    if (cameraScreensOff)
+        return;
+
 
     switch(camera) {
 
@@ -2507,15 +2895,16 @@ function cameraInteraction(
             setTimeout(
                 () => {
 
-                    if (!cameraMode)
-                        return;
+                    if (!cameraMode) return;
 
                     showCameraInteractionMessage(
                         "MAS NÃO OLHE PARA TRÁS.",
                         true,
-                        3000
+                        3200
                     );
 
+                    lookBackAvailable = true;
+                    showLookBackPrompt();
                 },
                 1900
             );
@@ -2597,6 +2986,175 @@ function cameraInteraction(
 }
 
 
+function showLookBackPrompt() {
+    if (lookBackPrompt) lookBackPrompt.classList.add("visible");
+}
+
+function hideLookBackPrompt() {
+    if (lookBackPrompt) lookBackPrompt.classList.remove("visible");
+}
+
+function playOneShot(sound, volume) {
+    if (!sound) return;
+    sound.pause();
+    sound.currentTime = 0;
+    sound.volume = volume;
+    const promise = sound.play();
+    if (promise) promise.catch(() => {});
+}
+
+function triggerLookBack() {
+    if (!cameraMode || !lookBackAvailable || lookBackSequenceActive) return;
+
+    lookBackAvailable = false;
+    lookBackSequenceActive = true;
+    hideLookBackPrompt();
+
+    /*
+       Na primeira vez, acontece a sequência completa da silhueta.
+       Se o jogador voltar à Central e olhar para trás novamente,
+       a memória começa a se contradizer.
+    */
+    if (lookBackEventSeen) {
+        showCameraInteractionMessage("O QUE PROCURA?", true, 1800);
+
+        setTimeout(() => {
+            if (!cameraMode) return;
+            showCameraInteractionMessage(
+                "VOCÊ TEM UM LAPSO DE MEMÓRIA.\nLEMBRA QUE DA ÚLTIMA VEZ QUE ESTEVE AÍ, OLHOU PARA TRÁS E VIU A SILHUETA.",
+                true,
+                4200
+            );
+        }, 2100);
+
+        setTimeout(() => {
+            if (!cameraMode) return;
+            showCameraInteractionMessage(
+                "OU ISSO FOI AGORA?\n\nNÃO ME LEMBRO.",
+                true,
+                3000
+            );
+            lookBackSequenceActive = false;
+        }, 6700);
+
+        return;
+    }
+
+    lookBackEventSeen = true;
+
+    showCameraInteractionMessage("VOCÊ NÃO DEVERIA TER FEITO ISSO.", true, 1800);
+
+    setTimeout(() => {
+        if (!cameraMode) return;
+        showCameraInteractionMessage("A CÂMERA 06 APAGA.", true, 1000);
+        playOneShot(cameraOffSound, 0.65);
+        const cam06 = document.getElementById("camera06");
+        if (cam06) {
+            cam06.style.background = "#000";
+            cam06.style.filter = "brightness(0)";
+        }
+    }, 1900);
+
+    setTimeout(() => {
+        if (!cameraMode) return;
+        showCameraInteractionMessage("VOCÊ OUVE UM PASSO ATRÁS DE VOCÊ.", true, 1800);
+        playOneShot(lookBackStepsSound, 0.8);
+    }, 3100);
+
+    ["05","04","03","02","01"].forEach((number, index) => {
+        setTimeout(() => {
+            if (!cameraMode) return;
+            const monitor = document.querySelector('.camera-monitor[data-camera="' + number + '"]');
+            const screen = monitor ? monitor.querySelector(".camera-screen") : null;
+            if (screen) {
+                screen.style.background = "#000";
+                screen.style.filter = "brightness(0)";
+                screen.querySelectorAll(".camera-person, .camera-message-small, .camera-error").forEach(element => {
+                    element.style.display = "none";
+                });
+            }
+            if (number === "01") {
+                cameraScreensOff = true;
+            }
+            playOneShot(cameraOffSound, 0.65);
+            showCameraInteractionMessage("CÂMERA " + number + " DESLIGADA.", true, 650);
+        }, 5000 + index * 900);
+    });
+
+    setTimeout(() => { if (cameraMode) showCameraInteractionMessage("VOCÊ SE VIRA.", false, 1100); }, 9800);
+    setTimeout(() => { if (cameraMode) showCameraInteractionMessage("NÃO HÁ NINGUÉM.", false, 1600); }, 11100);
+    setTimeout(() => { if (cameraMode) showCameraInteractionMessage("QUANDO VOCÊ OLHA NOVAMENTE PARA A CÂMERA...", true, 1800); }, 12900);
+    setTimeout(() => {
+        if (!cameraMode) return;
+        showCameraInteractionMessage("A SILHUETA ESTÁ ATRÁS DE VOCÊ.", true, 1900);
+        playOneShot(silhouetteSound, 0.9);
+    }, 14800);
+    setTimeout(() => { if (cameraMode) showCameraInteractionMessage("ELA ESTÁ USANDO AS SUAS ROUPAS.", true, 2200); }, 16900);
+    setTimeout(() => {
+        if (!cameraMode) return;
+        showCameraInteractionMessage("E ELA ESTÁ SORRINDO.", true, 3000);
+        lookBackSequenceActive = false;
+    }, 19400);
+}
+
+if (lookBackPrompt) lookBackPrompt.addEventListener("click", triggerLookBack);
+
+/* =========================================================
+   ESTADO VISUAL DAS CÂMERAS
+========================================================= */
+
+function resetCameraScreens() {
+
+    cameraScreensOff = false;
+
+    document.querySelectorAll(".camera-monitor").forEach(monitor => {
+        const screen = monitor.querySelector(".camera-screen");
+        if (!screen) return;
+
+        const cameraNumber = monitor.getAttribute("data-camera");
+        const normalBackgrounds = {
+            "01": "#26362d",
+            "02": "#362d26",
+            "03": "#292f38",
+            "04": "#302634",
+            "05": "#352525",
+            "06": "#090909"
+        };
+
+        screen.style.background = normalBackgrounds[cameraNumber] || "#181818";
+        screen.style.filter = "";
+
+        screen.querySelectorAll(".camera-person, .camera-message-small, .camera-error").forEach(element => {
+            element.style.display = "";
+            element.style.visibility = "";
+            element.style.opacity = "";
+        });
+    });
+
+    const camera06 = document.getElementById("camera06");
+    if (camera06) {
+        camera06.style.background = "#090909";
+        camera06.style.filter = "";
+    }
+}
+
+function turnOffAllCameras() {
+
+    cameraScreensOff = true;
+
+    document.querySelectorAll(".camera-monitor").forEach(monitor => {
+        const screen = monitor.querySelector(".camera-screen");
+        if (!screen) return;
+
+        screen.style.background = "#000";
+        screen.style.filter = "brightness(0)";
+
+        screen.querySelectorAll(".camera-person, .camera-message-small, .camera-error").forEach(element => {
+            element.style.display = "none";
+        });
+    });
+}
+
 /* =========================================================
    CÂMERA 06
 ========================================================= */
@@ -2628,7 +3186,7 @@ function updateCamera06() {
         setInterval(
             () => {
 
-                if (!cameraMode)
+                if (!cameraMode || cameraScreensOff)
                     return;
 
 
@@ -2773,6 +3331,23 @@ function makeClick(
             LIGHT_DURATION
         );
 
+}
+
+
+function playNormalDoorSound() {
+    if (!normalDoorSound) return;
+    normalDoorSound.currentTime = 0;
+    normalDoorSound.volume = 0.65;
+    const p = normalDoorSound.play();
+    if (p) p.catch(() => {});
+}
+
+function playFinalDoorSound() {
+    if (!finalDoorSound) return;
+    finalDoorSound.currentTime = 0;
+    finalDoorSound.volume = 0.75;
+    const p = finalDoorSound.play();
+    if (p) p.catch(() => {});
 }
 
 
@@ -3096,7 +3671,7 @@ function createPlayer(
    SALA 01
 ========================================================= */
 
-function createRoom01() {
+function createRoom01(spawnX = 150, spawnY = 350) {
 
     clearRoom();
 
@@ -3106,8 +3681,8 @@ function createRoom01() {
     createRoomBase();
 
     createPlayer(
-        150,
-        350
+        spawnX,
+        spawnY
     );
 
 
@@ -3121,11 +3696,18 @@ function createRoom01() {
     );
 
 
-    createKey(
-        450,
-        500,
-        "KEY_01"
-    );
+    if (!inventory.key1) {
+
+        createKey(
+            450,
+            500,
+            "KEY_01"
+        );
+
+    }
+
+
+    createPagePiece(700, 520, "PAGE_01");
 
 
     createText(
@@ -3137,10 +3719,10 @@ function createRoom01() {
 
 
     createText(
-        275,
-        135,
-        "2",
-        13
+        850,
+        120,
+        "26",
+        20
     );
 
 
@@ -3161,7 +3743,7 @@ function createRoom01() {
    SALA 02
 ========================================================= */
 
-function createRoom02() {
+function createRoom02(spawnX = 100, spawnY = 350) {
 
     clearRoom();
 
@@ -3171,8 +3753,18 @@ function createRoom02() {
     createRoomBase();
 
     createPlayer(
-        100,
-        350
+        spawnX,
+        spawnY
+    );
+
+
+    createObject(
+        70,
+        350,
+        30,
+        120,
+        0x3b3028,
+        "DOOR_02_RETURN"
     );
 
 
@@ -3219,6 +3811,8 @@ function createRoom02() {
             );
 
         }
+
+        createPagePiece(680, 300, "PAGE_02");
 
     }
 
@@ -3453,7 +4047,7 @@ function createRoom03() {
    SALA 04
 ========================================================= */
 
-function createRoom04() {
+function createRoom04(spawnX = 100, spawnY = 350) {
 
     clearRoom();
 
@@ -3463,8 +4057,8 @@ function createRoom04() {
     createRoomBase();
 
     createPlayer(
-        100,
-        350
+        spawnX,
+        spawnY
     );
 
 
@@ -3521,6 +4115,11 @@ function createRoom04() {
     );
 
 
+    createPagePiece(260, 220, "PAGE_03");
+    createPagePiece(540, 430, "PAGE_04");
+    createPagePiece(820, 220, "PAGE_05");
+
+
     /*
         Porta de retorno para as câmeras.
     */
@@ -3535,14 +4134,18 @@ function createRoom04() {
     );
 
 
-    createObject(
-        1030,
-        350,
-        30,
-        150,
-        0x222222,
-        "FINAL_DOOR"
-    );
+    if (!finalDoorUnlocked) {
+
+        createObject(
+            1030,
+            350,
+            30,
+            150,
+            0x222222,
+            "FINAL_DOOR"
+        );
+
+    }
 
 
     showMessage(
@@ -3623,8 +4226,8 @@ function createRoom05() {
         () => {
 
             showMessage(
-                "Agora é a minha vez.",
-                5000
+                "A silhueta está se iluminando aos poucos.....",
+                4000
             );
 
         },
@@ -3632,17 +4235,61 @@ function createRoom05() {
     );
 
 
-    setTimeout(
-        () => {
-
-            triggerEnding();
-
-        },
-        9000
-    );
+    setTimeout(() => { showMessage("Espera!....", 3000); }, 8000);
+    setTimeout(() => { showMessage("É... VOCÊ!", 3000); }, 11200);
+    setTimeout(() => { showMessage("TALVEZ VOCÊ NÃO ESTEJA AVANÇANDO, APENAS RECOMEÇANDO.", 5000); }, 14500);
+    setTimeout(() => { triggerEnding(); }, 19000);
 
 }
 
+
+/* =========================================================
+   MENSAGENS DE RETORNO
+========================================================= */
+
+const returnMessagePools = {
+    "01": [
+        "VOCÊ SABE QUEM É?",
+        "VOCÊ JÁ ESTEVE AQUI ANTES?",
+        "POR QUE ESTE LUGAR PARECE TÃO FAMILIAR?",
+        "VOCÊ SE LEMBRA DESTA SALA?",
+        "ALGUMA COISA AQUI PARECE ERRADA."
+    ],
+    "03": [
+        "AS CÂMERAS JÁ VIRAM VOCÊ ANTES.",
+        "VOCÊ NÃO DEVERIA SE LEMBRAR DISSO.",
+        "QUEM ESTAVA OBSERVANDO QUEM?",
+        "VOCÊ TEM CERTEZA DE QUE ESTÁ SOZINHO?",
+        "ALGUMA COISA LEMBRA DE VOCÊ."
+    ]
+};
+
+const returnMessageHistory = {
+    "01": [],
+    "03": []
+};
+
+function getRandomReturnMessage(room) {
+    const pool = returnMessagePools[room];
+
+    if (!pool || !pool.length) {
+        return "ALGUMA COISA PARECE TER MUDADO.";
+    }
+
+    let history = returnMessageHistory[room] || [];
+
+    if (history.length >= pool.length) {
+        history = [];
+    }
+
+    const available = pool.filter(message => !history.includes(message));
+    const message = available[Math.floor(Math.random() * available.length)];
+
+    history.push(message);
+    returnMessageHistory[room] = history;
+
+    return message;
+}
 
 /* =========================================================
    OBJETOS
@@ -4079,6 +4726,174 @@ function createKey(
 
 
 /* =========================================================
+   PÁGINAS ESPALHADAS
+========================================================= */
+
+function createPagePiece(x, y, type) {
+    const index = Number(type.replace("PAGE_", "")) - 1;
+    if (index < 0 || index >= pageTotal || collectedPages.has(index)) return null;
+
+    const paper = scene.add.container(x, y);
+    const shadow = scene.add.rectangle(3, 4, 74, 92, 0x000000, .35);
+    const sheet = scene.add.rectangle(0, 0, 70, 88, 0xd1cec4);
+    sheet.setStrokeStyle(2, 0x77736a);
+    const mark = scene.add.text(-25, -31, "PÁGINA " + (index + 1), {fontFamily:"monospace",fontSize:"7px",color:"#55524c"});
+    const lines = scene.add.text(-31, -18, "████████\\n████████\\n████████", {fontFamily:"monospace",fontSize:"7px",color:"#77736a",lineSpacing:4});
+    paper.add([shadow, sheet, mark, lines]);
+    paper.setDepth(18);
+    paper.setData("type", type);
+    paper.setData("pageIndex", index);
+    objects.push(paper);
+
+    scene.tweens.add({targets:paper,angle:{from:-2,to:2},duration:900,yoyo:true,repeat:-1,ease:"Sine.easeInOut"});
+    return paper;
+}
+
+function collectPage(object) {
+    const index = object.getData("pageIndex");
+    if (collectedPages.has(index)) return;
+    collectedPages.add(index);
+    object.destroy();
+    showMessage("FRAGMENTO " + (index + 1) + " ENCONTRADO.", 2200);
+    updatePageProgress();
+    if (collectedPages.size === pageTotal) setTimeout(openPagePuzzle, 700);
+}
+
+function updatePageProgress() {
+    const progress = document.getElementById("pagePuzzleProgress");
+    if (progress) progress.innerText = "PÁGINAS: " + collectedPages.size + " / " + pageTotal;
+}
+
+function openPagePuzzle() {
+    if (pagePuzzleOpen || collectedPages.size < pageTotal) return;
+    if (pagesCompleted) {
+        reopenPagePuzzle();
+        return;
+    }
+    pagePuzzleOpen = true;
+    const overlay = document.getElementById("pagePuzzle");
+    const pieces = document.getElementById("pagePuzzlePieces");
+    const board = document.getElementById("pagePuzzleBoard");
+    const text = document.getElementById("pagePuzzleText");
+    const hint = document.getElementById("pagePuzzleHint");
+    const closeHint = document.getElementById("pagePuzzleCloseHint");
+    pieces.innerHTML = "";
+    text.classList.remove("visible");
+    text.innerText = "";
+    closeHint.style.display = "none";
+    board.style.display = "grid";
+    pieces.style.display = "block";
+    hint.innerText = "Deslize cada página para o lugar correto.";
+    assembledPages.clear();
+    updatePageProgress();
+
+    for (let i=0;i<pageTotal;i++) {
+        const piece=document.createElement("div");
+        piece.className="page-piece";
+        piece.dataset.index=String(i);
+        piece.innerText="PÁGINA " + (i+1) + "\n\n" + pageFragments[i].split("\n")[0];
+        pieces.appendChild(piece);
+        makePagePieceDraggable(piece,i);
+    }
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden","false");
+}
+
+function makePagePieceDraggable(piece,index) {
+    piece.addEventListener("pointerdown",event=>{
+        if(assembledPages.has(index)) return;
+        event.preventDefault();
+        const rect=piece.getBoundingClientRect();
+        pageDragState={piece,index,offsetX:event.clientX-rect.left,offsetY:event.clientY-rect.top};
+        piece.setPointerCapture(event.pointerId);
+        piece.style.position="fixed";
+        piece.style.left=(event.clientX-pageDragState.offsetX)+"px";
+        piece.style.top=(event.clientY-pageDragState.offsetY)+"px";
+        piece.style.transform="rotate(0deg) scale(1.03)";
+        piece.style.zIndex="100";
+    });
+    piece.addEventListener("pointermove",event=>{
+        if(!pageDragState || pageDragState.piece!==piece) return;
+        piece.style.left=(event.clientX-pageDragState.offsetX)+"px";
+        piece.style.top=(event.clientY-pageDragState.offsetY)+"px";
+    });
+    piece.addEventListener("pointerup",event=>{
+        if(!pageDragState || pageDragState.piece!==piece) return;
+        const slot=document.querySelector('.page-slot[data-slot="'+index+'"]');
+        const sr=slot.getBoundingClientRect(), pr=piece.getBoundingClientRect();
+        const cx=pr.left+pr.width/2, cy=pr.top+pr.height/2;
+        const sx=sr.left+sr.width/2, sy=sr.top+sr.height/2;
+        if(Math.hypot(cx-sx,cy-sy)<110){
+            assembledPages.add(index);
+            slot.classList.add("filled");
+            piece.classList.add("locked");
+            piece.style.position="absolute"; piece.style.left="0"; piece.style.top="0"; piece.style.transform="none"; piece.style.zIndex="2";
+            slot.appendChild(piece);
+            pageDragState=null;
+            if(assembledPages.size===pageTotal) setTimeout(revealPageText,800);
+        }else{
+            piece.style.position="absolute"; piece.style.left=""; piece.style.top=""; piece.style.transform=""; piece.style.zIndex="10";
+            pageDragState=null;
+        }
+    });
+    piece.addEventListener("pointercancel",()=>{
+        if(pageDragState && pageDragState.piece===piece){
+            piece.style.position="absolute"; piece.style.left=""; piece.style.top=""; piece.style.transform=""; piece.style.zIndex="10"; pageDragState=null;
+        }
+    });
+}
+
+function closePagePuzzle() {
+    const overlay = document.getElementById("pagePuzzle");
+    if (!overlay) return;
+    pagePuzzleOpen = false;
+    overlay.classList.remove("open");
+    overlay.setAttribute("aria-hidden", "true");
+    pageDragState = null;
+}
+
+function reopenPagePuzzle() {
+    if (!pagesCompleted || pagePuzzleOpen) return;
+    const overlay = document.getElementById("pagePuzzle");
+    const board = document.getElementById("pagePuzzleBoard");
+    const pieces = document.getElementById("pagePuzzlePieces");
+    const hint = document.getElementById("pagePuzzleHint");
+    const text = document.getElementById("pagePuzzleText");
+    const closeHint = document.getElementById("pagePuzzleCloseHint");
+    if (!overlay) return;
+    pagePuzzleOpen = true;
+    board.style.display = "none";
+    pieces.style.display = "none";
+    hint.innerText = "TEXTO REVELADO";
+    text.classList.add("visible");
+    text.innerText = pageFragments.join("\n\n");
+    closeHint.style.display = "block";
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden", "false");
+}
+
+function revealPageText() {
+    const board=document.getElementById("pagePuzzleBoard"), pieces=document.getElementById("pagePuzzlePieces"), hint=document.getElementById("pagePuzzleHint"), text=document.getElementById("pagePuzzleText"), closeHint=document.getElementById("pagePuzzleCloseHint");
+    board.style.display="none"; pieces.style.display="none"; hint.innerText="O texto começa a aparecer lentamente..."; text.classList.add("visible"); text.innerText="";
+
+    const lines=[
+        "TESTE 13","","Se você está lendo isso...","","então provavelmente já fez tudo o que eu fiz.","","Eu já passei por essas salas milhares de vezes.","","Ou pelo menos acho que passei.","","Não consigo me lembrar.","","Às vezes tenho pequenos lapsos de memória.","","Vejo lugares que parecem familiares.","","Mas tudo desaparece.","","E então começa novamente.","","Eles me tratam como um animal.","","Dia e noite.","","Observam.","","Testam.","","Esperam.","","E eu nem sei quem eles são.","","Eu não sei quem sou.","","Não sei como vim parar nesse maldito experimento.","","Se você está lendo isso, saiba que eu não resisti.","","Não sei mais quanto tempo consigo continuar vivendo nesse limbo infernal.","","Estou pensando em tentar tirar minha própria vida.","","Talvez seja a única coisa que ainda posso decidir por mim mesmo.","","Vou tentar pela última vez.","","Se você encontrou estas páginas...","","por favor, termine o que eu comecei.","","Mas tenha cuidado.","","Porque talvez...","","VOCÊ JÁ TENHA FEITO ISSO ANTES TAMBÉM."
+    ];
+    let i=0;
+    function next(){
+        if(i>=lines.length){pagesCompleted=true;closeHint.style.display="block";hint.innerText="As páginas foram reunidas.";document.getElementById("pageReviewHint")?.classList.add("visible");return;}
+        text.innerText += (i===0?"":"\n")+lines[i];
+        const line=lines[i++];
+        let delay=520;
+        if(line==="") delay=300;
+        if(line==="Porque talvez...") delay=1900;
+        if(line==="VOCÊ JÁ TENHA FEITO ISSO ANTES TAMBÉM.") delay=3200;
+        setTimeout(next,delay);
+    }
+    next();
+}
+
+/* =========================================================
    TEXTO
 ========================================================= */
 
@@ -4254,6 +5069,9 @@ function interactionText(
         case "DOOR_02":
             return "ABRIR PORTA";
 
+        case "DOOR_02_RETURN":
+            return "VOLTAR AO ARQUIVO";
+
         case "DOOR_03":
             return "ABRIR PORTA";
 
@@ -4261,7 +5079,14 @@ function interactionText(
             return "VOLTAR À CENTRAL";
 
         case "FINAL_DOOR":
-            return "ABRIR PORTA";
+            return finalDoorUnlocked ? "" : "ABRIR PORTA";
+
+        case "PAGE_01":
+        case "PAGE_02":
+        case "PAGE_03":
+        case "PAGE_04":
+        case "PAGE_05":
+            return "PEGAR PÁGINA";
 
         default:
             return "INTERAGIR";
@@ -4282,6 +5107,9 @@ function interact() {
 
 
     if (cameraMode)
+        return;
+
+    if (pagePuzzleOpen)
         return;
 
 
@@ -4359,6 +5187,14 @@ function handleInteraction(
 
     switch(type) {
 
+        case "PAGE_01":
+        case "PAGE_02":
+        case "PAGE_03":
+        case "PAGE_04":
+        case "PAGE_05":
+            collectPage(object);
+            break;
+
 
         case "KEY_01":
 
@@ -4430,6 +5266,8 @@ function handleInteraction(
 
             }
 
+            createPagePiece(680, 300, "PAGE_02");
+
 
             showMessage(
                 "A caixa foi aberta.\n\nHá uma chave vermelha dentro.",
@@ -4456,6 +5294,24 @@ function handleInteraction(
             break;
 
 
+        case "DOOR_02_RETURN":
+
+            playNormalDoorSound();
+
+            transitionToRoom(
+                () => createRoom01(970, 350)
+            );
+
+            setTimeout(() => {
+                showMessage(
+                    getRandomReturnMessage("01"),
+                    3500
+                );
+            }, 750);
+
+            break;
+
+
         case "DOOR_02":
 
             if (!inventory.key1) {
@@ -4470,8 +5326,10 @@ function handleInteraction(
             }
 
 
+            playNormalDoorSound();
+
             transitionToRoom(
-                createRoom02
+                () => createRoom02(100, 350)
             );
 
             break;
@@ -4491,6 +5349,8 @@ function handleInteraction(
             }
 
 
+            playNormalDoorSound();
+
             transitionToRoom(
                 createRoom03
             );
@@ -4501,13 +5361,22 @@ function handleInteraction(
         case "DOOR_03_RETURN":
 
             /*
-                Pode voltar para a Central
-                quantas vezes quiser.
+                A porta da esquerda continua funcionando mesmo
+                depois que o código final foi aceito. O jogador
+                pode voltar para a Central quantas vezes quiser.
             */
+            playNormalDoorSound();
 
             transitionToRoom(
-                createRoom03
+                () => createRoom03(970, 350)
             );
+
+            setTimeout(() => {
+                showMessage(
+                    getRandomReturnMessage("03"),
+                    3500
+                );
+            }, 750);
 
             break;
 
@@ -4604,6 +5473,7 @@ function transitionToRoom(
 ========================================================= */
 
 let enteredCode = "";
+let finalDoorUnlocked = false;
 
 
 const codeDisplay =
@@ -4613,6 +5483,8 @@ const codeDisplay =
 
 
 function openFinalDoor() {
+
+    if (finalDoorUnlocked) return;
 
     enteredCode =
         "";
@@ -4811,6 +5683,11 @@ function confirmCode() {
 
         clearCodeStatus();
 
+        /*
+            Depois que o código é aceito, a porta final
+            deixa de existir nas próximas visitas à Sala 04.
+        */
+        finalDoorUnlocked = true;
 
         codePanel.style.display =
             "none";
@@ -4992,6 +5869,44 @@ function triggerEnding() {
 }
 
 </script>
+
+<div id="phaser-fatal-error" style="display:none;position:fixed;inset:0;z-index:99999;background:#000;color:#ddd;font-family:monospace;padding:40px;box-sizing:border-box;text-align:center;">
+<h2>O ÚLTIMO CLIQUE</h2><p>O Phaser não conseguiu carregar.</p><p>Abra este arquivo pelo Live Server do VS Code e verifique sua conexão com a internet.</p>
+</div>
+
+<script>
+window.addEventListener("load", function(){
+    setTimeout(function(){
+        if (typeof Phaser === "undefined") {
+            var e=document.getElementById("phaser-fatal-error");
+            if(e)e.style.display="block";
+        }
+    }, 2500);
+});
+document.addEventListener("click", event => {
+    if (event.target && event.target.id === "pageReviewHint") {
+        reopenPagePuzzle();
+    }
+});
+
+</script>
+
+
+<div id="pagePuzzle" aria-hidden="true">
+  <div id="pagePuzzlePanel">
+    <div id="pagePuzzleTitle">FRAGMENTOS ENCONTRADOS</div>
+    <div id="pagePuzzleHint">Deslize cada página para o lugar correto.</div>
+    <div id="pagePuzzleProgress">PÁGINAS: 0 / 5</div>
+    <div id="pagePuzzleBoard">
+      <div class="page-slot" data-slot="0"></div><div class="page-slot" data-slot="1"></div><div class="page-slot" data-slot="2"></div><div class="page-slot" data-slot="3"></div><div class="page-slot" data-slot="4"></div>
+    </div>
+    <div id="pagePuzzlePieces"></div>
+    <div id="pagePuzzleText" aria-live="polite"></div>
+    <div id="pagePuzzleCloseHint">As páginas foram reunidas.</div>
+    <div id="pagePuzzleEscHint">ESC — sair</div>
+  </div>
+</div>
+<div id="pageReviewHint">CLIQUE — VER PÁGINAS</div>
 
 </body>
 
